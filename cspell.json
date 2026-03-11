@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/packages/cspell-types/cspell.schema.json",
+  "version": "0.2",
+  "language": "en,pt-BR",
+  "words": [
+    // Brand / project names
+    "JUPHD",
+    "JUPHDCARE",
+    "juphd",
+
+    // PT-BR UI terms (words the EN dictionary won't know)
+    "Ansioso", "ansioso",
+    "Calmo", "calmo",
+    "Estável", "estável",
+    "Disposta", "disposta",
+    "Irritado", "irritado",
+    "Exausto", "exausto",
+    "Tenso", "tenso",
+    "Sonolento", "sonolento",
+    "Agitado", "agitado",
+    "Tranquilo", "tranquilo",
+    "Focado", "focado",
+    "Cansado", "cansado",
+    "Esgotado", "esgotado",
+
+    // Tech / stack terms
+    "Vite", "vite",
+    "Drizzle", "drizzle",
+    "wouter",
+    "shadcn",
+    "lucide",
+    "tabler",
+    "cspell",
+    "Zod", "zod",
+    "Radix",
+    "tsconfig",
+    "tsx",
+    "esbuild",
+    "tailwindcss",
+    "postcss",
+    "pnpm",
+
+    // cSpell itself
+    "streetsidesoftware"
+  ],
+  "ignoreWords": [],
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    ".git/**",
+    "package-lock.json",
+    "**/*.min.js",
+    "**/*.min.css"
+  ],
+  "overrides": [
+    {
+      // Relax checking inside TS type annotations and template literals
+      "filename": "**/*.{ts,tsx}",
+      "ignoreRegExpList": [
+        // hex colours
+        "#[0-9a-fA-F]{3,8}",
+        // tailwind class strings (long utility chains)
+        "(?:className|class)=['\"`][^'\"` ]{40,}"
+      ]
+    }
+  ]
+}
