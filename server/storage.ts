@@ -1,5 +1,6 @@
 import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type IncidentReport, type InsertIncidentReport } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -13,9 +14,9 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private checkIns: Map<string, CheckIn>;
-  private incidentReports: Map<string, IncidentReport>;
+  private readonly users: Map<string, User>;
+  private readonly checkIns: Map<string, CheckIn>;
+  private readonly incidentReports: Map<string, IncidentReport>;
 
   constructor() {
     this.users = new Map();
@@ -25,10 +26,13 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
+    // Seed passwords are hashed at startup. Plain-text only in this comment for dev reference: "Senha@123"
+    const seedHash = bcrypt.hashSync("Senha@123", 10);
+
     const demoUser: User = {
       id: "user-1",
       username: "maria@juphd.com",
-      password: "Senha@123",
+      password: seedHash,
       name: "Maria Silva",
       role: "collaborator",
       department: "Marketing",
@@ -38,7 +42,7 @@ export class MemStorage implements IStorage {
     const rhUser: User = {
       id: "user-rh",
       username: "rh@juphd.com",
-      password: "Senha@123",
+      password: seedHash,
       name: "Carlos Mendes",
       role: "rh",
       department: "Recursos Humanos",
@@ -57,7 +61,7 @@ export class MemStorage implements IStorage {
       const seedUser: User = {
         id: `seed-user-${i}`,
         username: `user${i}@juphd.com`,
-        password: "Senha@123",
+        password: seedHash,
         name: `Colaborador ${i + 1}`,
         role: "collaborator",
         department: dept,
@@ -118,7 +122,8 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
-    const user: User = { ...insertUser, id, role: insertUser.role || "collaborator", department: insertUser.department || null };
+    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+    const user: User = { ...insertUser, id, password: hashedPassword, role: insertUser.role || "collaborator", department: insertUser.department || null };
     this.users.set(id, user);
     return user;
   }

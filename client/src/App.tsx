@@ -23,10 +23,17 @@ function ProtectedRoute({ component: Component, requireRole }: Readonly<{ compon
   return <Component />;
 }
 
+// Prevents authenticated users from landing on the login page
+function AuthRoute({ component: Component }: Readonly<{ component: () => JSX.Element }>) {
+  const { isAuthenticated, user } = useAuth();
+  if (isAuthenticated) return <Redirect to={user?.role === "rh" ? "/rh" : "/dashboard"} />;
+  return <Component />;
+}
+
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={LoginPage} />
+      <Route path="/">{() => <AuthRoute component={LoginPage} />}</Route>
       <Route path="/dashboard">
         {() => <ProtectedRoute component={DashboardPage} />}
       </Route>

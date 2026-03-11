@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -6,6 +5,10 @@ import {
   Sun, CloudSun, Heart, Brain, Droplets, Wind, Play, Clock,
   Shield, ChevronRight, Sparkles, Activity, Moon, Coffee
 } from "lucide-react";
+import {
+  TbMoodSmile, TbMoodWrrr, TbMoodAngry, TbMoodSad,
+  TbMoodHappy, TbMoodEmpty, TbMoodNervous, TbMoodConfuzed,
+} from "react-icons/tb";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import type { CheckIn } from "@shared/schema";
@@ -45,13 +48,20 @@ const pills = [
   },
 ];
 
-function getMoodEmoji(humor: string) {
-  const map: Record<string, string> = {
-    "Bem": "😊", "Ansioso": "😰", "Tenso": "😤", "Calmo": "😌",
-    "Motivado": "💪", "Triste": "😢", "Irritado": "😠", "Confiante": "😎",
-    "Inseguro": "😟", "Desanimado": "😞",
+function getMoodIcon(humor: string): React.ComponentType<{ className?: string }> {
+  const map: Record<string, React.ComponentType<{ className?: string }>> = {
+    "Bem": TbMoodSmile,
+    "Ansioso": TbMoodNervous,
+    "Tenso": TbMoodWrrr,
+    "Calmo": TbMoodHappy,
+    "Motivado": TbMoodSmile,
+    "Triste": TbMoodSad,
+    "Irritado": TbMoodAngry,
+    "Confiante": TbMoodSmile,
+    "Inseguro": TbMoodConfuzed,
+    "Desanimado": TbMoodEmpty,
   };
-  return map[humor] || "🙂";
+  return map[humor] ?? TbMoodSmile;
 }
 
 function getEnergyIcon(energy: string) {
@@ -126,7 +136,7 @@ export default function DashboardPage() {
             </motion.div>
             <div>
               <h2 className="text-lg font-semibold text-foreground">
-                {greeting()}, {firstName}! ☀️
+                {greeting()}, {firstName}!
               </h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Olá! Minha missão é cuidar muito bem de você. Como posso te ajudar hoje?
@@ -166,7 +176,7 @@ export default function DashboardPage() {
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-background/40 p-3 text-center">
-                <span className="text-2xl" data-testid="text-last-mood">{getMoodEmoji(lastCheckIn.humor)}</span>
+                {(() => { const Icon = getMoodIcon(lastCheckIn.humor); return <Icon className="w-6 h-6 mx-auto text-amber-400" />; })()}
                 <p className="text-xs text-muted-foreground mt-1">Humor</p>
                 <p className="text-sm font-medium">{lastCheckIn.humor}</p>
               </div>
@@ -202,7 +212,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-3">
             {pills.map((pill, i) => (
               <motion.div
-                key={i}
+                key={pill.title}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.5 + i * 0.1 }}
@@ -210,7 +220,7 @@ export default function DashboardPage() {
                 data-testid={`card-pill-${i}`}
               >
                 <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${pill.color} flex items-center justify-center mb-3`}>
-                  <pill.icon className={`w-4.5 h-4.5 ${pill.iconColor}`} />
+                  <pill.icon className={`w-4 h-4 ${pill.iconColor}`} />
                 </div>
                 <p className="text-sm font-medium leading-tight">{pill.title}</p>
                 <p className="text-xs text-muted-foreground mt-1">{pill.desc}</p>

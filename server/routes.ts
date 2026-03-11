@@ -1,5 +1,6 @@
 import type { Express } from "express";
-import { createServer, type Server } from "http";
+import type { Server } from "node:http";
+import bcrypt from "bcryptjs";
 import { storage } from "./storage";
 import { insertCheckInSchema, insertIncidentReportSchema } from "@shared/schema";
 
@@ -7,13 +8,24 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // DEBT: add rate limiting on auth endpoints [security]
+  // DEBT: replace localStorage auth with JWT/session middleware [security]
   app.post("/api/auth/login", async (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password) {
+    if (!username || typeof username !== "string" || !password || typeof password !== "string") {
       return res.status(400).json({ message: "Email e senha são obrigatórios" });
     }
+    if (username.length > 254 || password.length > 128) {
+      return res.status(400).json({ message: "Credenciais inválidas" });
+    }
     const user = await storage.getUserByUsername(username);
-    if (!user || user.password !== password) {
+    if (!user) {
+      // Constant-time comparison even when user not found to prevent timing attacks
+      await bcrypt.compare(password, "$2b$10$invalidhashtopreventtimingattac");
+      return res.status(401).json({ message: "Credenciais inválidas" });
+    }
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
       return res.status(401).json({ message: "Credenciais inválidas" });
     }
     const { password: _, ...safeUser } = user;
@@ -22,13 +34,24 @@ export async function registerRoutes(
 
   app.post("/api/auth/register", async (req, res) => {
     const { username, password, name, department } = req.body;
-    if (!username || !password || !name) {
+    if (!username || typeof username !== "string" || !password || typeof password !== "string" || !name || typeof name !== "string") {
       return res.status(400).json({ message: "Nome, email e senha são obrigatórios" });
+    }
+    if (username.length > 254 || password.length > 128 || name.length > 100) {
+      return res.status(400).json({ message: "Dados inválidos" });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(username)) {
+      return res.status(400).json({ message: "Email inválido" });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ message: "A senha deve ter pelo menos 8 caracteres" });
     }
     const existing = await storage.getUserByUsername(username);
     if (existing) {
       return res.status(409).json({ message: "Este email já está cadastrado" });
     }
+    // Password hashed inside storage.createUser
     const user = await storage.createUser({
       username,
       password,
