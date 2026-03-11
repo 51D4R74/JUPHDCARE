@@ -1,72 +1,97 @@
 import { useState } from "react";
+import { type IconType } from "react-icons";
+import {
+  TbAlertTriangle,
+  TbBattery1,
+  TbBattery2,
+  TbBattery4,
+  TbBatteryCharging,
+  TbBed,
+  TbBolt,
+  TbBriefcase,
+  TbBulb,
+  TbCloudBolt,
+  TbCloudStorm,
+  TbDots,
+  TbEyeOff,
+  TbFocus,
+  TbHeartHandshake,
+  TbHeartbeat,
+  TbMoodSad,
+  TbMoodSmile,
+  TbMoon,
+  TbMoonStars,
+  TbRocket,
+  TbShieldCheck,
+  TbShieldQuestion,
+  TbSparkles,
+  TbSunrise,
+  TbTrendingDown,
+  TbTrendingUp,
+  TbUsersGroup,
+} from "react-icons/tb";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowLeft, ArrowRight, Check, Sun, Frown, Meh, Smile, Zap,
-  Battery, BatteryLow, BatteryFull, BatteryCharging,
-  Brain, Focus, Lightbulb, TrendingDown, TrendingUp, CloudLightning,
-  Moon, CloudMoon, BedDouble, Sparkles, Star, Sunrise,
-  Briefcase, Users, HeartPulse, Heart, MoreHorizontal,
-  Save, ChevronLeft
+  Check, Save, ChevronLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 
 interface StepOption {
   label: string;
-  icon: typeof Sun;
+  icon: IconType;
   color: string;
   bgColor: string;
 }
 
 const humorOptions: StepOption[] = [
-  { label: "Ansioso", icon: Frown, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
-  { label: "Tenso", icon: CloudLightning, color: "text-orange-400", bgColor: "from-orange-500/20 to-orange-600/5" },
-  { label: "Irritado", icon: Zap, color: "text-red-500", bgColor: "from-red-500/20 to-red-600/5" },
-  { label: "Inseguro", icon: Meh, color: "text-yellow-400", bgColor: "from-yellow-500/20 to-yellow-600/5" },
-  { label: "Triste", icon: Frown, color: "text-blue-400", bgColor: "from-blue-500/20 to-blue-600/5" },
-  { label: "Desanimado", icon: TrendingDown, color: "text-slate-400", bgColor: "from-slate-500/20 to-slate-600/5" },
-  { label: "Bem", icon: Smile, color: "text-emerald-400", bgColor: "from-emerald-500/20 to-emerald-600/5" },
-  { label: "Confiante", icon: Star, color: "text-amber-400", bgColor: "from-amber-500/20 to-amber-600/5" },
-  { label: "Motivado", icon: TrendingUp, color: "text-green-400", bgColor: "from-green-500/20 to-green-600/5" },
-  { label: "Calmo", icon: Sunrise, color: "text-cyan-400", bgColor: "from-cyan-500/20 to-cyan-600/5" },
+  { label: "Ansioso", icon: TbAlertTriangle, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
+  { label: "Tenso", icon: TbCloudStorm, color: "text-orange-400", bgColor: "from-orange-500/20 to-orange-600/5" },
+  { label: "Irritado", icon: TbBolt, color: "text-red-500", bgColor: "from-red-500/20 to-red-600/5" },
+  { label: "Inseguro", icon: TbShieldQuestion, color: "text-yellow-400", bgColor: "from-yellow-500/20 to-yellow-600/5" },
+  { label: "Triste", icon: TbMoodSad, color: "text-blue-400", bgColor: "from-blue-500/20 to-blue-600/5" },
+  { label: "Desanimado", icon: TbTrendingDown, color: "text-slate-400", bgColor: "from-slate-500/20 to-slate-600/5" },
+  { label: "Bem", icon: TbMoodSmile, color: "text-emerald-400", bgColor: "from-emerald-500/20 to-emerald-600/5" },
+  { label: "Confiante", icon: TbShieldCheck, color: "text-amber-400", bgColor: "from-amber-500/20 to-amber-600/5" },
+  { label: "Motivado", icon: TbRocket, color: "text-green-400", bgColor: "from-green-500/20 to-green-600/5" },
+  { label: "Calmo", icon: TbSunrise, color: "text-cyan-400", bgColor: "from-cyan-500/20 to-cyan-600/5" },
 ];
 
 const energyOptions: StepOption[] = [
-  { label: "Exausto", icon: BatteryLow, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
-  { label: "Cansado", icon: Battery, color: "text-orange-400", bgColor: "from-orange-500/20 to-orange-600/5" },
-  { label: "Disposto", icon: BatteryFull, color: "text-emerald-400", bgColor: "from-emerald-500/20 to-emerald-600/5" },
-  { label: "Empolgado", icon: BatteryCharging, color: "text-amber-400", bgColor: "from-amber-500/20 to-amber-600/5" },
+  { label: "Exausto", icon: TbBattery1, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
+  { label: "Cansado", icon: TbBattery2, color: "text-orange-400", bgColor: "from-orange-500/20 to-orange-600/5" },
+  { label: "Disposto", icon: TbBattery4, color: "text-emerald-400", bgColor: "from-emerald-500/20 to-emerald-600/5" },
+  { label: "Empolgado", icon: TbBatteryCharging, color: "text-amber-400", bgColor: "from-amber-500/20 to-amber-600/5" },
 ];
 
 const mindOptions: StepOption[] = [
-  { label: "Distraído", icon: CloudMoon, color: "text-slate-400", bgColor: "from-slate-500/20 to-slate-600/5" },
-  { label: "Estressado", icon: CloudLightning, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
-  { label: "Baixa Produção", icon: TrendingDown, color: "text-orange-400", bgColor: "from-orange-500/20 to-orange-600/5" },
-  { label: "Focado", icon: Focus, color: "text-blue-400", bgColor: "from-blue-500/20 to-blue-600/5" },
-  { label: "Criativo", icon: Lightbulb, color: "text-purple-400", bgColor: "from-purple-500/20 to-purple-600/5" },
-  { label: "Alta Produção", icon: TrendingUp, color: "text-emerald-400", bgColor: "from-emerald-500/20 to-emerald-600/5" },
+  { label: "Distraído", icon: TbEyeOff, color: "text-slate-400", bgColor: "from-slate-500/20 to-slate-600/5" },
+  { label: "Estressado", icon: TbCloudBolt, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
+  { label: "Baixa Produção", icon: TbTrendingDown, color: "text-orange-400", bgColor: "from-orange-500/20 to-orange-600/5" },
+  { label: "Focado", icon: TbFocus, color: "text-blue-400", bgColor: "from-blue-500/20 to-blue-600/5" },
+  { label: "Criativo", icon: TbBulb, color: "text-purple-400", bgColor: "from-purple-500/20 to-purple-600/5" },
+  { label: "Alta Produção", icon: TbTrendingUp, color: "text-emerald-400", bgColor: "from-emerald-500/20 to-emerald-600/5" },
 ];
 
 const sleepOptions: StepOption[] = [
-  { label: "Pesadelos", icon: CloudLightning, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
-  { label: "Cansaço ao acordar", icon: BatteryLow, color: "text-orange-400", bgColor: "from-orange-500/20 to-orange-600/5" },
-  { label: "Dificuldade para dormir", icon: Moon, color: "text-yellow-400", bgColor: "from-yellow-500/20 to-yellow-600/5" },
-  { label: "Adormeci rápido", icon: BedDouble, color: "text-blue-400", bgColor: "from-blue-500/20 to-blue-600/5" },
-  { label: "Sono restaurador", icon: Sparkles, color: "text-emerald-400", bgColor: "from-emerald-500/20 to-emerald-600/5" },
-  { label: "Sono tranquilo", icon: Star, color: "text-cyan-400", bgColor: "from-cyan-500/20 to-cyan-600/5" },
+  { label: "Pesadelos", icon: TbCloudStorm, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
+  { label: "Cansaço ao acordar", icon: TbBattery1, color: "text-orange-400", bgColor: "from-orange-500/20 to-orange-600/5" },
+  { label: "Dificuldade para dormir", icon: TbMoon, color: "text-yellow-400", bgColor: "from-yellow-500/20 to-yellow-600/5" },
+  { label: "Adormeci rápido", icon: TbBed, color: "text-blue-400", bgColor: "from-blue-500/20 to-blue-600/5" },
+  { label: "Sono restaurador", icon: TbSparkles, color: "text-emerald-400", bgColor: "from-emerald-500/20 to-emerald-600/5" },
+  { label: "Sono tranquilo", icon: TbMoonStars, color: "text-cyan-400", bgColor: "from-cyan-500/20 to-cyan-600/5" },
 ];
 
 const contextTags = [
-  { label: "Trabalho", icon: Briefcase },
-  { label: "Família", icon: Users },
-  { label: "Saúde", icon: HeartPulse },
-  { label: "Relacionamentos", icon: Heart },
-  { label: "Outro", icon: MoreHorizontal },
+  { label: "Trabalho", icon: TbBriefcase },
+  { label: "Família", icon: TbUsersGroup },
+  { label: "Saúde", icon: TbHeartbeat },
+  { label: "Relacionamentos", icon: TbHeartHandshake },
+  { label: "Outro", icon: TbDots },
 ];
 
 const steps = [
@@ -120,7 +145,7 @@ export default function CheckInPage() {
         notes: notes || null,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/checkins/user", user.id] });
-      toast({ title: "Check-in salvo! 🌟", description: "Obrigada por compartilhar como você está." });
+      toast({ title: "Check-in salvo!", description: "Obrigada por compartilhar como você está." });
       navigate("/dashboard");
     } catch {
       toast({ title: "Erro", description: "Não foi possível salvar o check-in.", variant: "destructive" });
@@ -185,7 +210,7 @@ export default function CheckInPage() {
                 {steps[step].question}
               </h2>
 
-              <div className={`grid ${steps[step].options.length <= 4 ? "grid-cols-2" : "grid-cols-2"} gap-3`}>
+              <div className="grid grid-cols-2 gap-3">
                 {steps[step].options.map((opt) => {
                   const isSelected = answers[steps[step].key] === opt.label;
                   return (
@@ -208,8 +233,8 @@ export default function CheckInPage() {
                           <Check className="w-4 h-4 text-amber-400" />
                         </motion.div>
                       )}
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${opt.bgColor} flex items-center justify-center`}>
-                        <opt.icon className={`w-6 h-6 ${opt.color}`} />
+                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${opt.bgColor} ring-1 ring-white/10 shadow-[0_14px_30px_rgba(15,23,42,0.18)] flex items-center justify-center`}>
+                        <opt.icon className={`h-6 w-6 ${opt.color}`} />
                       </div>
                       <span className="text-sm font-medium">{opt.label}</span>
                     </motion.button>
@@ -248,7 +273,7 @@ export default function CheckInPage() {
                       }`}
                       data-testid={`tag-${tag.label}`}
                     >
-                      <tag.icon className="w-3.5 h-3.5" />
+                      <tag.icon className="h-3.5 w-3.5" />
                       {tag.label}
                     </button>
                   );

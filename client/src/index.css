@@ -17,16 +17,16 @@
   --sidebar: 222 40% 8%;
   --sidebar-foreground: 40 15% 90%;
   --sidebar-border: 222 30% 14%;
-  --sidebar-primary: 38 92% 50%;
-  --sidebar-primary-foreground: 38 15% 10%;
+  --sidebar-primary: 270 55% 62%;
+  --sidebar-primary-foreground: 270 10% 98%;
   --sidebar-accent: 222 30% 14%;
   --sidebar-accent-foreground: 40 15% 88%;
-  --sidebar-ring: 38 92% 50%;
+  --sidebar-ring: 270 55% 62%;
   --popover: 222 40% 10%;
   --popover-foreground: 40 15% 90%;
   --popover-border: 222 30% 16%;
-  --primary: 38 92% 50%;
-  --primary-foreground: 38 15% 8%;
+  --primary: 270 55% 62%;
+  --primary-foreground: 270 10% 98%;
   --secondary: 222 25% 15%;
   --secondary-foreground: 40 15% 88%;
   --muted: 222 25% 14%;
@@ -36,13 +36,13 @@
   --destructive: 0 84% 40%;
   --destructive-foreground: 0 20% 98%;
   --input: 222 25% 20%;
-  --ring: 38 92% 50%;
+  --ring: 270 55% 62%;
   --chart-1: 210 85% 55%;
   --chart-2: 38 92% 55%;
-  --chart-3: 280 65% 60%;
-  --chart-4: 160 70% 50%;
+  --chart-3: 160 65% 45%;
+  --chart-4: 350 55% 60%;
   --chart-5: 15 80% 55%;
-  --font-sans: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  --font-sans: 'DM Sans', 'Inter', sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: 'JetBrains Mono', monospace;
   --radius: .625rem;
@@ -154,15 +154,15 @@
   }
 
   .gradient-sunrise {
-    background: radial-gradient(ellipse at top, rgba(245, 158, 11, 0.15) 0%, hsl(222, 47%, 6%) 60%, hsl(222, 47%, 4%) 100%);
+    background: radial-gradient(ellipse at top, rgba(155, 105, 210, 0.12) 0%, rgba(225, 110, 140, 0.06) 30%, hsl(222, 47%, 6%) 65%, hsl(222, 47%, 4%) 100%);
   }
 
   .gradient-warm-glow {
-    background: radial-gradient(ellipse at center, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(155, 105, 210, 0.08) 0%, transparent 70%);
   }
 
   .text-gradient-warm {
-    background: linear-gradient(135deg, hsl(38, 92%, 60%) 0%, hsl(28, 90%, 55%) 100%);
+    background: linear-gradient(135deg, hsl(270, 55%, 72%) 0%, hsl(350, 55%, 68%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -174,7 +174,98 @@
     border: 1px solid hsl(222, 30%, 18%);
   }
 
+  .glow-violet {
+    box-shadow: 0 0 20px rgba(155, 105, 210, 0.18), 0 0 60px rgba(155, 105, 210, 0.06);
+  }
+
   .glow-amber {
     box-shadow: 0 0 20px rgba(245, 158, 11, 0.15), 0 0 60px rgba(245, 158, 11, 0.05);
   }
+
+  .glow-rose {
+    box-shadow: 0 0 20px rgba(225, 110, 140, 0.18), 0 0 60px rgba(225, 110, 140, 0.06);
+  }
+
+  .gradient-dusk {
+    background: linear-gradient(135deg, rgba(155, 105, 210, 0.15) 0%, rgba(225, 110, 140, 0.10) 50%, rgba(155, 105, 210, 0.05) 100%);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Light mode scope — apply .theme-light on a wrapper to override     */
+/* ------------------------------------------------------------------ */
+.theme-light {
+  --button-outline: rgba(0,0,0, .06);
+  --badge-outline: rgba(0,0,0, .04);
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .06);
+  --background: 30 25% 98%;
+  --foreground: 240 20% 16%;
+  --border: 30 15% 88%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 20% 16%;
+  --card-border: 30 15% 90%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 20% 16%;
+  --popover-border: 30 15% 88%;
+  --primary: 262 48% 52%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 30 15% 93%;
+  --secondary-foreground: 240 15% 30%;
+  --muted: 30 15% 94%;
+  --muted-foreground: 240 8% 46%;
+  --accent: 30 15% 95%;
+  --accent-foreground: 240 15% 25%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 30 15% 88%;
+  --ring: 262 48% 52%;
+  --sidebar: 30 20% 96%;
+  --sidebar-foreground: 240 15% 25%;
+  --sidebar-border: 30 15% 90%;
+  --sidebar-primary: 262 48% 52%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 30 15% 93%;
+  --sidebar-accent-foreground: 240 15% 30%;
+  --sidebar-ring: 262 48% 52%;
+  --chart-1: 262 48% 52%;
+  --chart-2: 152 45% 42%;
+  --chart-3: 210 65% 55%;
+  --chart-4: 38 80% 55%;
+  --chart-5: 350 55% 55%;
+  --shadow-2xs: 0px 1px 2px 0px hsl(240 10% 50% / 0.04);
+  --shadow-xs: 0px 1px 3px 0px hsl(240 10% 50% / 0.06);
+  --shadow-sm: 0px 2px 4px 0px hsl(240 10% 50% / 0.06), 0px 1px 2px -1px hsl(240 10% 50% / 0.04);
+  --shadow: 0px 4px 8px 0px hsl(240 10% 50% / 0.08), 0px 2px 4px -1px hsl(240 10% 50% / 0.04);
+  --shadow-md: 0px 6px 12px 0px hsl(240 10% 50% / 0.08), 0px 3px 6px -1px hsl(240 10% 50% / 0.04);
+  --shadow-lg: 0px 10px 20px 0px hsl(240 10% 50% / 0.10), 0px 5px 10px -1px hsl(240 10% 50% / 0.06);
+  --shadow-xl: 0px 16px 32px 0px hsl(240 10% 50% / 0.12), 0px 8px 16px -1px hsl(240 10% 50% / 0.08);
+  --shadow-2xl: 0px 24px 48px 0px hsl(240 10% 50% / 0.14);
+  color: hsl(240 20% 16%);
+  background-color: hsl(30 25% 98%);
+}
+
+.theme-light .gradient-sunrise-light {
+  background: radial-gradient(ellipse at top, rgba(124, 82, 190, 0.06) 0%, rgba(152, 195, 160, 0.04) 40%, hsl(30, 25%, 98%) 70%);
+}
+
+.theme-light .glass-card {
+  background: hsl(0 0% 100% / 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(30, 15%, 88%);
+}
+
+.theme-light .text-gradient-warm {
+  background: linear-gradient(135deg, hsl(262, 48%, 52%) 0%, hsl(152, 40%, 40%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.theme-light .glow-primary {
+  box-shadow: 0 0 20px rgba(124, 82, 190, 0.12), 0 0 60px rgba(124, 82, 190, 0.04);
+}
+
+.theme-light .glow-sage {
+  box-shadow: 0 0 20px rgba(120, 170, 130, 0.15), 0 0 60px rgba(120, 170, 130, 0.05);
 }
