@@ -49,9 +49,10 @@ These rules prevent lint debt from accumulating. Apply them on every new file an
 
 ### TypeScript / React
 
-- **Readonly props**: always mark component prop interfaces with `readonly` on each property.
+- **Readonly props**: always mark component prop interfaces with `readonly` on each property AND wrap the destructured parameter: `{ x }: Readonly<MyProps>`.
 - **No negated conditions**: write `x ? A : B`, not `!x ? B : A`. Positive branch first.
 - **No nested ternaries**: extract to a named helper function or use `if/else`.
+- **No nested template literals**: avoid `\`text ${condition ? \`inner ${val}\` : ""}\``. Flip to a plain ternary or string concatenation.
 - **No bitwise truncation**: use `Math.trunc(n)` instead of `n | 0` or `n |= 0`.
 - **Unicode-safe strings**: use `str.codePointAt(i) ?? 0` instead of `str.charCodeAt(i)`.
 - **Non-mutating sort**: use `[...arr].toSorted(fn)` instead of `arr.sort(fn)`.
@@ -64,6 +65,11 @@ These rules prevent lint debt from accumulating. Apply them on every new file an
 ### Accessibility (a11y)
 
 - Interactive list items must be `<button type="button">`, not `<li onClick>`.
+
+### Spell check (cspell)
+
+- New product-specific identifiers, abbreviations, PT-BR unaccented keys, or domain terms must be added to `cspell.json` `"words"` array immediately — never leave a term that will fail `npx cspell`.
+- Do NOT rename working identifiers to satisfy cspell. Add the word instead.
 
 ### Markdown (`.md` files)
 
