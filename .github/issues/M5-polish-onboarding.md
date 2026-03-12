@@ -1,4 +1,4 @@
-## M5 — Polish & Onboarding
+# M5 — Polish & Onboarding
 
 **Epic:** Product-complete for internal pilot
 **Sprints:** S11–S12 (4 weeks)
@@ -8,13 +8,13 @@
 
 ---
 
-### Goal
+## Goal
 
 A new user understands the product in under 60 seconds. Settings work. Notifications exist in-app. Storybook pages are cleaned up. E2E tests cover critical paths. The product is ready for a real pilot with real people.
 
 ---
 
-### Success criteria
+## Success criteria
 
 - [ ] Onboarding flow explains scores + missions + points + sky/halo in ≤ 5 screens
 - [ ] User completes onboarding → first check-in in ≤ 90 seconds
@@ -29,10 +29,10 @@ A new user understands the product in under 60 seconds. Settings work. Notificat
 
 ---
 
-### Sprint 11 — Onboarding + settings + notifications
+## Sprint 11 — Onboarding + settings + notifications
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| --- | ------ | ------ | ----- |
 | 1 | Onboarding flow — 4–5 swipeable screens explaining: sky state, scores, missions, Solar Points, support | Component | 6h |
 | 2 | First-run detection — show onboarding on first login, skip on subsequent sessions | Behavior | 1h |
 | 3 | `Settings` page — notification preferences: opt-in toggles, time window picker, quiet hours, max notifications/day | Page | 5h |
@@ -41,10 +41,10 @@ A new user understands the product in under 60 seconds. Settings work. Notificat
 
 **Sprint 11 definition of done:** New user sees onboarding. Settings persist to localStorage. Notification badge shows count. Drawer lists recent notifications.
 
-### Sprint 12 — Cleanup + E2E + performance
+## Sprint 12 — Cleanup + E2E + performance
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| --- | ------ | ------ | ----- |
 | 6 | Remove storybook pages (1–6) from routes; archive color/typography specs to `DOCS/design-archive.md` | Cleanup | 2h |
 | 7 | Lazy-load all routes via `React.lazy` + `Suspense` with loading skeleton | Performance | 3h |
 | 8 | Bundle analysis — identify and tree-shake unused code; target < 300 KB gzipped | Performance | 3h |
@@ -55,20 +55,20 @@ A new user understands the product in under 60 seconds. Settings work. Notificat
 
 ---
 
-### Onboarding screens spec
+## Onboarding screens spec
 
 | Screen | Content | Visual |
-|--------|---------|--------|
+| -------- | --------- | -------- |
 | 1 — Welcome | "Seu companheiro de autocuidado" + app logo animation | SkyHeader in clear state |
 | 2 — Sky & Halo | "O céu mostra como você está. O halo mostra que você se cuida." | Side-by-side: cloudy sky with bright halo vs. clear sky with no halo |
 | 3 — Scores | "Três dimensões do seu dia" — Recarga, Estado, Segurança | 3 ScoreCards preview |
 | 4 — Missions | "Pequenas missões, grandes mudanças" — missions adapt to your state | MissionCard examples |
 | 5 — Let's go | "Seu primeiro check-in leva menos de 1 minuto" + CTA | Arrow pointing to check-in |
 
-### Notification types
+## Notification types
 
 | Type | Icon | Example |
-|------|------|---------|
+| ------ | ------ | --------- |
 | `care` | 💧 | "Hora de um gole d'água?" |
 | `mission` | ⭐ | "Nova missão disponível" |
 | `microcheck` | 💬 | "Como você está agora?" |
@@ -76,6 +76,7 @@ A new user understands the product in under 60 seconds. Settings work. Notificat
 | `support` | 🤝 | "Hoje talvez valha desacelerar" |
 
 **Rules:**
+
 - Max 3 in-app notifications/day
 - Respect quiet hours setting
 - No sensitive content in notification preview
@@ -83,10 +84,10 @@ A new user understands the product in under 60 seconds. Settings work. Notificat
 
 ---
 
-### Storybook cleanup plan
+## Storybook cleanup plan
 
 | Page | Action |
-|------|--------|
+| ------ | -------- |
 | `storybook.tsx` (v0.2 dark) | Remove route. Archive palette to `DOCS/design-archive.md` |
 | `storybook2.tsx` (v0.3 light) | Remove route. Archive palette |
 | `storybook3.tsx` (wireframes) | Remove route. Already superseded by real pages |
@@ -98,10 +99,10 @@ A new user understands the product in under 60 seconds. Settings work. Notificat
 
 ---
 
-### E2E test plan
+## E2E test plan
 
 | Test | Flow | Assertions |
-|------|------|------------|
+| ------ | ------ | ------------ |
 | Registration | Fill form → submit → redirect to dashboard | User created, auth token set, dashboard renders |
 | Login | Email + password → submit | Redirect to correct dashboard per role |
 | Check-in complete | Open check-in → answer 6 questions → submit | Scores computed, data persisted, redirect to dashboard |
@@ -112,10 +113,10 @@ A new user understands the product in under 60 seconds. Settings work. Notificat
 
 ---
 
-### Performance budget
+## Performance budget
 
 | Metric | Target | Tool |
-|--------|--------|------|
+| -------- | -------- | ------ |
 | Main bundle (gzipped) | < 300 KB | `vite-plugin-visualizer` |
 | LCP | < 2.5s | Lighthouse |
 | FID / INP | < 200ms | Lighthouse |
@@ -127,7 +128,7 @@ A new user understands the product in under 60 seconds. Settings work. Notificat
 ### Files touched
 
 | File | Action |
-|------|--------|
+| ---- | ------ |
 | `client/src/components/onboarding.tsx` | Create |
 | `client/src/pages/settings.tsx` | Create |
 | `client/src/components/notification-drawer.tsx` | Create |

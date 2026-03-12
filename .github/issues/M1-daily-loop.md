@@ -1,4 +1,4 @@
-## M1 — Daily Loop
+# M1 — Daily Loop
 
 **Epic:** Core engagement loop — check-in → scores → missions → points
 **Sprints:** S3–S4 (4 weeks)
@@ -8,13 +8,13 @@
 
 ---
 
-### Goal
+## Goal
 
 The user does a check-in, sees three score cards, receives personalized missions, completes them, and earns Solar Points. The entire daily loop works in a single session. This is the minimum viable product loop.
 
 ---
 
-### Success criteria
+## Success criteria
 
 - [ ] Dashboard shows `SkyHeader` + 3 `ScoreCard` (Recarga, Estado do dia, Segurança relacional) with real computed data
 - [ ] `MissionCenter` displays 3–4 missions adapted to user's current state
@@ -27,10 +27,10 @@ The user does a check-in, sees three score cards, receives personalized missions
 
 ---
 
-### Sprint 3 — Dashboard redesign + mission UI
+## Sprint 3 — Dashboard redesign + mission UI
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| --- | ------ | ------ | ----- |
 | 1 | Redesign `dashboard.tsx`: SkyHeader + 3 ScoreCards + check-in CTA + daily insight placeholder | Page | 8h |
 | 2 | `MissionCard` component — icon, title, status (pending/done), points, tap-to-complete | Component | 3h |
 | 3 | `MissionCenter` page — daily mission list, progress bar, Solar Points total | Page | 6h |
@@ -38,10 +38,10 @@ The user does a check-in, sees three score cards, receives personalized missions
 
 **Sprint 3 definition of done:** Dashboard renders with live score data from check-in. Mission center shows static mission list. Navigation between dashboard ↔ missions works.
 
-### Sprint 4 — Mission engine + points + persistence
+## Sprint 4 — Mission engine + points + persistence
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| --- | ------ | ------ | ----- |
 | 5 | `client/src/lib/mission-engine.ts` — selects 3–4 missions based on state (stable / tense / Modo Respiro), tags, time of day | Lib | 6h |
 | 6 | `SolarPointsBadge` component — point display in header with subtle animation on increment | Component | 2h |
 | 7 | Mission completion flow: tap → confirm → animation → points awarded → card updates | Interaction | 4h |
@@ -52,9 +52,9 @@ The user does a check-in, sees three score cards, receives personalized missions
 
 ---
 
-### Scoring rules (product invariants)
+## Scoring rules (product invariants)
 
-```
+```text
 Points awarded for:
   check-in completed        12 pts
   microcheck completed       3 pts  (max 2/day = 6 pts)
@@ -71,10 +71,10 @@ Points NEVER awarded for:
 
 > These values are initial. Flag as `// DEBT: calibrate point values with engagement data`.
 
-### Mission categories
+## Mission categories
 
 | Category | Examples |
-|----------|----------|
+| ---------- | ---------- |
 | Breathing | 1-min guided breathing, box breathing |
 | Hydration | Drink 1/2/3 glasses of water |
 | Pause | Stand up for 2 min, screen break |
@@ -87,10 +87,10 @@ Points NEVER awarded for:
 
 ---
 
-### API dependencies
+## API dependencies
 
 | Endpoint | Needed by | Contract |
-|----------|-----------|----------|
+| ---------- | ----------- | ---------- |
 | `GET /api/scores/user/:id/today` | S3 | `{ recarga: number, estadoDoDia: number, segurancaRelacional: number, skyState: string }` |
 | `GET /api/missions/user/:id/today` | S4 | `Mission[]` |
 | `POST /api/missions/:id/complete` | S4 | `{ pointsAwarded: number }` |
@@ -98,20 +98,20 @@ Points NEVER awarded for:
 
 ---
 
-### Risks
+## Risks
 
 | Risk | Impact | Mitigation |
-|------|--------|------------|
+| ------ | -------- | ------------ |
 | Mission engine produces repetitive missions | User boredom, drop-off | Pool of 30+ missions across categories; weighted random with recency bias |
 | Points feel meaningless without consequence | No motivation to earn | Constancy dots + Solar Halo brightness create visual feedback loop |
 | Dashboard redesign breaks existing functionality | Regressions | Keep old dashboard accessible at `/dashboard-legacy` during S3 |
 
 ---
 
-### Files touched
+## Files touched
 
 | File | Action |
-|------|--------|
+| ------ | -------- |
 | `client/src/pages/dashboard.tsx` | Rewrite — new layout with SkyHeader + ScoreCards |
 | `client/src/pages/missions.tsx` | Create — mission center |
 | `client/src/lib/mission-engine.ts` | Create — adaptive mission selection |

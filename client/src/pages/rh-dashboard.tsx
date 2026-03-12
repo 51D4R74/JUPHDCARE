@@ -18,7 +18,7 @@ import {
 } from "recharts";
 import {
   Shield, AlertTriangle, TrendingUp, Users, Activity, Brain,
-  LogOut, BarChart3, Flame, Bell, ArrowUpRight, ArrowDownRight,
+  LogOut, BarChart3, Flame, Bell,
   Trophy, Heart, Percent,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -187,6 +187,19 @@ function getAggregateData(): RHAggregateData {
 
 // ── Helpers ────────────────────────────────────────
 
+function participationColor(rate: number) {
+  if (rate >= 85) return "bg-score-good";
+  if (rate >= 70) return "bg-score-moderate";
+  return "bg-score-attention";
+}
+
+function domainTierClass(avg: number) {
+  if (avg >= 75) return "bg-score-good/15 text-score-good border-score-good/20";
+  if (avg >= 50) return "bg-score-moderate/15 text-score-moderate border-score-moderate/20";
+  if (avg >= 25) return "bg-score-attention/15 text-score-attention border-score-attention/20";
+  return "bg-score-critical/15 text-score-critical border-score-critical/20";
+}
+
 function getRiskColor(level: string) {
   if (level === "high") return "text-score-critical bg-score-critical/10 border-score-critical/20";
   if (level === "medium") return "text-score-moderate bg-score-moderate/10 border-score-moderate/20";
@@ -256,7 +269,7 @@ export default function RHDashboardPage() {
               data-testid="button-notifications"
             >
               <Bell className="w-4 h-4 text-muted-foreground" />
-              {data.alerts.filter((a) => a.severity === "high").length > 0 && (
+              {data.alerts.some((a) => a.severity === "high") && (
                 <span className="absolute top-1 right-1 w-2 h-2 bg-score-critical rounded-full" />
               )}
             </button>
@@ -499,13 +512,7 @@ export default function RHDashboardPage() {
                       initial={{ width: 0 }}
                       animate={{ width: `${dept.participationRate}%` }}
                       transition={{ duration: 0.8, delay: 0.4 }}
-                      className={`h-full rounded-full ${
-                        dept.participationRate >= 85
-                          ? "bg-score-good"
-                          : dept.participationRate >= 70
-                            ? "bg-score-moderate"
-                            : "bg-score-attention"
-                      }`}
+                      className={`h-full rounded-full ${participationColor(dept.participationRate)}`}
                     />
                   </div>
                 </div>
@@ -567,14 +574,7 @@ export default function RHDashboardPage() {
                   <p className="text-xs font-medium mb-2">{dept.department}</p>
                   <div className="flex gap-2">
                     {dept.domainAverages.map((da) => {
-                      const tier =
-                        da.avg >= 75
-                          ? "bg-score-good/15 text-score-good border-score-good/20"
-                          : da.avg >= 50
-                            ? "bg-score-moderate/15 text-score-moderate border-score-moderate/20"
-                            : da.avg >= 25
-                              ? "bg-score-attention/15 text-score-attention border-score-attention/20"
-                              : "bg-score-critical/15 text-score-critical border-score-critical/20";
+                      const tier = domainTierClass(da.avg);
                       return (
                         <div
                           key={da.domain}

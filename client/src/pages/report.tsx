@@ -46,7 +46,7 @@ function mean(nums: number[]): number {
   return Math.round(nums.reduce((a, b) => a + b, 0) / nums.length);
 }
 
-function TrendIcon({ delta }: { delta: number }) {
+function TrendIcon({ delta }: Readonly<{ delta: number }>) {
   if (delta > 3) return <TrendingUp className="w-4 h-4 text-score-good" />;
   if (delta < -3) return <TrendingDown className="w-4 h-4 text-score-critical" />;
   return <Minus className="w-4 h-4 text-muted-foreground" />;
@@ -57,12 +57,12 @@ function ScoreStat({
   value,
   delta,
   color,
-}: {
+}: Readonly<{
   label: string;
   value: number;
   delta: number;
   color: string;
-}) {
+}>) {
   return (
     <div className="flex-1 text-center">
       <div className="text-2xl font-bold" style={{ color }}>
@@ -80,11 +80,11 @@ function ChartTooltip({
   active,
   payload,
   label,
-}: {
+}: Readonly<{
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
   label?: string;
-}) {
+}>) {
   if (!active || !payload?.length) return null;
   return (
     <div className="glass-card rounded-xl p-3 border border-border/30 text-xs shadow-md">
@@ -191,7 +191,7 @@ export default function ReportPage() {
           <div>
             <h1 className="text-2xl font-bold">Relatório Pessoal</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {records.length} check-in{records.length !== 1 ? "s" : ""} na {periodLabel}.
+              {records.length} check-in{records.length === 1 ? "" : "s"} na {periodLabel}.
             </p>
           </div>
           <div className="flex rounded-xl border border-border/40 overflow-hidden text-xs mt-1">

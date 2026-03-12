@@ -1,4 +1,4 @@
-## M2 — Support & Protection
+# M2 — Support & Protection
 
 **Epic:** Support layer — curated messages, Modo Respiro, microchecks
 **Sprints:** S5–S6 (4 weeks)
@@ -8,13 +8,13 @@
 
 ---
 
-### Goal
+## Goal
 
 When a user is struggling, the app responds with support — not silence. Curated messages, Modo Respiro mode, microcheck follow-ups, and a redesigned protection page. The app earns trust in its hardest moment.
 
 ---
 
-### Success criteria
+## Success criteria
 
 - [ ] User can request a support message by category (calm, courage, warmth, lightness)
 - [ ] Curated library contains ≥ 40 messages across 4 categories
@@ -27,10 +27,10 @@ When a user is struggling, the app responds with support — not silence. Curate
 
 ---
 
-### Sprint 5 — Support center + curated library + Modo Respiro
+## Sprint 5 — Support center + curated library + Modo Respiro
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| --- | ------ | ------ | ----- |
 | 1 | `SupportCenter` page — tabs: receive message / leave message / protected route | Page | 6h |
 | 2 | Curated message library — JSON data file, ~40 messages tagged by category (calma, coragem, acolhimento, leveza) | Data | 3h |
 | 3 | `SupportMessageCard` component — displays message, category badge, favorite toggle | Component | 2h |
@@ -39,10 +39,10 @@ When a user is struggling, the app responds with support — not silence. Curate
 
 **Sprint 5 definition of done:** User can open SupportCenter, choose a category, receive a curated message, and favorite it. Modo Respiro changes the UI when activated.
 
-### Sprint 6 — Microchecks, message authoring, protection redesign
+## Sprint 6 — Microchecks, message authoring, protection redesign
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| --- | ------ | ------ | ----- |
 | 6 | Microcheck trigger flow — appears after mission completion or after OneTapMood distress signal | Interaction | 4h |
 | 7 | Microcheck component refinement — conditional follow-up question ("O que pesa mais agora?") | Component | 2h |
 | 8 | "Leave a support message" form — text input (max 280 chars), preview, submit | Component | 3h |
@@ -53,7 +53,7 @@ When a user is struggling, the app responds with support — not silence. Curate
 
 ---
 
-### Curated message library structure
+## Curated message library structure
 
 ```json
 {
@@ -70,10 +70,10 @@ Categories: `calma` (calm), `coragem` (courage), `acolhimento` (warmth), `leveza
 
 ---
 
-### Modo Respiro behavior spec
+## Modo Respiro behavior spec
 
 | Layer | Normal | Modo Respiro |
-|-------|--------|--------------|
+| ------- | -------- | -------------- |
 | SkyHeader | Animated per state | Quieter animation, slower transitions |
 | Missions | 3–4 adapted | 2 max, basic care only (water, breathe, rest) |
 | Notifications | Up to 3/day | 1 max, support-only |
@@ -86,30 +86,30 @@ Categories: `calma` (calm), `coragem` (courage), `acolhimento` (warmth), `leveza
 
 ---
 
-### API dependencies
+## API dependencies
 
 | Endpoint | Needed by | Contract |
-|----------|-----------|----------|
+| ---------- | ----------- | ---------- |
 | `GET /api/support-messages?category=` | S5 | `SupportMessage[]` |
 | `POST /api/support-messages` | S6 | `{ text: string }` → `{ id, status: "pending_review" }` |
 | `POST /api/microchecks` | S6 | `{ mood: string, context?: string, timestamp: string }` |
 
 ---
 
-### Risks
+## Risks
 
 | Risk | Impact | Mitigation |
-|------|--------|------------|
+| ------ | -------- | ------------ |
 | Curated library feels generic | Users don't engage with support messages | Write messages with clinical/editorial input; A/B test phrasing |
 | Modo Respiro is a UX dead end | User gets stuck in quiet mode with nothing to do | Ensure at least 2 micro-missions always available; show gentle "feeling better?" prompt after 24h |
 | Unmoderated user messages | Toxic/inappropriate content | User messages stored as `pending_review`, never served without moderation. Library-only in MVP |
 
 ---
 
-### Files touched
+## Files touched
 
 | File | Action |
-|------|--------|
+| ------ | -------- |
 | `client/src/pages/support.tsx` | Create — support center |
 | `client/src/lib/support-messages.json` | Create — curated message library |
 | `client/src/lib/support-engine.ts` | Create — message selection logic |

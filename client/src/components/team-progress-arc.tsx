@@ -9,12 +9,12 @@ import { motion } from "framer-motion";
 import type { MilestoneThreshold } from "@/lib/team-challenge-engine";
 
 interface TeamProgressArcProps {
-  progressPct: number;
-  milestones: MilestoneThreshold[];
-  size?: number;
-  strokeWidth?: number;
-  children?: React.ReactNode;
-  className?: string;
+  readonly progressPct: number;
+  readonly milestones: MilestoneThreshold[];
+  readonly size?: number;
+  readonly strokeWidth?: number;
+  readonly children?: React.ReactNode;
+  readonly className?: string;
 }
 
 // Arc color transitions based on progress tier

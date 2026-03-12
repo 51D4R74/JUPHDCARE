@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { X, Bell, Check } from "lucide-react";
+import { X, Bell } from "lucide-react";
 import {
   getNotifications,
   markAllRead,
@@ -16,8 +16,8 @@ import {
 } from "@/lib/notification-engine";
 
 interface NotificationDrawerProps {
-  open: boolean;
-  onClose: () => void;
+  readonly open: boolean;
+  readonly onClose: () => void;
 }
 
 function timeAgo(ts: number): string {
@@ -31,7 +31,7 @@ function timeAgo(ts: number): string {
   return `${days}d atrás`;
 }
 
-export default function NotificationDrawer({ open, onClose }: NotificationDrawerProps) {
+export default function NotificationDrawer({ open, onClose }: Readonly<NotificationDrawerProps>) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   useEffect(() => {
@@ -106,14 +106,15 @@ export default function NotificationDrawer({ open, onClose }: NotificationDrawer
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-border-soft/50">
+            <div className="divide-y divide-border-soft/50">
               {notifications.map((n) => {
                 const template = NOTIFICATION_TEMPLATES[n.type];
                 return (
-                  <li
+                  <button
                     key={n.id}
-                    className={`px-4 py-3 hover:bg-surface-warm/50 transition-colors cursor-pointer ${
-                      !n.read ? "bg-brand-teal/5" : ""
+                    type="button"
+                    className={`w-full text-left px-4 py-3 hover:bg-surface-warm/50 transition-colors cursor-pointer ${
+                      n.read ? "" : "bg-brand-teal/5"
                     }`}
                     onClick={() => handleMarkRead(n.id)}
                   >
@@ -123,7 +124,7 @@ export default function NotificationDrawer({ open, onClose }: NotificationDrawer
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className={`text-xs ${!n.read ? "font-semibold" : "font-medium"} truncate`}>
+                          <p className={`text-xs ${n.read ? "font-medium" : "font-semibold"} truncate`}>
                             {n.title}
                           </p>
                           {!n.read && (
@@ -138,10 +139,10 @@ export default function NotificationDrawer({ open, onClose }: NotificationDrawer
                         </p>
                       </div>
                     </div>
-                  </li>
+                  </button>
                 );
               })}
-            </ul>
+            </div>
           )}
         </div>
       </motion.div>

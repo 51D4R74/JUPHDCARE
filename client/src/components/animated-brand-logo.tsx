@@ -81,7 +81,7 @@ export default function AnimatedBrandLogo({
           }}
         />
 
-        {!compact ? (
+        {compact ? null : (
           <div
             className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-medium uppercase tracking-[0.18em]"
             style={{
@@ -93,7 +93,7 @@ export default function AnimatedBrandLogo({
             <Cloud className="h-3 w-3" style={{ color: palette.teal }} />
             Sol entre nuvens
           </div>
-        ) : null}
+        )}
       </motion.div>
 
       {showWordmark ? (

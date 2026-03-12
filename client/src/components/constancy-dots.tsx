@@ -5,17 +5,17 @@
 
 import { motion } from "framer-motion";
 import { Sun, Cloud } from "lucide-react";
-import { getConstancyDays, type ConstancyDay } from "@/lib/points-ledger";
+import { getConstancyDays } from "@/lib/points-ledger";
 
 interface ConstancyDotsProps {
-  days?: number;
-  className?: string;
+  readonly days?: number;
+  readonly className?: string;
 }
 
 export default function ConstancyDots({
   days = 10,
   className = "",
-}: ConstancyDotsProps) {
+}: Readonly<ConstancyDotsProps>) {
   const constancy = getConstancyDays(days);
   // Reverse to show oldest → newest (left to right)
   const ordered = [...constancy].reverse();

@@ -1,4 +1,4 @@
-## M4 — Collective
+# M4 — Collective
 
 **Epic:** Team challenges and aggregate progress
 **Sprints:** S9–S10 (4 weeks)
@@ -8,13 +8,13 @@
 
 ---
 
-### Goal
+## Goal
 
 Teams share a monthly collective mission. Progress is always aggregate — never individual. The collective sky brightens as the team progresses. RH dashboard shows real aggregate data instead of demo hardcoded values.
 
 ---
 
-### Success criteria
+## Success criteria
 
 - [ ] `TeamChallenge` page shows current monthly mission, aggregate progress, days remaining
 - [ ] Individual contributions are private — only team total is visible
@@ -27,10 +27,10 @@ Teams share a monthly collective mission. Progress is always aggregate — never
 
 ---
 
-### Sprint 9 — Team challenge UI + progress
+## Sprint 9 — Team challenge UI + progress
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| - | ---- | ---- | --- |
 | 1 | `TeamChallenge` page — current mission, progress arc, days left, milestone markers | Page | 6h |
 | 2 | `TeamProgressArc` component — animated arc/ring showing aggregate progress toward goal | Component | 4h |
 | 3 | Team challenge card on Home — compact progress indicator + "contribute" CTA | Component | 2h |
@@ -39,10 +39,10 @@ Teams share a monthly collective mission. Progress is always aggregate — never
 
 **Sprint 9 definition of done:** Team challenge page renders. User can contribute. Progress updates. Individual contribution is not revealed.
 
-### Sprint 10 — Collective sky + RH dashboard + celebrations
+## Sprint 10 — Collective sky + RH dashboard + celebrations
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| - | ---- | ---- | --- |
 | 6 | Collective sky animation — team's SkyHeader variant that brightens with aggregate progress | Component | 4h |
 | 7 | Milestone celebrations — animation + message at 25/50/75/100% thresholds | Interaction | 3h |
 | 8 | Rewrite `rh-dashboard.tsx` — replace hardcoded demo data with aggregate data shape (real or structured stubs) | Page | 8h |
@@ -52,17 +52,17 @@ Teams share a monthly collective mission. Progress is always aggregate — never
 
 ---
 
-### Team challenge examples
+## Team challenge examples
 
 | Mission | Target | Unit | Cap/person/day |
-|---------|--------|------|----------------|
+| ------- | ------ | ---- | -------------- |
 | Copos d'água coletivos | 200 | glasses | 3 |
 | Pausas conscientes | 120 | pauses | 2 |
 | Mensagens de apoio aprovadas | 80 | messages | 1 |
 | Check-ins fechados | 150 | check-ins | 1 |
 | Minutos de respiração | 60 | minutes | 3 |
 
-### Safeguards (product invariants)
+## Safeguards (product invariants)
 
 - Individual contribution is **private** — only aggregate total shown
 - **No ranking** of individuals within a team
@@ -73,30 +73,30 @@ Teams share a monthly collective mission. Progress is always aggregate — never
 
 ---
 
-### API dependencies
+## API dependencies
 
 | Endpoint | Needed by | Contract |
-|----------|-----------|----------|
+| -------- | --------- | -------- |
 | `GET /api/team-challenges/:teamId/current` | S9 | `{ id, title, target, progress, endsAt, milestones }` |
 | `POST /api/team-challenges/:id/contribute` | S9 | `{ type: string, amount: number }` → `{ accepted, newTotal }` |
 | `GET /api/rh/aggregate` | S10 | `{ departments: DeptAggregate[], alerts: Alert[], participation: number }` |
 
 ---
 
-### Risks
+## Risks
 
 | Risk | Impact | Mitigation |
-|------|--------|------------|
+| ---- | ------ | ---------- |
 | Gaming via repeated contributions | Inflated numbers, loss of trust | Daily per-person cap per mission type; server-side enforcement |
 | Low participation makes progress stall | Team feels failure | Set achievable targets (80% of team contributing 1x/day should hit goal) |
 | Managers use participation as performance signal | Surveillance disguised as wellness | RH aggregate shows only % participation, never names; document in onboarding |
 
 ---
 
-### Files touched
+## Files touched
 
 | File | Action |
-|------|--------|
+| ---- | ------ |
 | `client/src/pages/team-challenge.tsx` | Create |
 | `client/src/components/team-progress-arc.tsx` | Create |
 | `client/src/pages/rh-dashboard.tsx` | Rewrite — real data structure |

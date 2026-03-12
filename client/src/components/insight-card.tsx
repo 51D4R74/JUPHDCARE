@@ -11,8 +11,8 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 import type { Discovery } from "@/lib/discovery-engine";
 
 interface InsightCardProps {
-  discovery: Discovery;
-  className?: string;
+  readonly discovery: Discovery;
+  readonly className?: string;
 }
 
 const domainColors: Record<string, { text: string; bg: string; border: string }> = {
@@ -63,7 +63,7 @@ export default function InsightCard({ discovery, className = "" }: InsightCardPr
 
           {/* Sample size */}
           <p className="text-[11px] text-muted-foreground">
-            Baseado em {discovery.withCount} dia{discovery.withCount !== 1 ? "s" : ""} com "{discovery.tagLabel}".
+            Baseado em {discovery.withCount} dia{discovery.withCount === 1 ? "" : "s"} com "{discovery.tagLabel}".
           </p>
         </div>
       </div>

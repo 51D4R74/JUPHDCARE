@@ -10,10 +10,10 @@ import type { SupportMessage, SupportCategory } from "@/lib/support-messages";
 import { SUPPORT_CATEGORIES } from "@/lib/support-messages";
 
 interface SupportMessageCardProps {
-  message: SupportMessage;
-  isFavorite: boolean;
-  onToggleFavorite: (messageId: string) => void;
-  className?: string;
+  readonly message: SupportMessage;
+  readonly isFavorite: boolean;
+  readonly onToggleFavorite: (messageId: string) => void;
+  readonly className?: string;
 }
 
 const categoryColors: Record<SupportCategory, { bg: string; text: string; border: string }> = {
@@ -28,7 +28,7 @@ export default function SupportMessageCard({
   isFavorite: initialFav,
   onToggleFavorite,
   className = "",
-}: SupportMessageCardProps) {
+}: Readonly<SupportMessageCardProps>) {
   const [fav, setFav] = useState(initialFav);
   const cat = SUPPORT_CATEGORIES.find((c) => c.id === message.category);
   const colors = categoryColors[message.category];

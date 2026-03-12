@@ -1,4 +1,4 @@
-## M3 — History & Discoveries
+# M3 — History & Discoveries
 
 **Epic:** Personal evolution — history, tags, correlations, reports
 **Sprints:** S7–S8 (4 weeks)
@@ -8,13 +8,13 @@
 
 ---
 
-### Goal
+## Goal
 
 The user sees their journey over time. Tags they've been marking reveal private patterns. The app shows correlations — not diagnoses — after enough data accumulates. Personal reports make the invisible visible.
 
 ---
 
-### Success criteria
+## Success criteria
 
 - [ ] `MeuCuidado` page renders score trends for last 7 and 30 days
 - [ ] Tag system integrated into check-in flow (selectable context tags)
@@ -27,10 +27,10 @@ The user sees their journey over time. Tags they've been marking reveal private 
 
 ---
 
-### Sprint 7 — History page + tags + constancy
+## Sprint 7 — History page + tags + constancy
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| - | ---- | ---- | --- |
 | 1 | `MeuCuidado` page — score trend chart (7d/30d toggle), tag cloud, constancy dots, favorites | Page | 8h |
 | 2 | Tag system refinement — integrate existing `checkin-data.ts` tags into new check-in model, add UI for tag selection | Component | 3h |
 | 3 | `InsightCard` component — "Nos dias com tag X, seu score Y tende a Z" + disclaimer | Component | 2h |
@@ -39,10 +39,10 @@ The user sees their journey over time. Tags they've been marking reveal private 
 
 **Sprint 7 definition of done:** MeuCuidado page shows real historical data. Tags visible in check-in history. Constancy dots render from persisted data.
 
-### Sprint 8 — Discovery engine + reports
+## Sprint 8 — Discovery engine + reports
 
 | # | Task | Type | Est |
-|---|------|------|-----|
+| - | ---- | ---- | --- |
 | 6 | `client/src/lib/discovery-engine.ts` — correlate tags with scores after ≥ 14 data points; output 1–3 discoveries | Lib | 6h |
 | 7 | `PersonalReport` page — weekly summary (scores, missions, constancy, top tags, discoveries) | Page | 6h |
 | 8 | Monthly report variant — same layout, 30-day window, trend arrows | Page | 2h |
@@ -52,9 +52,9 @@ The user sees their journey over time. Tags they've been marking reveal private 
 
 ---
 
-### Discovery engine rules
+## Discovery engine rules
 
-```
+```text
 Minimum data: 14 business days with check-in completed
 Correlation method: simple frequency analysis (not statistical)
 Output format: "Nos dias com tag '{tag}', seu {score} costuma {direction}"
@@ -66,10 +66,10 @@ CRITICAL: Always display as observation, never causation.
   ❌ "'Reuniões demais' causa piora no seu fechamento"
 ```
 
-### Available tags
+## Available tags
 
 | Tag key | Display (PT-BR) |
-|---------|-----------------|
+| ------- | --------------- |
 | `meetings` | Reuniões demais |
 | `leadership` | Liderança |
 | `difficult_client` | Cliente difícil |
@@ -87,7 +87,7 @@ CRITICAL: Always display as observation, never causation.
 ### API dependencies
 
 | Endpoint | Needed by | Contract |
-|----------|-----------|----------|
+| -------- | --------- | -------- |
 | `GET /api/checkins/user/:id/history?days=` | S7 | `CheckinHistory[]` with scores and tags |
 | `GET /api/tags/user/:id/stats` | S7 | `{ tag: string, count: number, avgScore: Record<string, number> }[]` |
 | `GET /api/discoveries/user/:id` | S8 | `Discovery[]` |
@@ -98,7 +98,7 @@ CRITICAL: Always display as observation, never causation.
 ### Risks
 
 | Risk | Impact | Mitigation |
-|------|--------|------------|
+| ---- | ------ | ---------- |
 | 14-day wait for first discovery | Users lose interest before value appears | Show "X dias para sua primeira descoberta" progress indicator |
 | False correlations | Misleading insights damage trust | Always show sample size; require minimum 5 occurrences of a tag; strong disclaimer copy |
 | Chart library bundle size | Performance regression | Use lightweight charting (recharts already in deps — reuse) |
@@ -108,7 +108,7 @@ CRITICAL: Always display as observation, never causation.
 ### Files touched
 
 | File | Action |
-|------|--------|
+| ---- | ------ |
 | `client/src/pages/meu-cuidado.tsx` | Create — personal history |
 | `client/src/pages/report.tsx` | Create — weekly/monthly reports |
 | `client/src/lib/discovery-engine.ts` | Create — correlation analysis |

@@ -347,7 +347,7 @@ function dayseed(): number {
   const dateStr = new Date().toISOString().slice(0, 10);
   let hash = 0;
   for (let i = 0; i < dateStr.length; i++) {
-    hash = ((hash << 5) - hash + dateStr.charCodeAt(i)) | 0;
+    hash = Math.trunc((hash << 5) - hash + (dateStr.codePointAt(i) ?? 0));
   }
   return Math.abs(hash);
 }
@@ -356,12 +356,19 @@ function dayseed(): number {
 function seededRandom(seed: number): () => number {
   let s = seed;
   return () => {
-    s |= 0;
-    s = (s + 0x6d2b79f5) | 0;
+    s = Math.trunc(s);
+    s = Math.trunc(s + 0x6d2b79f5);
     let t = Math.imul(s ^ (s >>> 15), 1 | s);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+/** Difficulty weight multiplier when user is in respiro (recovery) mode. */
+function respiroFactor(difficulty: MissionTemplate["difficulty"]): number {
+  if (difficulty === "medium") return 0.4;
+  if (difficulty === "support") return 0.2;
+  return 1;
 }
 
 /** Compute selection weight for a mission given the user's context. */
@@ -395,11 +402,8 @@ function computeWeight(mission: MissionTemplate, ctx: SelectionContext): number 
   }
 
   // Respiro mode: de-prioritize demanding missions
-  if (ctx.skyState === "respiro" && mission.difficulty === "medium") {
-    weight *= 0.4;
-  }
-  if (ctx.skyState === "respiro" && mission.difficulty === "support") {
-    weight *= 0.2;
+  if (ctx.skyState === "respiro") {
+    weight *= respiroFactor(mission.difficulty);
   }
 
   return Math.max(weight, 0.01);
@@ -458,18 +462,18 @@ export function selectMissions(ctx: SelectionContext): SelectedMission[] {
   }));
 }
 
+function skyStateToInt(skyState: string): number {
+  if (skyState === "clear") return 1;
+  if (skyState === "partly-cloudy") return 2;
+  if (skyState === "protective-cloud") return 3;
+  return 4;
+}
+
 /** Extended day seed that incorporates context for variety across users. */
 function dayHash(ctx: SelectionContext): number {
   const base = dayseed();
   // Mix in sky state to vary missions when user state changes mid-day
-  const stateVal =
-    ctx.skyState === "clear"
-      ? 1
-      : ctx.skyState === "partly-cloudy"
-        ? 2
-        : ctx.skyState === "protective-cloud"
-          ? 3
-          : 4;
+  const stateVal = skyStateToInt(ctx.skyState);
   return base ^ (stateVal * 7919);
 }
 

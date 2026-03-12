@@ -24,7 +24,7 @@ Two products in one: personal well-being tool (collaborator) + aggregate analyti
 ## Milestones
 
 | Milestone | Sprints | Goal | Success criteria |
-|-----------|---------|------|------------------|
+| --------- | ------- | ---- | ---------------- |
 | **M0 — Foundation** | S1–S2 | Adapt existing code to new product model | New check-in flow works e2e with mock backend; SkyHeader renders 4 visual states; ScoreCard displays 3 domains |
 | **M1 — Daily Loop** | S3–S4 | Core loop functional: check-in → scores → missions → points | User completes check-in, sees updated scores, receives 3–4 missions, earns Solar Points — all in one session |
 | **M2 — Support & Protection** | S5–S6 | Support layer live: curated messages, Modo Respiro, microchecks | User in distress can receive support message, activate Modo Respiro, and complete simplified mission set |
@@ -42,7 +42,7 @@ Two products in one: personal well-being tool (collaborator) + aggregate analyti
 
 ## What ships when
 
-```
+```text
 S1─S2          S3─S4          S5─S6          S7─S8          S9─S10        S11─S12
  M0              M1             M2             M3             M4            M5
 Foundation     Daily Loop     Support        History        Collective    Polish
@@ -59,7 +59,7 @@ ScoreEngine    Persistência   Proteção v2    Constância    Marcos        Cle
 ## Out of scope (deferred beyond M5)
 
 | Feature | Reason | Revisit when |
-|---------|--------|--------------|
+| ------- | ------ | ------------ |
 | LLM Advisor / Chatbot | AI infra cost undefined; needs clinical validation | Post-pilot, if engagement data supports it |
 | Native push notifications | Requires service worker + permission UX + cross-browser testing | Post-M5, after in-app notifications prove useful |
 | Audio support messages | Moderation pipeline is a separate engineering project | V2, if text-only messages show adoption |
@@ -74,7 +74,7 @@ ScoreEngine    Persistência   Proteção v2    Constância    Marcos        Cle
 Frontend uses local stubs (localStorage + mock data) until each backend delivery.
 
 | Sprint | Backend must deliver |
-|--------|---------------------|
+| ------ | ------------------- |
 | S2 | API contract for new check-in (`POST /api/checkins` schema + endpoint) |
 | S3 | `GET /api/scores/user/:id/today` (even simplified calculation) |
 | S4 | Missions CRUD + Solar Points ledger |
@@ -87,7 +87,7 @@ Frontend uses local stubs (localStorage + mock data) until each backend delivery
 ## Key metrics (post-launch)
 
 | Metric | Target | Measurement |
-|--------|--------|-------------|
+| ------ | ------ | ----------- |
 | D1 retention | ≥ 70% | Users who return day after first check-in |
 | D7 retention | ≥ 40% | Users active 7 days after registration |
 | D30 retention | ≥ 25% | Users active 30 days after registration |
@@ -102,7 +102,7 @@ Frontend uses local stubs (localStorage + mock data) until each backend delivery
 ## Architecture decision records
 
 | ADR | Decision | Status |
-|-----|----------|--------|
+| --- | -------- | ------ |
 | ADR-001 | Replace 3-moment EMA with single daily check-in | Proposed |
 | ADR-002 | Sky state and Solar Halo as independent visual layers | Accepted |
 | ADR-003 | Client-side score engine with localStorage until backend ready | Proposed |

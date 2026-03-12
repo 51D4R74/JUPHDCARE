@@ -53,7 +53,7 @@ function buildContributors(domainId: ScoreDomainId, scores: TodayScores): ScoreC
 
 export default function DashboardPage() {
   const [, navigate] = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [scores, setScores] = useState<TodayScores>(getTodayScores);
   const [drawerOpen, setDrawerOpen] = useState(false);
 

@@ -9,7 +9,7 @@ import SupportMessageCard from "@/components/support-message-card";
 import SolarPointsBadge from "@/components/solar-points-badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { SUPPORT_CATEGORIES, type SupportCategory } from "@/lib/support-messages";
+import { SUPPORT_CATEGORIES, type SupportCategory, type SupportMessage } from "@/lib/support-messages";
 import {
   selectSupportMessage,
   toggleFavorite,
@@ -17,10 +17,8 @@ import {
   getFavoriteMessages,
   evaluateRespiro,
   deactivateRespiro,
-  getRespiroState,
 } from "@/lib/support-engine";
 import { getTodayScores } from "@/lib/score-engine";
-import type { SupportMessage } from "@/lib/support-messages";
 
 // ── Tabs ──────────────────────────────────────────
 
@@ -31,7 +29,6 @@ export default function SupportCenterPage() {
   const { toast } = useToast();
   const scores = getTodayScores();
   const isRespiro = evaluateRespiro(scores);
-  const respiroState = getRespiroState();
 
   const [tab, setTab] = useState<Tab>("receive");
   const [authorText, setAuthorText] = useState("");
@@ -165,7 +162,7 @@ export default function SupportCenterPage() {
         </div>
 
         <AnimatePresence mode="wait">
-          {tab === "receive" ? (
+          {tab === "receive" && (
             <motion.div
               key="receive"
               initial={{ opacity: 0, x: -12 }}
@@ -173,30 +170,8 @@ export default function SupportCenterPage() {
               exit={{ opacity: 0, x: 12 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Category selection */}
-              {!currentMessage ? (
-                <section className="mt-5">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    O que você precisa agora?
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {SUPPORT_CATEGORIES.map((cat) => (
-                      <motion.button
-                        key={cat.id}
-                        whileTap={{ scale: 0.96 }}
-                        onClick={() => handleCategorySelect(cat.id)}
-                        className="glass-card rounded-xl p-4 flex flex-col items-center gap-2 text-center hover:border-brand-teal/20 transition-all"
-                      >
-                        <span className="text-2xl">{cat.emoji}</span>
-                        <span className="text-sm font-medium">{cat.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {cat.description}
-                        </span>
-                      </motion.button>
-                    ))}
-                  </div>
-                </section>
-              ) : (
+              {/* Category selection or current message */}
+              {currentMessage ? (
                 <section className="mt-5 space-y-4">
                   {/* Current message */}
                   <SupportMessageCard
@@ -225,9 +200,32 @@ export default function SupportCenterPage() {
                     </button>
                   </div>
                 </section>
+              ) : (
+                <section className="mt-5">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    O que você precisa agora?
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {SUPPORT_CATEGORIES.map((cat) => (
+                      <motion.button
+                        key={cat.id}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => handleCategorySelect(cat.id)}
+                        className="glass-card rounded-xl p-4 flex flex-col items-center gap-2 text-center hover:border-brand-teal/20 transition-all"
+                      >
+                        <span className="text-2xl">{cat.emoji}</span>
+                        <span className="text-sm font-medium">{cat.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {cat.description}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </section>
               )}
             </motion.div>
-          ) : tab === "favorites" ? (
+          )}
+          {tab === "favorites" && (
             <motion.div
               key="favorites"
               initial={{ opacity: 0, x: 12 }}
@@ -258,7 +256,8 @@ export default function SupportCenterPage() {
                 )}
               </section>
             </motion.div>
-          ) : (
+          )}
+          {tab === "leave" && (
             <motion.div
               key="leave"
               initial={{ opacity: 0, x: 12 }}

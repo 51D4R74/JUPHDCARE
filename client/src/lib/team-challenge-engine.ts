@@ -162,7 +162,7 @@ export function getCurrentChallenge(): TeamChallengeState & {
   let state = readState();
 
   // Reset if challenge is from a different month
-  if (!state || state.challengeId !== template.id || state.startDate !== bounds.start) {
+  if (!state?.challengeId || state.challengeId !== template.id || state.startDate !== bounds.start) {
     state = {
       challengeId: template.id,
       startDate: bounds.start,
@@ -231,8 +231,8 @@ export function contribute(amount: number = 1): {
     };
   }
 
-  // Record contribution
-  const state = readState()!;
+  const state = readState();
+  if (!state) return { accepted: false, newTotal: 0, reason: "Estado não encontrado" };
   const contribution: ContributionRecord = {
     date: todayKey(),
     amount,
@@ -249,7 +249,7 @@ export function contribute(amount: number = 1): {
 export function getLatestMilestone(): MilestoneThreshold | null {
   const { milestones } = getCurrentChallenge();
   const reached = milestones.filter((m) => m.reached);
-  return reached.length > 0 ? reached[reached.length - 1] : null;
+  return reached.length > 0 ? (reached.at(-1) ?? null) : null;
 }
 
 /** Compute collective sky brightness level (0–1) from team progress. */

@@ -25,11 +25,11 @@ import {
 import type { MicroMoodId } from "@/components/one-tap-mood";
 
 interface MicrocheckProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onRespond: (mood: MicroMoodId, context?: string) => void;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onRespond: (mood: MicroMoodId, context?: string) => void;
   /** Contextual prompt — e.g. after mission vs after distress. */
-  variant?: "post-mission" | "post-distress";
+  readonly variant?: "post-mission" | "post-distress";
 }
 
 interface FollowUpOption {
@@ -73,13 +73,13 @@ export default function Microcheck({
   function handleMoodTap(mood: MicroMoodId) {
     setSelectedMood(mood);
     // Show follow-up for tense/low-energy/need-support
-    if (mood !== "ok") {
-      setShowFollowUp(true);
-    } else {
+    if (mood === "ok") {
       setTimeout(() => {
         onRespond(mood);
         reset();
       }, 250);
+    } else {
+      setShowFollowUp(true);
     }
   }
 
@@ -109,7 +109,27 @@ export default function Microcheck({
         </SheetHeader>
 
         <AnimatePresence mode="wait">
-          {!showFollowUp ? (
+          {showFollowUp ? (
+            <motion.div
+              key="followup"
+              initial={{ opacity: 0, x: 16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
+              className="space-y-2"
+            >
+              <p className="text-sm font-medium mb-3">O que pesa mais agora?</p>
+              {FOLLOW_UP_OPTIONS.map((opt) => (
+                <motion.button
+                  key={opt.id}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleFollowUp(opt.id)}
+                  className="w-full text-left px-4 py-3 rounded-xl border border-border/40 bg-background/40 hover:border-border text-sm transition-all"
+                >
+                  {opt.label}
+                </motion.button>
+              ))}
+            </motion.div>
+          ) : (
             <motion.div
               key="mood"
               initial={{ opacity: 0 }}
@@ -137,26 +157,6 @@ export default function Microcheck({
                   </motion.button>
                 );
               })}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="followup"
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              className="space-y-2"
-            >
-              <p className="text-sm font-medium mb-3">O que pesa mais agora?</p>
-              {FOLLOW_UP_OPTIONS.map((opt) => (
-                <motion.button
-                  key={opt.id}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleFollowUp(opt.id)}
-                  className="w-full text-left px-4 py-3 rounded-xl border border-border/40 bg-background/40 hover:border-border text-sm transition-all"
-                >
-                  {opt.label}
-                </motion.button>
-              ))}
             </motion.div>
           )}
         </AnimatePresence>

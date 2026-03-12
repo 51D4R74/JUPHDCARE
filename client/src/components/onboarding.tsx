@@ -16,10 +16,10 @@ import {
 import { Button } from "@/components/ui/button";
 import SkyHeader from "@/components/sky-header";
 import AnimatedBrandLogo from "@/components/animated-brand-logo";
-import { hasCompletedOnboarding, markOnboardingComplete } from "@/lib/onboarding-state";
+import { markOnboardingComplete } from "@/lib/onboarding-state";
 
 // Re-export for backward compatibility
-export { hasCompletedOnboarding, markOnboardingComplete };
+export { hasCompletedOnboarding, markOnboardingComplete } from "@/lib/onboarding-state";
 
 // ── Screen data ───────────────────────────────────
 
@@ -225,18 +225,17 @@ export default function OnboardingPage() {
       <footer className="relative z-10 max-w-lg mx-auto w-full px-6 pb-8 space-y-4">
         {/* Dots indicator */}
         <div className="flex justify-center gap-2">
-          {SCREENS.map((s, i) => (
-            <div
-              key={s.id}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === step
-                  ? "w-6 bg-primary"
-                  : i < step
-                    ? "w-1.5 bg-primary/40"
-                    : "w-1.5 bg-muted-foreground/20"
-              }`}
-            />
-          ))}
+          {SCREENS.map((s, i) => {
+            let dotClass = "w-1.5 bg-muted-foreground/20";
+            if (i === step) dotClass = "w-6 bg-primary";
+            else if (i < step) dotClass = "w-1.5 bg-primary/40";
+            return (
+              <div
+                key={s.id}
+                className={`h-1.5 rounded-full transition-all duration-300 ${dotClass}`}
+              />
+            );
+          })}
         </div>
 
         {/* Buttons */}

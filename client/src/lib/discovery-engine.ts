@@ -106,8 +106,8 @@ export function computeDiscoveries(
   }
 
   // Return top N by magnitude (largest diff first)
-  return result
-    .sort((a, b) => b.diff - a.diff)
+  return [...result]
+    .toSorted((a, b) => b.diff - a.diff)
     .slice(0, DISCOVERY_MAX_RESULTS);
 }
 

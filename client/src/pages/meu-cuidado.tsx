@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useReducer } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -42,11 +42,11 @@ function ChartTooltip({
   active,
   payload,
   label,
-}: {
+}: Readonly<{
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
   label?: string;
-}) {
+}>) {
   if (!active || !payload?.length) return null;
   return (
     <div className="glass-card rounded-xl p-3 border border-border/30 text-xs shadow-md">
@@ -68,7 +68,7 @@ function ChartTooltip({
 
 // ── Tag pill ──────────────────────────────────────
 
-function TagPill({ tag }: { tag: TagCount }) {
+function TagPill({ tag }: Readonly<{ tag: TagCount }>) {
   const size = Math.min(tag.count, 5); // cap visual intensity at 5
   const opacity = 0.4 + size * 0.12;
   return (
@@ -84,6 +84,10 @@ function TagPill({ tag }: { tag: TagCount }) {
   );
 }
 
+function plural(n: number, singular: string, pluralForm: string): string {
+  return n === 1 ? singular : pluralForm;
+}
+
 // ── Page ──────────────────────────────────────────
 
 export default function MeuCuidadoPage() {
@@ -94,7 +98,7 @@ export default function MeuCuidadoPage() {
   const records = getRecentRecords(range);
   const allRecords = getAllRecords();
   const tagCloud = getTagCloud(30);
-  const [, setFavTick] = useState(0); // force re-render on favorite toggle
+  const [, forceFavUpdate] = useReducer((x: number) => x + 1, 0); // force re-render on favorite toggle
   const favorites = getFavoriteMessages();
 
   const discoveries = useMemo(
@@ -164,7 +168,7 @@ export default function MeuCuidadoPage() {
           <p className="text-xs text-muted-foreground mt-2">
             {allRecords.length === 0
               ? "Faça seu primeiro check-in para começar."
-              : `${allRecords.length} check-in${allRecords.length !== 1 ? "s" : ""} no total.`}
+              : `${allRecords.length} check-in${plural(allRecords.length, "", "s")} no total.`}
           </p>
         </motion.section>
 
@@ -291,7 +295,7 @@ export default function MeuCuidadoPage() {
                 <div>
                   <p className="text-sm font-medium">
                     {daysLeft > 0
-                      ? `${daysLeft} dia${daysLeft !== 1 ? "s" : ""} para sua primeira descoberta`
+                      ? `${daysLeft} dia${plural(daysLeft, "", "s")} para sua primeira descoberta`
                       : "Continue fazendo check-ins para descobertas."}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -368,7 +372,7 @@ export default function MeuCuidadoPage() {
                   key={msg.id}
                   message={msg}
                   isFavorite={isFavorite(msg.id)}
-                  onToggleFavorite={(id) => { toggleFavorite(id); setFavTick((t) => t + 1); }}
+                  onToggleFavorite={(id) => { toggleFavorite(id); forceFavUpdate(); }}
                 />
               ))}
             </div>

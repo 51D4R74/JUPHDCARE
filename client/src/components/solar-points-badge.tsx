@@ -11,14 +11,14 @@ import { getTotalPointsToday } from "@/lib/points-ledger";
 
 interface SolarPointsBadgeProps {
   /** Override point value (e.g. if parent already has it). */
-  points?: number;
-  className?: string;
+  readonly points?: number;
+  readonly className?: string;
 }
 
 export default function SolarPointsBadge({
   points,
   className = "",
-}: SolarPointsBadgeProps) {
+}: Readonly<SolarPointsBadgeProps>) {
   const displayPoints = points ?? getTotalPointsToday();
 
   return (

@@ -17,7 +17,6 @@ import {
 import { Button } from "@/components/ui/button";
 import TeamProgressArc from "@/components/team-progress-arc";
 import SkyHeader from "@/components/sky-header";
-import { useAuth } from "@/lib/auth";
 import {
   getCurrentChallenge,
   getTodayContributionCount,
@@ -47,17 +46,26 @@ function getCollectiveSkyState(pct: number): SkyState {
   return "respiro";
 }
 
+function contributeLabel(
+  challenge: ReturnType<typeof getCurrentChallenge>,
+  canContribute: boolean,
+): string {
+  if (challenge.progressPct >= 100) return "Meta atingida! 🎉";
+  if (canContribute) return `Contribuir +1 ${challenge.template.unit.slice(0, -1) || challenge.template.unit}`;
+  return `Limite diário atingido (${challenge.template.capPerPersonPerDay}×)`;
+}
+
 // ── Milestone celebration overlay ─────────────────
 
 function MilestoneCelebration({
   label,
   pct,
   onDismiss,
-}: {
+}: Readonly<{
   label: string;
   pct: number;
   onDismiss: () => void;
-}) {
+}>) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -95,9 +103,9 @@ function MilestoneCelebration({
 
         {/* Confetti-like sparkle particles */}
         <div className="relative h-8 overflow-hidden mt-2">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {(["s0", "s1", "s2", "s3", "s4", "s5"] as const).map((id, i) => (
             <motion.div
-              key={i}
+              key={id}
               className="absolute w-2 h-2 rounded-full"
               style={{
                 left: `${15 + i * 14}%`,
@@ -130,11 +138,13 @@ function MilestoneCelebration({
 
 export default function TeamChallengePage() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
   const { toast } = useToast();
 
   const [tick, setTick] = useState(0);
   const forceUpdate = () => setTick((t) => t + 1);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- tick forces re-render
+  const _tick = tick;
 
   const [celebrationMilestone, setCelebrationMilestone] = useState<{
     label: string;
@@ -149,9 +159,11 @@ export default function TeamChallengePage() {
 
   // Track previously reached milestones to detect new ones
   const handleContribute = useCallback(() => {
-    const prevMilestones = challenge.milestones
-      .filter((m) => m.reached)
-      .map((m) => m.pct);
+    const prevMilestones = new Set(
+      challenge.milestones
+        .filter((m) => m.reached)
+        .map((m) => m.pct),
+    );
 
     const result = contribute();
 
@@ -169,7 +181,7 @@ export default function TeamChallengePage() {
     // Check for new milestone crossed
     const updated = getCurrentChallenge();
     const newMilestone = updated.milestones.find(
-      (m) => m.reached && !prevMilestones.includes(m.pct),
+      (m) => m.reached && !prevMilestones.has(m.pct),
     );
 
     if (newMilestone) {
@@ -181,11 +193,6 @@ export default function TeamChallengePage() {
       });
     }
   }, [challenge, toast]);
-
-  // Suppress unused var lint — tick forces re-render
-  void tick;
-
-  const firstName = user?.name?.split(" ")[0] || "Colaborador";
 
   return (
     <div className="min-h-screen gradient-sunrise">
@@ -302,11 +309,7 @@ export default function TeamChallengePage() {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
             <Sparkles className="w-5 h-5 mr-3 text-accent" />
-            {challenge.progressPct >= 100
-              ? "Meta atingida! 🎉"
-              : canContribute
-                ? `Contribuir +1 ${challenge.template.unit.slice(0, -1) || challenge.template.unit}`
-                : `Limite diário atingido (${challenge.template.capPerPersonPerDay}×)`}
+            {contributeLabel(challenge, canContribute)}
             <ChevronRight className="w-5 h-5 ml-3" />
           </Button>
           {canContribute && (

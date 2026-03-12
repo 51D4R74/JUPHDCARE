@@ -11,7 +11,7 @@
  */
 
 import { POINT_VALUES } from "@/lib/mission-engine";
-import { getRecentRecords, getTodayScores, type DailyCheckInRecord } from "@/lib/score-engine";
+import { getRecentRecords, getTodayScores } from "@/lib/score-engine";
 
 // ── Storage ───────────────────────────────────────
 
