@@ -1,4 +1,4 @@
-import { useState, useEffect, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
 interface AuthUser {
   id: string;
@@ -11,7 +11,7 @@ interface AuthUser {
 let currentUser: AuthUser | null = null;
 const listeners = new Set<() => void>();
 
-const stored = typeof window !== "undefined" ? localStorage.getItem("juphd_user") : null;
+const stored = globalThis.window === undefined ? null : localStorage.getItem("juphd_user");
 if (stored) {
   try { currentUser = JSON.parse(stored); } catch {}
 }

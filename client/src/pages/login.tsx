@@ -1,28 +1,38 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sun, Eye, EyeOff, Mail, Lock, ArrowRight, Check, X, Sparkles, User, Building2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Check, X, Sparkles, User, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import AnimatedBrandLogo from "@/components/animated-brand-logo";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 
-function PasswordCriteria({ label, met }: { label: string; met: boolean }) {
+function PasswordCriteria({ label, met }: Readonly<{ label: string; met: boolean }>) {
   return (
     <div className="flex items-center gap-2 text-xs" data-testid={`criteria-${label}`}>
       {met ? (
-        <Check className="w-3.5 h-3.5 text-emerald-400" />
+        <Check className="w-3.5 h-3.5 text-brand-teal" />
       ) : (
         <X className="w-3.5 h-3.5 text-muted-foreground/50" />
       )}
-      <span className={met ? "text-emerald-400" : "text-muted-foreground/60"}>{label}</span>
+      <span className={met ? "text-brand-teal" : "text-muted-foreground/60"}>{label}</span>
     </div>
   );
 }
 
 type ViewMode = "login" | "register" | "forgot";
+
+const resetCodeSlots = [
+  { key: "slot-0", index: 0 },
+  { key: "slot-1", index: 1 },
+  { key: "slot-2", index: 2 },
+  { key: "slot-3", index: 3 },
+  { key: "slot-4", index: 4 },
+  { key: "slot-5", index: 5 },
+] as const;
 
 export default function LoginPage() {
   const [, navigate] = useLocation();
@@ -41,8 +51,8 @@ export default function LoginPage() {
     length: password.length >= 8,
     upper: /[A-Z]/.test(password),
     lower: /[a-z]/.test(password),
-    number: /[0-9]/.test(password),
-    special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+    number: /\d/.test(password),
+    special: /[^A-Za-z\d]/.test(password),
   };
 
   const allCriteriaMet = Object.values(criteria).every(Boolean);
@@ -99,7 +109,7 @@ export default function LoginPage() {
   }
 
   function handleCodeInput(index: number, value: string) {
-    if (value.length > 1) value = value[value.length - 1];
+    if (value.length > 1) value = value.at(-1) ?? value;
     const newCode = [...resetCode];
     newCode[index] = value;
     setResetCode(newCode);
@@ -121,8 +131,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen gradient-sunrise flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-500/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-blue-500/5 rounded-full blur-[100px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-brand-gold/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-brand-teal/8 rounded-full blur-[100px]" />
       </div>
 
       <motion.div
@@ -132,30 +142,7 @@ export default function LoginPage() {
         className="w-full max-w-md relative z-10"
       >
         <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 mb-4 glow-amber"
-          >
-            <Sun className="w-8 h-8 text-white" />
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-2xl font-bold text-gradient-warm"
-          >
-            JuPhD Care
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="text-muted-foreground mt-1 text-sm"
-          >
-            Gestão de Riscos Psicossociais
-          </motion.p>
+          <AnimatedBrandLogo className="mx-auto" />
         </div>
 
         <AnimatePresence mode="wait">
@@ -169,7 +156,7 @@ export default function LoginPage() {
               className="glass-card rounded-2xl p-8"
             >
               <div className="flex items-center gap-2 mb-6">
-                <Sparkles className="w-4 h-4 text-amber-400" />
+                <Sparkles className="w-4 h-4 text-brand-gold" />
                 <h2 className="text-lg font-semibold text-foreground">Seja muito bem-vinda!</h2>
               </div>
 
@@ -184,7 +171,7 @@ export default function LoginPage() {
                       placeholder="seu@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 bg-background/50 border-border/50 focus:border-amber-500/50 h-11"
+                      className="pl-10 bg-background/50 border-border/50 focus:border-brand-navy/50 h-11"
                       data-testid="input-email"
                     />
                   </div>
@@ -200,7 +187,7 @@ export default function LoginPage() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 bg-background/50 border-border/50 focus:border-amber-500/50 h-11"
+                      className="pl-10 pr-10 bg-background/50 border-border/50 focus:border-brand-navy/50 h-11"
                       data-testid="input-password"
                     />
                     <button
@@ -217,7 +204,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isLoading || !email || !password}
-                  className="w-full h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium rounded-xl border-0"
+                  className="w-full h-11 bg-brand-navy hover:bg-brand-navy-hover text-white font-medium rounded-xl border-0"
                   data-testid="button-login"
                 >
                   {isLoading ? (
@@ -238,7 +225,7 @@ export default function LoginPage() {
               <div className="flex items-center justify-between mt-4">
                 <button
                   onClick={() => switchView("forgot")}
-                  className="text-sm text-muted-foreground hover:text-amber-400 transition-colors"
+                  className="text-sm text-muted-foreground hover:text-brand-navy transition-colors"
                   data-testid="link-forgot-password"
                 >
                   Esqueci minha senha
@@ -251,7 +238,7 @@ export default function LoginPage() {
                   type="button"
                   variant="outline"
                   onClick={() => switchView("register")}
-                  className="w-full h-11 rounded-xl border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
+                  className="w-full h-11 rounded-xl border-brand-navy/30 text-brand-navy hover:bg-brand-navy/10 hover:text-brand-navy-hover"
                   data-testid="button-go-to-register"
                 >
                   <User className="w-4 h-4 mr-2" />
@@ -271,7 +258,7 @@ export default function LoginPage() {
               className="glass-card rounded-2xl p-8"
             >
               <div className="flex items-center gap-2 mb-6">
-                <Sparkles className="w-4 h-4 text-amber-400" />
+                <Sparkles className="w-4 h-4 text-brand-gold" />
                 <h2 className="text-lg font-semibold text-foreground">Criar sua conta</h2>
               </div>
 
@@ -286,7 +273,7 @@ export default function LoginPage() {
                       placeholder="Maria Silva"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="pl-10 bg-background/50 border-border/50 focus:border-amber-500/50 h-11"
+                      className="pl-10 bg-background/50 border-border/50 focus:border-brand-navy/50 h-11"
                       data-testid="input-reg-name"
                     />
                   </div>
@@ -302,7 +289,7 @@ export default function LoginPage() {
                       placeholder="seu@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 bg-background/50 border-border/50 focus:border-amber-500/50 h-11"
+                      className="pl-10 bg-background/50 border-border/50 focus:border-brand-navy/50 h-11"
                       data-testid="input-reg-email"
                     />
                   </div>
@@ -318,7 +305,7 @@ export default function LoginPage() {
                       placeholder="Ex: Marketing, TI, Vendas..."
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
-                      className="pl-10 bg-background/50 border-border/50 focus:border-amber-500/50 h-11"
+                      className="pl-10 bg-background/50 border-border/50 focus:border-brand-navy/50 h-11"
                       data-testid="input-reg-department"
                     />
                   </div>
@@ -334,7 +321,7 @@ export default function LoginPage() {
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10 pr-10 bg-background/50 border-border/50 focus:border-amber-500/50 h-11"
+                      className="pl-10 pr-10 bg-background/50 border-border/50 focus:border-brand-navy/50 h-11"
                       data-testid="input-reg-password"
                     />
                     <button
@@ -364,7 +351,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={isLoading || !email || !password || !name || !allCriteriaMet}
-                  className="w-full h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium rounded-xl border-0"
+                  className="w-full h-11 bg-brand-navy hover:bg-brand-navy-hover text-white font-medium rounded-xl border-0"
                   data-testid="button-register"
                 >
                   {isLoading ? (
@@ -385,10 +372,10 @@ export default function LoginPage() {
               <div className="mt-5 pt-4 border-t border-border/30 text-center">
                 <button
                   onClick={() => switchView("login")}
-                  className="text-sm text-muted-foreground hover:text-amber-400 transition-colors"
+                  className="text-sm text-muted-foreground hover:text-brand-navy transition-colors"
                   data-testid="link-back-to-login"
                 >
-                  Já tem uma conta? <span className="text-amber-400/80 font-medium">Entrar</span>
+                  Já tem uma conta? <span className="text-brand-navy font-medium">Entrar</span>
                 </button>
               </div>
             </motion.div>
@@ -409,17 +396,17 @@ export default function LoginPage() {
               </p>
 
               <div className="flex gap-2 justify-center mb-6">
-                {resetCode.map((digit, i) => (
+                {resetCodeSlots.map((slot) => (
                   <Input
-                    key={i}
-                    id={`code-${i}`}
+                    key={slot.key}
+                    id={`code-${slot.index}`}
                     type="text"
                     inputMode="numeric"
                     maxLength={1}
-                    value={digit}
-                    onChange={(e) => handleCodeInput(i, e.target.value)}
-                    className="w-12 h-14 text-center text-xl font-bold bg-background/50 border-border/50 focus:border-amber-500/50"
-                    data-testid={`input-code-${i}`}
+                    value={resetCode[slot.index]}
+                    onChange={(e) => handleCodeInput(slot.index, e.target.value)}
+                    className="w-12 h-14 text-center text-xl font-bold bg-background/50 border-border/50 focus:border-brand-navy/50"
+                    data-testid={`input-code-${slot.index}`}
                   />
                 ))}
               </div>
@@ -430,7 +417,7 @@ export default function LoginPage() {
                   switchView("login");
                   setResetCode(["", "", "", "", "", ""]);
                 }}
-                className="w-full h-11 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-medium rounded-xl border-0"
+                className="w-full h-11 bg-brand-navy hover:bg-brand-navy-hover text-white font-medium rounded-xl border-0"
                 data-testid="button-verify-code"
               >
                 Verificar código

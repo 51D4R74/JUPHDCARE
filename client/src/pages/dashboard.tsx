@@ -1,89 +1,68 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sun, CloudSun, Heart, Brain, Droplets, Wind, Play, Clock,
-  Shield, ChevronRight, Sparkles, Activity, Moon, Coffee
+  Sun, ChevronRight, Sparkles, Activity, Shield, Target, Lightbulb,
+  Heart, Trophy, Settings,
 } from "lucide-react";
-import {
-  TbMoodSmile, TbMoodWrrr, TbMoodAngry, TbMoodSad,
-  TbMoodHappy, TbMoodEmpty, TbMoodNervous, TbMoodConfuzed,
-} from "react-icons/tb";
 import { Button } from "@/components/ui/button";
+import AnimatedBrandLogo from "@/components/animated-brand-logo";
+import SkyHeader from "@/components/sky-header";
+import ScoreCard, { type ScoreContributor } from "@/components/score-card";
+import SolarPointsBadge from "@/components/solar-points-badge";
+import NotificationBadge from "@/components/notification-badge";
+import NotificationDrawer from "@/components/notification-drawer";
 import { useAuth } from "@/lib/auth";
-import type { CheckIn } from "@shared/schema";
+import { getTodayScores, getDomainMeta, type TodayScores } from "@/lib/score-engine";
+import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
+import { getCurrentChallenge } from "@/lib/team-challenge-engine";
 
-const pills = [
-  {
-    icon: Brain,
-    title: "Técnica de Respiração 4-7-8",
-    desc: "Exercício de relaxamento em 2 minutos",
-    color: "from-blue-500/20 to-blue-600/10",
-    iconColor: "text-blue-400",
-    tag: "Respiração",
-  },
-  {
-    icon: Droplets,
-    title: "Lembrete de Hidratação",
-    desc: "Beba 250ml de água agora",
-    color: "from-cyan-500/20 to-cyan-600/10",
-    iconColor: "text-cyan-400",
-    tag: "Saúde",
-  },
-  {
-    icon: Heart,
-    title: "Reestruturação Cognitiva",
-    desc: "Identifique padrões de pensamento",
-    color: "from-rose-500/20 to-rose-600/10",
-    iconColor: "text-rose-400",
-    tag: "CBT",
-  },
-  {
-    icon: Wind,
-    title: "Mindfulness Guiado",
-    desc: "5 minutos de atenção plena",
-    color: "from-emerald-500/20 to-emerald-600/10",
-    iconColor: "text-emerald-400",
-    tag: "Meditação",
-  },
+// ── Insight do dia (static placeholder) ───────────
+// DEBT: replace with dynamic insight engine [M3]
+const DAILY_INSIGHTS = [
+  "Sua recarga está boa — manter o padrão de sono faz diferença.",
+  "Que tal uma pausa de 5 minutos? Pequenos intervalos turbam sua energia.",
+  "Pessoas que fazem check-in consistentemente percebem melhorias em 2 semanas.",
+  "Respiração pausada por 1 minuto já reduz tensão perceptível.",
+  "Lembre-se: dias difíceis fazem parte. O importante é o padrão, não o ponto.",
 ];
 
-function getMoodIcon(humor: string): React.ComponentType<{ className?: string }> {
-  const map: Record<string, React.ComponentType<{ className?: string }>> = {
-    "Bem": TbMoodSmile,
-    "Ansioso": TbMoodNervous,
-    "Tenso": TbMoodWrrr,
-    "Calmo": TbMoodHappy,
-    "Motivado": TbMoodSmile,
-    "Triste": TbMoodSad,
-    "Irritado": TbMoodAngry,
-    "Confiante": TbMoodSmile,
-    "Inseguro": TbMoodConfuzed,
-    "Desanimado": TbMoodEmpty,
-  };
-  return map[humor] ?? TbMoodSmile;
+function pickDailyInsight(): string {
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86_400_000,
+  );
+  return DAILY_INSIGHTS[dayOfYear % DAILY_INSIGHTS.length];
 }
 
-function getEnergyIcon(energy: string) {
-  const map: Record<string, typeof Sun> = {
-    "Exausto": Moon, "Cansado": Coffee, "Disposto": Activity, "Empolgado": Sparkles,
-  };
-  return map[energy] || Activity;
+/** Build ScoreContributor list for a domain from stored answers. */
+function buildContributors(domainId: ScoreDomainId, scores: TodayScores): ScoreContributor[] {
+  if (!scores.hasCheckedIn) return [];
+  const meta = getDomainMeta().find((d) => d.id === domainId);
+  if (!meta) return [];
+
+  return meta.questionIds.map((qId) => {
+    const step = DAILY_STEPS.find((s) => s.id === qId);
+    if (!step || step.type === "tags") return null;
+    return {
+      label: step.question.replace(/\?$/, "").slice(0, 40),
+      value: 1, // placeholder — individual question scores not stored separately
+      maxValue: 1,
+    } satisfies ScoreContributor;
+  }).filter(Boolean) as ScoreContributor[];
 }
 
 export default function DashboardPage() {
   const [, navigate] = useLocation();
   const { user, logout } = useAuth();
+  const [scores, setScores] = useState<TodayScores>(getTodayScores);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { data: checkIns } = useQuery<CheckIn[]>({
-    queryKey: ["/api/checkins/user", user?.id || ""],
-    enabled: !!user?.id,
-  });
-
-  const lastCheckIn = checkIns?.[0];
-  const todayDone = lastCheckIn?.createdAt
-    ? new Date(lastCheckIn.createdAt).toDateString() === new Date().toDateString()
-    : false;
+  // Re-read scores when page gains focus (e.g. coming back from check-in)
+  useEffect(() => {
+    function refresh() { setScores(getTodayScores()); }
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, []);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -93,58 +72,61 @@ export default function DashboardPage() {
   };
 
   const firstName = user?.name?.split(" ")[0] || "Colaborador";
+  const domains = getDomainMeta();
 
   return (
     <div className="min-h-screen gradient-sunrise">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/5 rounded-full blur-[150px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-accent/8 rounded-full blur-[150px]" />
       </div>
 
+      {/* Header */}
       <header className="relative z-10 px-4 pt-6 pb-2 flex items-center justify-between max-w-lg mx-auto">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center glow-amber">
-            <Sun className="w-5 h-5 text-white" />
-          </div>
+          <AnimatedBrandLogo size="compact" showWordmark={false} />
           <div>
             <p className="text-xs text-muted-foreground">JuPhD Care</p>
             <p className="text-sm font-semibold">{firstName}</p>
           </div>
         </div>
-        <button
-          onClick={() => { logout(); navigate("/"); }}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5"
-          data-testid="button-logout"
-        >
-          Sair
-        </button>
+        <div className="flex items-center gap-2">
+          <SolarPointsBadge />
+          <NotificationBadge onClick={() => setDrawerOpen(true)} />
+          <button
+            onClick={() => navigate("/settings")}
+            className="p-1.5 rounded-lg hover:bg-black/5 transition-colors"
+            aria-label="Configurações"
+          >
+            <Settings className="w-4 h-4 text-muted-foreground" />
+          </button>
+        </div>
       </header>
 
+      <AnimatePresence>
+        {drawerOpen && (
+          <NotificationDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+        )}
+      </AnimatePresence>
+
       <main className="relative z-10 max-w-lg mx-auto px-4 pb-24">
+        {/* Sky visualization */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mt-6 glass-card rounded-2xl p-6"
+          className="mt-4"
         >
-          <div className="flex items-start gap-4">
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-500/10 flex items-center justify-center flex-shrink-0"
-            >
-              <CloudSun className="w-7 h-7 text-amber-400" />
-            </motion.div>
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">
-                {greeting()}, {firstName}!
-              </h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Olá! Minha missão é cuidar muito bem de você. Como posso te ajudar hoje?
-              </p>
-            </div>
-          </div>
+          <SkyHeader
+            skyState={scores.skyState}
+            solarHaloLevel={scores.solarHaloLevel}
+            size="hero"
+          />
+          <p className="text-center text-sm text-muted-foreground mt-2">
+            {greeting()}, {firstName}!
+          </p>
         </motion.section>
 
+        {/* Check-in CTA */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -153,92 +135,138 @@ export default function DashboardPage() {
         >
           <Button
             onClick={() => navigate("/checkin")}
-            className="w-full h-16 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold text-base rounded-2xl border-0 glow-amber relative overflow-hidden group"
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base rounded-2xl border-0 glow-amber relative overflow-hidden group"
             data-testid="button-checkin"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <Sparkles className="w-5 h-5 mr-3" />
-            {todayDone ? "Check-in de hoje completo ✓" : "Fazer Check-in de hoje"}
+            <Sparkles className="w-5 h-5 mr-3 text-accent" />
+            {scores.hasCheckedIn ? "Check-in realizado ✓" : "Fazer check-in diário"}
             <ChevronRight className="w-5 h-5 ml-3" />
           </Button>
         </motion.section>
 
-        {lastCheckIn && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mt-4 glass-card rounded-2xl p-5"
-          >
-            <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5" />
-              Último check-in
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-background/40 p-3 text-center">
-                {(() => { const Icon = getMoodIcon(lastCheckIn.humor); return <Icon className="w-6 h-6 mx-auto text-amber-400" />; })()}
-                <p className="text-xs text-muted-foreground mt-1">Humor</p>
-                <p className="text-sm font-medium">{lastCheckIn.humor}</p>
-              </div>
-              <div className="rounded-xl bg-background/40 p-3 text-center">
-                {(() => { const Icon = getEnergyIcon(lastCheckIn.energy); return <Icon className="w-6 h-6 mx-auto text-amber-400" />; })()}
-                <p className="text-xs text-muted-foreground mt-1">Energia</p>
-                <p className="text-sm font-medium">{lastCheckIn.energy}</p>
-              </div>
-              <div className="rounded-xl bg-background/40 p-3 text-center">
-                <Brain className="w-6 h-6 mx-auto text-blue-400" />
-                <p className="text-xs text-muted-foreground mt-1">Mente</p>
-                <p className="text-sm font-medium">{lastCheckIn.mind}</p>
-              </div>
-              <div className="rounded-xl bg-background/40 p-3 text-center">
-                <Moon className="w-6 h-6 mx-auto text-indigo-400" />
-                <p className="text-xs text-muted-foreground mt-1">Sono</p>
-                <p className="text-sm font-medium">{lastCheckIn.sleep}</p>
-              </div>
-            </div>
-          </motion.section>
-        )}
+        {/* Score cards */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-5 space-y-3"
+        >
+          {domains.map((d) => (
+            <ScoreCard
+              key={d.id}
+              domainId={d.id}
+              title={d.label}
+              description={d.description}
+              score={scores.domainScores[d.id] ?? 0}
+              contributors={buildContributors(d.id, scores)}
+            />
+          ))}
+        </motion.section>
 
+        {/* Insight do dia */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="mt-6"
+          className="mt-5 glass-card rounded-2xl p-4"
         >
-          <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            Pílulas de Conhecimento
+          <h3 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+            <Lightbulb className="w-3.5 h-3.5 text-accent" />
+            Insight do dia
           </h3>
-          <div className="grid grid-cols-2 gap-3">
-            {pills.map((pill, i) => (
-              <motion.div
-                key={pill.title}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5 + i * 0.1 }}
-                className="glass-card rounded-xl p-4 cursor-pointer hover:border-amber-500/20 transition-colors group"
-                data-testid={`card-pill-${i}`}
+          <p className="text-sm text-foreground leading-relaxed">
+            {pickDailyInsight()}
+          </p>
+        </motion.section>
+
+        {/* Mission CTA */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-4"
+        >
+          <button
+            onClick={() => navigate("/missions")}
+            className="w-full glass-card rounded-2xl p-4 flex items-center gap-3 hover:border-primary/15 transition-colors text-left"
+            data-testid="button-missions"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Target className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">Missões do dia</p>
+              <p className="text-xs text-muted-foreground">
+                Complete missões e ganhe Pontos Solares
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          </button>
+        </motion.section>
+
+        {/* Team Challenge CTA — M4 */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.55 }}
+          className="mt-3"
+        >
+          {(() => {
+            const tc = getCurrentChallenge();
+            return (
+              <button
+                onClick={() => navigate("/team")}
+                className="w-full glass-card rounded-2xl p-4 flex items-center gap-3 hover:border-brand-gold/20 transition-colors text-left"
+                data-testid="button-team-challenge"
               >
-                <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${pill.color} flex items-center justify-center mb-3`}>
-                  <pill.icon className={`w-4 h-4 ${pill.iconColor}`} />
+                <div className="w-10 h-10 rounded-xl bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
+                  <Trophy className="w-5 h-5 text-brand-gold-dark" />
                 </div>
-                <p className="text-sm font-medium leading-tight">{pill.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">{pill.desc}</p>
-                <div className="flex items-center gap-1 mt-3">
-                  <Play className="w-3 h-3 text-amber-400" />
-                  <span className="text-xs text-amber-400/80">{pill.tag}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">{tc.template.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {tc.progressPct}% · {tc.daysRemaining} dias restantes
+                  </p>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              </button>
+            );
+          })()}
+        </motion.section>
+
+        {/* Minha Jornada CTA — M3 */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="mt-3"
+        >
+          <button
+            onClick={() => navigate("/meu-cuidado")}
+            className="w-full glass-card rounded-2xl p-4 flex items-center gap-3 hover:border-brand-teal/20 transition-colors text-left"
+            data-testid="button-meu-cuidado"
+          >
+            <div className="w-10 h-10 rounded-xl bg-brand-teal/10 flex items-center justify-center flex-shrink-0">
+              <Activity className="w-5 h-5 text-brand-teal" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">Minha Jornada</p>
+              <p className="text-xs text-muted-foreground">
+                Histórico, tendências e descobertas pessoais
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          </button>
         </motion.section>
       </main>
 
+      {/* Bottom nav */}
       <nav className="fixed bottom-0 inset-x-0 z-20 glass-card border-t border-border/30">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-around">
           <button
             onClick={() => navigate("/dashboard")}
-            className="flex flex-col items-center gap-1 text-amber-400"
+            className="flex flex-col items-center gap-1 text-primary"
             data-testid="nav-home"
           >
             <Sun className="w-5 h-5" />
@@ -251,6 +279,22 @@ export default function DashboardPage() {
           >
             <Activity className="w-5 h-5" />
             <span className="text-xs">Check-in</span>
+          </button>
+          <button
+            onClick={() => navigate("/missions")}
+            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            data-testid="nav-missions"
+          >
+            <Target className="w-5 h-5" />
+            <span className="text-xs">Missões</span>
+          </button>
+          <button
+            onClick={() => navigate("/support")}
+            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+            data-testid="nav-support"
+          >
+            <Heart className="w-5 h-5" />
+            <span className="text-xs">Apoio</span>
           </button>
           <button
             onClick={() => navigate("/protecao")}

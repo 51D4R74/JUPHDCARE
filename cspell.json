@@ -2,26 +2,28 @@
   "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/packages/cspell-types/cspell.schema.json",
   "version": "0.2",
   "language": "en,pt-BR",
+  "import": ["@cspell/dict-pt-br/cspell-ext.json"],
   "words": [
     // Brand / project names
     "JUPHD",
     "JUPHDCARE",
     "juphd",
 
-    // PT-BR UI terms (words the EN dictionary won't know)
-    "Ansioso", "ansioso",
-    "Calmo", "calmo",
-    "Estável", "estável",
-    "Disposta", "disposta",
-    "Irritado", "irritado",
-    "Exausto", "exausto",
-    "Tenso", "tenso",
-    "Sonolento", "sonolento",
-    "Agitado", "agitado",
-    "Tranquilo", "tranquilo",
-    "Focado", "focado",
-    "Cansado", "cansado",
-    "Esgotado", "esgotado",
+    // PT-BR terms not in standard dictionary (ASCII route/code forms or specialized)
+    "Protecao", "protecao",
+    "Gestao", "gestao",
+    "Psicossociais", "psicossociais",
+    "Psicossocial", "psicossocial",
+    "previsao",
+
+    // Proper nouns (seed data)
+    "Mendes",
+
+    // App domain terms
+    "checkin", "checkins", "Checkin", "Checkins",
+    "endday",
+    "sublabel",
+    "testid",
 
     // Tech / stack terms
     "Vite", "vite",
@@ -39,6 +41,31 @@
     "tailwindcss",
     "postcss",
     "pnpm",
+    "Embla", "embla",
+    "cmdk",
+    "vaul",
+    "replit",
+    "Wordmark", "wordmark",
+    "memorystore",
+    "firewalled",
+    "openat",
+    "syscalls",
+    "openai",
+    "esnext",
+    "jridgewell",
+    "cartesian",
+    "displayname",
+
+    // Tabler icon official names (unconventional but intentional)
+    "Confuzed",
+    "Wrrr",
+
+    // Design / storybook content terms
+    "Hierarchia",
+    "microprovas",
+
+    // Intentional dummy bcrypt hash used for constant-time comparison
+    "invalidhashtopreventtimingattac",
 
     // cSpell itself
     "streetsidesoftware"
@@ -51,14 +78,16 @@
     ".git/**",
     "package-lock.json",
     "**/*.min.js",
-    "**/*.min.css"
+    "**/*.min.css",
+    "DOCS/**",
+    "replit.md"
   ],
   "overrides": [
     {
       // Relax checking inside TS type annotations and template literals
       "filename": "**/*.{ts,tsx}",
       "ignoreRegExpList": [
-        // hex colours
+        // hex colors
         "#[0-9a-fA-F]{3,8}",
         // tailwind class strings (long utility chains)
         "(?:className|class)=['\"`][^'\"` ]{40,}"

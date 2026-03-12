@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type IncidentReport, type InsertIncidentReport } from "@shared/schema";
+import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport } from "@shared/schema";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 
@@ -9,6 +9,10 @@ export interface IStorage {
   createCheckIn(checkIn: InsertCheckIn): Promise<CheckIn>;
   getCheckInsByUserId(userId: string): Promise<CheckIn[]>;
   getAllCheckIns(): Promise<CheckIn[]>;
+  createMomentCheckIn(checkIn: InsertMomentCheckIn): Promise<MomentCheckIn>;
+  getMomentCheckInsByUserId(userId: string): Promise<MomentCheckIn[]>;
+  getMomentCheckInsByUserIdAndDate(userId: string, date: Date): Promise<MomentCheckIn[]>;
+  getAllMomentCheckIns(): Promise<MomentCheckIn[]>;
   createIncidentReport(report: InsertIncidentReport): Promise<IncidentReport>;
   getAllIncidentReports(): Promise<IncidentReport[]>;
 }
@@ -16,11 +20,13 @@ export interface IStorage {
 export class MemStorage implements IStorage {
   private readonly users: Map<string, User>;
   private readonly checkIns: Map<string, CheckIn>;
+  private readonly momentCheckIns: Map<string, MomentCheckIn>;
   private readonly incidentReports: Map<string, IncidentReport>;
 
   constructor() {
     this.users = new Map();
     this.checkIns = new Map();
+    this.momentCheckIns = new Map();
     this.incidentReports = new Map();
     this.seedData();
   }
@@ -143,6 +149,44 @@ export class MemStorage implements IStorage {
 
   async getAllCheckIns(): Promise<CheckIn[]> {
     return Array.from(this.checkIns.values())
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async createMomentCheckIn(insert: InsertMomentCheckIn): Promise<MomentCheckIn> {
+    const id = randomUUID();
+    const checkIn: MomentCheckIn = {
+      ...insert,
+      id,
+      createdAt: new Date(),
+      flags: insert.flags || null,
+      chatTriggered: insert.chatTriggered ?? false,
+    };
+    this.momentCheckIns.set(id, checkIn);
+    return checkIn;
+  }
+
+  async getMomentCheckInsByUserId(userId: string): Promise<MomentCheckIn[]> {
+    return Array.from(this.momentCheckIns.values())
+      .filter((c) => c.userId === userId)
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async getMomentCheckInsByUserIdAndDate(userId: string, date: Date): Promise<MomentCheckIn[]> {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+    return Array.from(this.momentCheckIns.values())
+      .filter((c) => {
+        if (c.userId !== userId) return false;
+        const t = c.createdAt?.getTime() || 0;
+        return t >= dayStart.getTime() && t <= dayEnd.getTime();
+      })
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async getAllMomentCheckIns(): Promise<MomentCheckIn[]> {
+    return Array.from(this.momentCheckIns.values())
       .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import type { Server } from "node:http";
 import bcrypt from "bcryptjs";
 import { storage } from "./storage";
-import { insertCheckInSchema, insertIncidentReportSchema } from "@shared/schema";
+import { insertCheckInSchema, insertMomentCheckInSchema, insertIncidentReportSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -87,6 +87,32 @@ export async function registerRoutes(
 
   app.get("/api/checkins", async (_req, res) => {
     const checkIns = await storage.getAllCheckIns();
+    return res.json(checkIns);
+  });
+
+  // Moment check-ins (3-moment EMA)
+  app.post("/api/moment-checkins", async (req, res) => {
+    try {
+      const data = insertMomentCheckInSchema.parse(req.body);
+      const checkIn = await storage.createMomentCheckIn(data);
+      return res.json(checkIn);
+    } catch (e: any) {
+      return res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.get("/api/moment-checkins/user/:userId", async (req, res) => {
+    const checkIns = await storage.getMomentCheckInsByUserId(req.params.userId);
+    return res.json(checkIns);
+  });
+
+  app.get("/api/moment-checkins/user/:userId/today", async (req, res) => {
+    const checkIns = await storage.getMomentCheckInsByUserIdAndDate(req.params.userId, new Date());
+    return res.json(checkIns);
+  });
+
+  app.get("/api/moment-checkins", async (_req, res) => {
+    const checkIns = await storage.getAllMomentCheckIns();
     return res.json(checkIns);
   });
 

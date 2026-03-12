@@ -3,8 +3,8 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Phone, AlertTriangle, ChevronLeft, Heart,
-  Users, Eye, Lock, Scale, Weight, UserX, MessageCircle,
-  Headphones, ArrowRight, Check, Sparkles, ShieldAlert,
+  Users, Eye, Lock, Scale, Weight, UserX,
+  Headphones, Sun, Activity, Target, ShieldAlert,
   Ban, Siren, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,20 +14,20 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 
 const globalRisks = [
-  { label: "Assédio Sexual", icon: Ban, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
-  { label: "Assédio Moral", icon: ShieldAlert, color: "text-orange-400", bgColor: "from-orange-500/20 to-orange-600/5" },
-  { label: "Situação Violenta/Traumática", icon: Siren, color: "text-red-500", bgColor: "from-red-500/20 to-red-600/5" },
-  { label: "Isolamento", icon: UserX, color: "text-purple-400", bgColor: "from-purple-500/20 to-purple-600/5" },
+  { label: "Assédio Sexual", icon: Ban, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+  { label: "Assédio Moral", icon: ShieldAlert, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+  { label: "Situação Violenta/Traumática", icon: Siren, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+  { label: "Isolamento", icon: UserX, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
 ];
 
 const psychSafety = [
-  { label: "Falta de clareza", icon: Eye, color: "text-blue-400", bgColor: "from-blue-500/20 to-blue-600/5" },
-  { label: "Baixo reconhecimento", icon: Heart, color: "text-rose-400", bgColor: "from-rose-500/20 to-rose-600/5" },
-  { label: "Falta de suporte", icon: Users, color: "text-cyan-400", bgColor: "from-cyan-500/20 to-cyan-600/5" },
-  { label: "Falta de autonomia", icon: Lock, color: "text-yellow-400", bgColor: "from-yellow-500/20 to-yellow-600/5" },
-  { label: "Sensação de injustiça", icon: Scale, color: "text-amber-400", bgColor: "from-amber-500/20 to-amber-600/5" },
-  { label: "Sobrecarga", icon: Weight, color: "text-red-400", bgColor: "from-red-500/20 to-red-600/5" },
-  { label: "Relações ruins", icon: UserX, color: "text-slate-400", bgColor: "from-slate-500/20 to-slate-600/5" },
+  { label: "Falta de clareza", icon: Eye, color: "text-brand-teal", bgColor: "from-brand-teal/20 to-brand-teal/5" },
+  { label: "Baixo reconhecimento", icon: Heart, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+  { label: "Falta de suporte", icon: Users, color: "text-brand-teal", bgColor: "from-brand-teal/20 to-brand-teal/5" },
+  { label: "Falta de autonomia", icon: Lock, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
+  { label: "Sensação de injustiça", icon: Scale, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+  { label: "Sobrecarga", icon: Weight, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+  { label: "Relações ruins", icon: UserX, color: "text-brand-navy", bgColor: "from-brand-navy/20 to-brand-navy/5" },
 ];
 
 export default function ProtecaoPage() {
@@ -64,9 +64,9 @@ export default function ProtecaoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-indigo-950/50">
+    <div className="min-h-screen gradient-sunrise">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-indigo-500/5 rounded-full blur-[150px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-brand-navy/5 rounded-full blur-[150px]" />
       </div>
 
       <header className="relative z-10 px-4 pt-6 pb-4 max-w-lg mx-auto">
@@ -86,8 +86,8 @@ export default function ProtecaoPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/20 mb-4">
-            <Shield className="w-8 h-8 text-indigo-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-navy/10 border border-brand-navy/15 mb-4">
+            <Shield className="w-8 h-8 text-brand-navy" />
           </div>
           <h1 className="text-2xl font-bold">Cuidado e Proteção</h1>
           <p className="text-sm text-muted-foreground mt-2">
@@ -99,21 +99,21 @@ export default function ProtecaoPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5 mb-6"
+          className="rounded-2xl border border-score-critical/20 bg-score-critical/5 p-5 mb-6"
         >
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500/20 to-red-600/10 flex items-center justify-center flex-shrink-0">
-              <Phone className="w-6 h-6 text-red-400" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-score-critical/20 to-score-critical/10 flex items-center justify-center flex-shrink-0">
+              <Phone className="w-6 h-6 text-score-critical" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-red-300 mb-1">Intervenção de Crise</h3>
+              <h3 className="font-semibold text-score-critical mb-1">Intervenção de Crise</h3>
               <p className="text-xs text-muted-foreground mb-3">
                 Se você está em perigo ou precisa de ajuda imediata, nosso conselheiro está disponível 24h.
                 Se a IA detectar risco à vida, conectamos você a um humano em menos de 60 segundos.
               </p>
               <Button
                 onClick={() => setShowCrisis(true)}
-                className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white border-0 rounded-xl h-10 text-sm"
+                className="bg-gradient-to-r from-score-critical to-score-critical-foreground hover:from-score-critical-foreground hover:to-score-critical text-white border-0 rounded-xl h-10 text-sm"
                 data-testid="button-crisis"
               >
                 <Headphones className="w-4 h-4 mr-2" />
@@ -130,7 +130,7 @@ export default function ProtecaoPage() {
           className="mb-6"
         >
           <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-            <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
+            <AlertTriangle className="w-3.5 h-3.5 text-score-attention" />
             Mapeamento de Riscos Globais — Denúncias Anônimas
           </h3>
           <div className="grid grid-cols-2 gap-3">
@@ -143,7 +143,7 @@ export default function ProtecaoPage() {
                   setSelectedSubcategory(risk.label);
                   setShowReport(true);
                 }}
-                className="glass-card rounded-xl p-4 flex flex-col items-center gap-3 text-center hover:border-indigo-500/20 transition-all"
+                className="glass-card rounded-xl p-4 flex flex-col items-center gap-3 text-center hover:border-brand-navy/15 transition-all"
                 data-testid={`risk-${risk.label}`}
               >
                 <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${risk.bgColor} flex items-center justify-center`}>
@@ -161,7 +161,7 @@ export default function ProtecaoPage() {
           transition={{ delay: 0.3 }}
         >
           <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
-            <Heart className="w-3.5 h-3.5 text-rose-400" />
+            <Heart className="w-3.5 h-3.5 text-score-attention" />
             Segurança Psicológica — Mapeamento de Dores
           </h3>
           <div className="grid grid-cols-2 gap-3">
@@ -174,7 +174,7 @@ export default function ProtecaoPage() {
                   setSelectedSubcategory(item.label);
                   setShowReport(true);
                 }}
-                className="glass-card rounded-xl p-3 flex items-center gap-3 hover:border-indigo-500/20 transition-all"
+                className="glass-card rounded-xl p-3 flex items-center gap-3 hover:border-brand-navy/15 transition-all"
                 data-testid={`psych-${item.label}`}
               >
                 <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${item.bgColor} flex items-center justify-center flex-shrink-0`}>
@@ -190,10 +190,22 @@ export default function ProtecaoPage() {
       <nav className="fixed bottom-0 inset-x-0 z-20 glass-card border-t border-border/30">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-around">
           <button onClick={() => navigate("/dashboard")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-home-2">
-            <Sparkles className="w-5 h-5" />
+            <Sun className="w-5 h-5" />
             <span className="text-xs">Início</span>
           </button>
-          <button onClick={() => navigate("/protecao")} className="flex flex-col items-center gap-1 text-indigo-400" data-testid="nav-protection-2">
+          <button onClick={() => navigate("/checkin")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-checkin-2">
+            <Activity className="w-5 h-5" />
+            <span className="text-xs">Check-in</span>
+          </button>
+          <button onClick={() => navigate("/missions")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-missions-2">
+            <Target className="w-5 h-5" />
+            <span className="text-xs">Missões</span>
+          </button>
+          <button onClick={() => navigate("/support")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-support-2">
+            <Heart className="w-5 h-5" />
+            <span className="text-xs">Apoio</span>
+          </button>
+          <button onClick={() => navigate("/protecao")} className="flex flex-col items-center gap-1 text-brand-navy" data-testid="nav-protection-2">
             <Shield className="w-5 h-5" />
             <span className="text-xs font-medium">Proteção</span>
           </button>
@@ -212,7 +224,7 @@ export default function ProtecaoPage() {
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
-              className="w-full max-w-md glass-card rounded-2xl p-6 border-indigo-500/20"
+              className="w-full max-w-md glass-card rounded-2xl p-6 border-brand-navy/15"
             >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold">Relato Anônimo</h3>
@@ -221,9 +233,9 @@ export default function ProtecaoPage() {
                 </button>
               </div>
 
-              <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-                <Lock className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                <p className="text-xs text-indigo-300">Este relato é completamente anônimo e protegido.</p>
+              <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-brand-navy/8 border border-brand-navy/15">
+                <Lock className="w-4 h-4 text-brand-navy flex-shrink-0" />
+                <p className="text-xs text-brand-navy">Este relato é completamente anônimo e protegido.</p>
               </div>
 
               <p className="text-sm text-muted-foreground mb-1">Categoria:</p>
@@ -233,14 +245,14 @@ export default function ProtecaoPage() {
                 placeholder="Descreva a situação (opcional)..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[100px] bg-background/40 border-border/40 focus:border-indigo-500/40 resize-none rounded-xl mb-4"
+                className="min-h-[100px] bg-background/40 border-border/40 focus:border-brand-navy/40 resize-none rounded-xl mb-4"
                 data-testid="input-report-description"
               />
 
               <Button
                 onClick={handleSubmitReport}
                 disabled={isSending}
-                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 rounded-xl h-11"
+                className="w-full bg-brand-navy hover:bg-brand-navy-hover text-white border-0 rounded-xl h-11"
                 data-testid="button-submit-report"
               >
                 {isSending ? "Enviando..." : "Enviar Relato Anônimo"}
@@ -260,10 +272,10 @@ export default function ProtecaoPage() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-sm rounded-2xl border border-red-500/20 bg-slate-900/95 p-8 text-center"
+              className="w-full max-w-sm rounded-2xl border border-score-critical/20 bg-white p-8 text-center"
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 mb-4">
-                <Headphones className="w-8 h-8 text-red-400" />
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-score-critical/10 border border-score-critical/20 mb-4">
+                <Headphones className="w-8 h-8 text-score-critical" />
               </div>
               <h3 className="text-lg font-bold mb-2">Conectando ao Conselheiro</h3>
               <p className="text-sm text-muted-foreground mb-6">
@@ -273,17 +285,17 @@ export default function ProtecaoPage() {
                 <motion.div
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
-                  className="w-2 h-2 bg-red-400 rounded-full"
+                  className="w-2 h-2 bg-score-critical rounded-full"
                 />
                 <motion.div
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
-                  className="w-2 h-2 bg-red-400 rounded-full"
+                  className="w-2 h-2 bg-score-critical rounded-full"
                 />
                 <motion.div
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity, delay: 0.6 }}
-                  className="w-2 h-2 bg-red-400 rounded-full"
+                  className="w-2 h-2 bg-score-critical rounded-full"
                 />
               </div>
               <p className="text-xs text-muted-foreground mb-4">(Simulação — em produção, conectaria ao conselheiro real)</p>

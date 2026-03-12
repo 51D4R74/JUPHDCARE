@@ -44,6 +44,7 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent) / <alpha-value>)",
           foreground: "hsl(var(--accent-foreground) / <alpha-value>)",
+          muted: "hsl(var(--accent-muted) / <alpha-value>)",
           border: "var(--accent-border)",
         },
         destructive: {
@@ -52,6 +53,29 @@ export default {
           border: "var(--destructive-border)",
         },
         ring: "hsl(var(--ring) / <alpha-value>)",
+        score: {
+          good: "hsl(var(--score-good) / <alpha-value>)",
+          "good-foreground": "hsl(var(--score-good-foreground) / <alpha-value>)",
+          moderate: "hsl(var(--score-moderate) / <alpha-value>)",
+          "moderate-foreground": "hsl(var(--score-moderate-foreground) / <alpha-value>)",
+          attention: "hsl(var(--score-attention) / <alpha-value>)",
+          "attention-foreground": "hsl(var(--score-attention-foreground) / <alpha-value>)",
+          critical: "hsl(var(--score-critical) / <alpha-value>)",
+          "critical-foreground": "hsl(var(--score-critical-foreground) / <alpha-value>)",
+        },
+        brand: {
+          navy: "hsl(var(--brand-navy) / <alpha-value>)",
+          "navy-hover": "hsl(var(--brand-navy-hover) / <alpha-value>)",
+          gold: "hsl(var(--brand-gold) / <alpha-value>)",
+          "gold-dark": "hsl(var(--brand-gold-dark) / <alpha-value>)",
+          teal: "hsl(var(--brand-teal) / <alpha-value>)",
+        },
+        surface: {
+          warm: "hsl(var(--surface-warm) / <alpha-value>)",
+          "cloud-a": "hsl(var(--surface-cloud-a) / <alpha-value>)",
+          "cloud-b": "hsl(var(--surface-cloud-b) / <alpha-value>)",
+        },
+        "border-soft": "hsl(var(--border-soft) / <alpha-value>)",
         chart: {
           "1": "hsl(var(--chart-1) / <alpha-value>)",
           "2": "hsl(var(--chart-2) / <alpha-value>)",
@@ -81,6 +105,35 @@ export default {
           busy: "rgb(239 68 68)",
           offline: "rgb(156 163 175)",
         },
+        sky: {
+          clear: {
+            from: "#FFF6D9",
+            to: "#F0EDE6",
+            sun: "#F5C542",
+            halo: "rgba(245,197,66,0.45)",
+          },
+          "partly-cloudy": {
+            from: "#EDF1F5",
+            to: "#E4E8EC",
+            sun: "#F5C542",
+            halo: "rgba(245,197,66,0.25)",
+            cloud: "#D5E1EA",
+          },
+          "protective-cloud": {
+            from: "#E2E6EB",
+            to: "#D8DDE3",
+            sun: "#E8C94A",
+            halo: "rgba(232,201,74,0.15)",
+            cloud: "#C8D3DE",
+          },
+          respiro: {
+            from: "#D9DEE4",
+            to: "#CDD3DA",
+            sun: "#DAB94A",
+            halo: "rgba(218,185,74,0.08)",
+            cloud: "#B8C5D2",
+          },
+        },
       },
       fontFamily: {
         sans: ["var(--font-sans)"],
@@ -96,10 +149,20 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "cloud-drift": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(8px)" },
+        },
+        "sun-pulse": {
+          "0%, 100%": { transform: "translateX(-50%) scale(1)", opacity: "1" },
+          "50%": { transform: "translateX(-50%) scale(1.04)", opacity: "0.92" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "cloud-drift": "cloud-drift 5s ease-in-out infinite",
+        "sun-pulse": "sun-pulse 4.2s ease-in-out infinite",
       },
     },
   },
