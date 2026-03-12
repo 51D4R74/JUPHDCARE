@@ -25,6 +25,28 @@
     "sublabel",
     "testid",
 
+    // Product feature names (intentional compound words)
+    "microcheck", "microchecks", "Microcheck", "Microchecks",
+    "juphdcare",
+
+    // PT-BR identifiers used without accents (ASCII-safe keys/routes)
+    "seguranca",
+
+    // Abbreviated identifiers (intentional in code context)
+    "favs",
+    "notif", "Notif",
+
+    // Internal function/variable names
+    "dayseed",
+
+    // Valid English words flagged by cspell
+    "cooldown",
+    "deprioritized",
+    "swipeable",
+
+    // Brazilian legislation acronym
+    "LGPD",
+
     // Tech / stack terms
     "Vite", "vite",
     "Drizzle", "drizzle",

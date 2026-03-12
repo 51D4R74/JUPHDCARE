@@ -8,14 +8,14 @@ import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 export interface RHAggregateCardProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string | number;
-  subtitle?: string;
-  trend?: { direction: "up" | "down" | "flat"; value: string };
-  trendPositive?: "up" | "down"; // which direction is "good"
-  className?: string;
-  delay?: number;
+  readonly icon: React.ReactNode;
+  readonly label: string;
+  readonly value: string | number;
+  readonly subtitle?: string;
+  readonly trend?: { direction: "up" | "down" | "flat"; value: string };
+  readonly trendPositive?: "up" | "down"; // which direction is "good"
+  readonly className?: string;
+  readonly delay?: number;
 }
 
 export default function RHAggregateCard({
@@ -27,7 +27,7 @@ export default function RHAggregateCard({
   trendPositive = "up",
   className,
   delay = 0,
-}: RHAggregateCardProps) {
+}: Readonly<RHAggregateCardProps>) {
   const trendColor = (() => {
     if (!trend) return "";
     if (trend.direction === "flat") return "text-muted-foreground";
@@ -35,12 +35,12 @@ export default function RHAggregateCard({
     return isGood ? "text-score-good" : "text-score-critical";
   })();
 
-  const TrendIcon =
-    trend?.direction === "up"
-      ? TrendingUp
-      : trend?.direction === "down"
-        ? TrendingDown
-        : Minus;
+  function trendIcon() {
+    if (trend?.direction === "up") return TrendingUp;
+    if (trend?.direction === "down") return TrendingDown;
+    return Minus;
+  }
+  const TrendIcon = trendIcon();
 
   return (
     <motion.div
