@@ -43,6 +43,35 @@
 - API error format: `{ message: string }` with appropriate HTTP status.
 - Validation: Zod schemas from `drizzle-zod` at route boundaries.
 
+## Code quality rules (SonarLint compliance)
+
+These rules prevent lint debt from accumulating. Apply them on every new file and every edit.
+
+### TypeScript / React
+
+- **Readonly props**: always mark component prop interfaces with `readonly` on each property.
+- **No negated conditions**: write `x ? A : B`, not `!x ? B : A`. Positive branch first.
+- **No nested ternaries**: extract to a named helper function or use `if/else`.
+- **No bitwise truncation**: use `Math.trunc(n)` instead of `n | 0` or `n |= 0`.
+- **Unicode-safe strings**: use `str.codePointAt(i) ?? 0` instead of `str.charCodeAt(i)`.
+- **Non-mutating sort**: use `[...arr].toSorted(fn)` instead of `arr.sort(fn)`.
+- **Array tail**: use `arr.at(-1)` instead of `arr[arr.length - 1]`.
+- **Existence check**: use `.some(fn)` instead of `.filter(fn).length > 0`.
+- **Re-exports**: use `export { X } from "module"` directly; avoid import + re-export two-liner.
+- **No unused imports/assignments**: remove anything not referenced.
+- **Cognitive complexity**: keep functions ≤ 15. Extract helpers when the limit is approached.
+
+### Accessibility (a11y)
+
+- Interactive list items must be `<button type="button">`, not `<li onClick>`.
+
+### Markdown (`.md` files)
+
+- First line must be `# Heading` (h1). Never start with `##`.
+- Subheadings: one level below parent only (`#` → `##` → `###`).
+- Table separators: `| --- |` format (spaces around dashes). Never `|---|`.
+- Fenced code blocks must declare a language: ` ```ts `, ` ```bash `, ` ```text `, etc.
+
 ## Available scripts
 
 ```bash
