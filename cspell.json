@@ -103,6 +103,7 @@
     "upsert", "Upsert",
     "resave",
     "dedup",
+    "Contribs", "contribs",
 
     // cSpell itself
     "streetsidesoftware"
