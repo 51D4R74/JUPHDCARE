@@ -24,7 +24,6 @@ const SKY_CONFIG: Record<SkyState, {
   bgTo: string;
   sunColor: string;
   haloOpacity: number;
-  cloudOpacity: number;
   label: string;
 }> = {
   clear: {
@@ -33,7 +32,6 @@ const SKY_CONFIG: Record<SkyState, {
     bgTo: "#F0EDE6",
     sunColor: "#F5C542",
     haloOpacity: 0.45,
-    cloudOpacity: 0.3,
     label: "Céu aberto",
   },
   "partly-cloudy": {
@@ -42,7 +40,6 @@ const SKY_CONFIG: Record<SkyState, {
     bgTo: "#E4E8EC",
     sunColor: "#F5C542",
     haloOpacity: 0.25,
-    cloudOpacity: 0.7,
     label: "Sol entre nuvens",
   },
   "protective-cloud": {
@@ -51,7 +48,6 @@ const SKY_CONFIG: Record<SkyState, {
     bgTo: "#D8DDE3",
     sunColor: "#E8C94A",
     haloOpacity: 0.15,
-    cloudOpacity: 0.9,
     label: "Nuvem protetora",
   },
   respiro: {
@@ -60,7 +56,6 @@ const SKY_CONFIG: Record<SkyState, {
     bgTo: "#CDD3DA",
     sunColor: "#DAB94A",
     haloOpacity: 0.08,
-    cloudOpacity: 1.0,
     label: "Modo Respiro",
   },
 };
@@ -69,12 +64,32 @@ const SKY_CONFIG: Record<SkyState, {
  * Per-state cloud depth tints.
  * back = distant haze, mid = middle layer, fore = nearest cloud.
  * Concrete hex values required — SVG filter chains don't resolve CSS variables.
+ *
+ * Depth contrast rule: back is the darkest/coolest (recedes), fore is the
+ * lightest/warmest (advances). Difference of ≥25 lightness units between layers
+ * ensures each depth reads as distinct in the final composited render.
  */
 const CLOUD_TINTS: Record<SkyState, { back: string; mid: string; fore: string }> = {
-  clear:              { back: "#C8D8E6", mid: "#D8E6F0", fore: "#E5EEF6" },
-  "partly-cloudy":    { back: "#BACED0", mid: "#CADCEA", fore: "#D6E4EE" },
-  "protective-cloud": { back: "#B4C6D4", mid: "#C2D0DE", fore: "#CED8E6" },
-  respiro:            { back: "#B0C0CE", mid: "#BECCD8", fore: "#C8D4E0" },
+  //                    back (cool/dark)   mid (neutral)   fore (light/warm)
+  clear:              { back: "#A8BED4",  mid: "#CCDAE8", fore: "#EAF2F8" },
+  "partly-cloudy":    { back: "#9AB8CC",  mid: "#BDD4E4", fore: "#DDEAF4" },
+  "protective-cloud": { back: "#92AABF",  mid: "#B2C6D6", fore: "#D2E0EA" },
+  respiro:            { back: "#8EAABF",  mid: "#AECAD8", fore: "#CEE0EA" },
+};
+
+/**
+ * Per-layer opacity multipliers per sky state.
+ * Using flat scalars on cloudOpacity ignores that feColorMatrix threshold
+ * binarizes alpha — low opacity on large circles still renders at near-full
+ * density inside the intersection zone. These values control *group* opacity
+ * after threshold, so they are true scene-presence weights.
+ */
+const CLOUD_OPACITY: Record<SkyState, { back: number; mid: number; fore: number }> = {
+  //                  back    mid    fore
+  clear:            { back: 0.00,  mid: 0.08, fore: 0.18 },
+  "partly-cloudy":  { back: 0.40,  mid: 0.58, fore: 0.72 },
+  "protective-cloud":{ back: 0.60, mid: 0.75, fore: 0.88 },
+  respiro:          { back: 0.68,  mid: 0.82, fore: 0.96 },
 };
 
 // ── Halo ring ─────────────────────────────────────────────────────────────
@@ -197,6 +212,7 @@ export default function SkyHeader({
   const layout = compact ? CLOUD_LAYOUTS.compact : CLOUD_LAYOUTS.hero;
   const config = SKY_CONFIG[skyState];
   const tints = CLOUD_TINTS[skyState];
+  const cloudLayers = CLOUD_OPACITY[skyState];
   const effectiveHalo = config.haloOpacity * Math.max(solarHaloLevel, 0);
   // Modo Respiro: slow all animations 1.8× for a calmer, breathing feel
   const tempoScale = skyState === "respiro" ? 1.8 : 1;
@@ -337,7 +353,7 @@ export default function SkyHeader({
           {/* ── Background cloud — distant atmospheric haze ── */}
           <motion.g
             filter={`url(#fb-${uid})`}
-            style={{ opacity: config.cloudOpacity * 0.65 }}
+            style={{ opacity: cloudLayers.back }}
             animate={{ x: [0, 14, 0], y: [0, 3, 0] }}
             transition={{ duration: 15 * tempoScale, repeat: Infinity, ease: "easeInOut" }}
           >
@@ -347,7 +363,7 @@ export default function SkyHeader({
           {/* ── Mid cloud — soft volume ── */}
           <motion.g
             filter={`url(#fm-${uid})`}
-            style={{ opacity: config.cloudOpacity * 0.80 }}
+            style={{ opacity: cloudLayers.mid }}
             animate={{ x: [0, -9, 0], y: [0, -2, 0] }}
             transition={{ duration: 10 * tempoScale, repeat: Infinity, ease: "easeInOut", delay: 1.4 }}
           >
@@ -357,7 +373,7 @@ export default function SkyHeader({
           {/* ── Foreground cloud — organic silhouette ── */}
           <motion.g
             filter={`url(#ff-${uid})`}
-            style={{ opacity: config.cloudOpacity * 0.92 }}
+            style={{ opacity: cloudLayers.fore }}
             animate={{ x: [0, 6, 0], y: [0, 1.5, 0] }}
             transition={{ duration: 8 * tempoScale, repeat: Infinity, ease: "easeInOut", delay: 2.7 }}
           >
