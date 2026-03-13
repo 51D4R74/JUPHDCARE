@@ -78,6 +78,50 @@ const slideVariants = {
 
 // ── Sub-components ────────────────────────────────
 
+function InlineGridCard({
+  option,
+  selected,
+  onClick,
+}: Readonly<{
+  option: StepOption;
+  selected: boolean;
+  onClick: () => void;
+}>) {
+  const Icon = option.icon;
+  return (
+    <motion.button
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl transition-all border aspect-square p-3 ${
+        selected
+          ? "border-primary/40 bg-primary/8"
+          : "glass-card hover:border-black/5"
+      }`}
+    >
+      <div
+        className={`w-12 h-12 rounded-xl bg-gradient-to-br ${option.bgColor} ring-1 ring-black/5 flex items-center justify-center`}
+      >
+        <Icon className={`w-6 h-6 ${option.color}`} />
+      </div>
+      <span
+        className={`text-xs leading-tight text-center ${
+          selected ? "font-semibold text-foreground" : "text-muted-foreground"
+        }`}
+      >
+        {option.label}
+      </span>
+      {selected && (
+        <motion.div
+          layoutId="inline-grid-check"
+          className="absolute top-2 right-2"
+        >
+          <Check className="w-3.5 h-3.5 text-primary" />
+        </motion.div>
+      )}
+    </motion.button>
+  );
+}
+
 function InlineOptionCard({
   option,
   selected,
@@ -301,11 +345,11 @@ function InlineStepView({
         )}
       </div>
 
-      {/* Single / Projection */}
+      {/* Single / Projection — 2×2 grid with icon-dominant cards */}
       {(step.type === "single" || step.type === "projection") && (
-        <div className="flex flex-col gap-1.5">
+        <div className="grid grid-cols-2 gap-2.5">
           {step.options.map((opt) => (
-            <InlineOptionCard
+            <InlineGridCard
               key={opt.id}
               option={opt}
               selected={selected === opt.id}

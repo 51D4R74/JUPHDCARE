@@ -414,21 +414,16 @@ export const DAILY_STEPS: CheckInStep[] = [
       ],
     },
   },
-  // Q3: Emotion retrospective → Estado do dia (multi3, max 3 of 8)
+  // Q3: Emotional state → Estado do dia (single, 4 options, 2×2 grid)
   {
     id: "emotion",
-    type: "multi3",
-    question: "Como você sai de hoje?",
-    sublabel: "Pode escolher até 3. Emoções se misturam.",
+    type: "single",
+    question: "Com que sensação você fecha o dia?",
     options: [
-      { id: "accomplished", label: "Realizado(a)", icon: TbTrophy, score: 10, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "calm", label: "Calmo(a)", icon: TbMoodHappy, score: 9, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "relieved", label: "Aliviado(a)", icon: TbMoodSmile, score: 8, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "tired", label: "Cansado(a)", icon: TbZzz, score: 6, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
-      { id: "frustrated", label: "Frustrado(a)", icon: TbMoodAngry, score: 4, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "sad", label: "Triste", icon: TbMoodSad, score: 3, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "anxious", label: "Ansioso(a)", icon: TbMoodNervous, score: 3, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "angry", label: "Irritado(a)", icon: TbMoodAngry, score: 2, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+      { id: "good", label: "Bem", icon: TbMoodHappy, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "tired", label: "Cansado", icon: TbZzz, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
+      { id: "heavy", label: "Pesado", icon: TbMoodSad, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "overwhelmed", label: "No limite", icon: TbMoodNervous, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
   // Q4: Emotional exit → Estado do dia
@@ -449,10 +444,10 @@ export const DAILY_STEPS: CheckInStep[] = [
     type: "single",
     question: "Hoje você se sentiu apoiado(a) pelo seu ambiente de trabalho?",
     options: [
-      { id: "supported", label: "Me senti apoiado(a) e seguro(a) 🤝", icon: TbCheck, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "normal", label: "Foi um dia normal, sem incidentes ⚖️", icon: TbMoodEmpty, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
-      { id: "tense", label: "O clima estava pesado ou tenso 🌡️", icon: TbTemperature, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5", flag: "climate_risk" },
-      { id: "pressured", label: "Me senti pressionado(a), isolado(a) ou constrangido(a) 🌩️", icon: TbAlertTriangle, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
+      { id: "supported", label: "Apoiado", icon: TbCheck, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "normal", label: "Normal", icon: TbMoodEmpty, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
+      { id: "tense", label: "Tenso", icon: TbTemperature, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5", flag: "climate_risk" },
+      { id: "pressured", label: "Pressionado", icon: TbAlertTriangle, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
     ],
   },
   // Q6: Context tags (optional, no score) — PRD v2.0 S5
@@ -489,7 +484,7 @@ export const SCORE_DOMAINS: ScoreDomain[] = [
     label: "Estado do dia",
     description: "Temperatura emocional e impacto do dia",
     questionIds: ["emotion", "day_impact"],
-    maxRaw: 14,
+    maxRaw: 8,
   },
   {
     id: "seguranca-relacional",
