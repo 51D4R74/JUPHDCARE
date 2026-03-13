@@ -296,7 +296,7 @@ export default function SupportCenterPage() {
                 {authorSubmitted ? (
                   <div className="text-center py-12">
                     <Sparkles className="w-8 h-8 text-brand-teal mx-auto mb-3" />
-                    <p className="text-sm font-medium">Obrigado por cuidar de alguém.</p>
+                    <p className="text-sm font-medium">Gratidão por cuidar de alguém.</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Sua mensagem será revisada antes de ser compartilhada.
                     </p>
@@ -317,7 +317,7 @@ export default function SupportCenterPage() {
                         Escreva algo que ajude alguém tendo um dia difícil. Máximo 280 caracteres.
                       </p>
                       <Textarea
-                        placeholder="Ex: Você não está sozinha nessa..."
+                        placeholder="Ex: Você não está só nessa..."
                         value={authorText}
                         onChange={(e) => setAuthorText(e.target.value.slice(0, 280))}
                         className="min-h-[100px] bg-background/40 border-border/40 focus:border-brand-teal/40 resize-none rounded-xl"
@@ -340,7 +340,7 @@ export default function SupportCenterPage() {
                             setAuthorSubmitted(true);
                             toast({
                               title: "Mensagem enviada",
-                              description: "Obrigado por cuidar de alguém. ❤️",
+                              description: "Gratidão por cuidar de alguém. ❤️",
                             });
                           }}
                           disabled={authorText.trim().length < 10}

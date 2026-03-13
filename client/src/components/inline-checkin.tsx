@@ -430,7 +430,7 @@ export default function InlineCheckin({
         clearPartial();
         toast({
           title: "Check-in salvo!",
-          description: "Obrigada por compartilhar como você está.",
+          description: "Valeu por compartilhar como você está.",
         });
         onComplete();
       } catch (error: unknown) {

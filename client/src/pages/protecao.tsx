@@ -22,7 +22,7 @@ const globalRisks = [
 
 const psychSafety = [
   { label: "Falta de clareza", icon: Eye, color: "text-brand-teal", bgColor: "from-brand-teal/20 to-brand-teal/5" },
-  { label: "Baixo reconhecimento", icon: Heart, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+  { label: "Esforço sem reconhecimento", icon: Heart, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
   { label: "Falta de suporte", icon: Users, color: "text-brand-teal", bgColor: "from-brand-teal/20 to-brand-teal/5" },
   { label: "Falta de autonomia", icon: Lock, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
   { label: "Sensação de injustiça", icon: Scale, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
@@ -92,7 +92,7 @@ export default function ProtecaoPage() {
           </div>
           <h1 className="text-2xl font-bold">Cuidado e Proteção</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Este é um espaço seguro e confidencial. Você está protegida.
+            Este é um espaço seguro e confidencial. Você tem proteção aqui.
           </p>
         </motion.div>
 
@@ -132,7 +132,7 @@ export default function ProtecaoPage() {
         >
           <h3 className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-2">
             <AlertTriangle className="w-3.5 h-3.5 text-score-attention" />
-            Mapeamento de Riscos Globais — Denúncias Anônimas
+            Mapeamento de Riscos Globais — Relatos Anônimos
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {globalRisks.map((risk) => (
@@ -236,7 +236,7 @@ export default function ProtecaoPage() {
 
               <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-brand-navy/8 border border-brand-navy/15">
                 <Lock className="w-4 h-4 text-brand-navy flex-shrink-0" />
-                <p className="text-xs text-brand-navy">Este relato é completamente anônimo e protegido.</p>
+                <p className="text-xs text-brand-navy">Este relato é completamente anônimo e seguro.</p>
               </div>
 
               <p className="text-sm text-muted-foreground mb-1">Categoria:</p>
@@ -278,9 +278,9 @@ export default function ProtecaoPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-score-critical/10 border border-score-critical/20 mb-4">
                 <Headphones className="w-8 h-8 text-score-critical" />
               </div>
-              <h3 className="text-lg font-bold mb-2">Conectando ao Conselheiro</h3>
+              <h3 className="text-lg font-bold mb-2">Conectando ao Atendimento</h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Estamos conectando você a um conselheiro qualificado. Tempo estimado: menos de 60 segundos.
+                Estamos conectando você a um profissional qualificado. Tempo estimado: menos de 60 segundos.
               </p>
               <div className="flex items-center justify-center gap-2 mb-6">
                 <motion.div

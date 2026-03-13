@@ -83,7 +83,8 @@ app.use((req, res, next) => {
   next();
 });
 
-await registerRoutes(httpServer, app, storage);
+(async () => {
+  await registerRoutes(httpServer, app, storage);
 
   app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
     let status = 500;
@@ -127,3 +128,4 @@ await registerRoutes(httpServer, app, storage);
       log(`serving on port ${port}`);
     },
   );
+})();

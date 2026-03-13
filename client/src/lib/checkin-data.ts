@@ -157,10 +157,10 @@ export const MORNING_STEPS: CheckInStep[] = [
     type: "single",
     question: "Como foi sua noite?",
     options: [
-      { id: "restorative", label: "Restauradora", icon: TbSparkles, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "restorative", label: "Com boa recuperação", icon: TbSparkles, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
       { id: "acceptable", label: "Aceitável", icon: TbMoonStars, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
-      { id: "agitated", label: "Agitada", icon: TbCloudStorm, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "terrible", label: "Péssima", icon: TbSkull, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+      { id: "agitated", label: "Com agitação", icon: TbCloudStorm, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "terrible", label: "Muito ruim", icon: TbSkull, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
   {
@@ -197,10 +197,10 @@ export const MIDDAY_STEPS: CheckInStep[] = [
     type: "single",
     question: "Como está seu combustível agora?",
     options: [
-      { id: "full", label: "Cheio(a)", icon: TbBattery4, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "full", label: "Com energia", icon: TbBattery4, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
       { id: "ok", label: "Ok", icon: TbBattery2, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
       { id: "low", label: "Baixo", icon: TbBattery1, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "empty", label: "Zerado(a)", icon: TbBatteryOff, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+      { id: "empty", label: "No limite", icon: TbBatteryOff, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
     followUp: {
       question: "Isso está atrapalhando seu trabalho hoje?",
@@ -214,8 +214,8 @@ export const MIDDAY_STEPS: CheckInStep[] = [
     options: [
       { id: "all_good", label: "Tranquilo por aqui", icon: TbCheck, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5", exclusive: true },
       { id: "heavy_air", label: "Clima pesado no ambiente", icon: TbTemperature, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5", flag: "climate_risk" },
-      { id: "pressured", label: "Me sinto pressionado(a)", icon: TbAlertTriangle, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
-      { id: "isolated", label: "Me sinto isolado(a) ou excluído(a)", icon: TbDoor, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
+      { id: "pressured", label: "Sinto pressão", icon: TbAlertTriangle, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
+      { id: "isolated", label: "Sinto isolamento ou exclusão", icon: TbDoor, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
       { id: "uncomfortable", label: "Desconfortável por causa de alguém", icon: TbMoodConfuzed, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
     ],
     projectionCard: {
@@ -239,14 +239,14 @@ export const ENDDAY_STEPS: CheckInStep[] = [
     question: "Como você sai de hoje?",
     sublabel: "Pode escolher até 3. Emoções se misturam.",
     options: [
-      { id: "relieved", label: "Aliviado(a)", icon: TbMoodSmile, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "satisfied", label: "Realizado(a)", icon: TbTrophy, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "calm", label: "Calmo(a)", icon: TbMoodHappy, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "tired", label: "Cansado(a)", icon: TbZzz, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
-      { id: "frustrated", label: "Frustrado(a)", icon: TbMoodAngry, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "relieved", label: "Com alívio", icon: TbMoodSmile, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "satisfied", label: "Com realização", icon: TbTrophy, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "calm", label: "Em calma", icon: TbMoodHappy, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "tired", label: "Com cansaço", icon: TbZzz, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
+      { id: "frustrated", label: "Com frustração", icon: TbMoodAngry, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
       { id: "sad", label: "Triste", icon: TbMoodSad, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "anxious", label: "Ansioso(a)", icon: TbMoodNervous, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "angry", label: "Irritado(a)", icon: TbMoodAngry, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+      { id: "anxious", label: "Com ansiedade", icon: TbMoodNervous, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "angry", label: "Com irritação", icon: TbMoodAngry, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
   {
@@ -256,7 +256,7 @@ export const ENDDAY_STEPS: CheckInStep[] = [
     sublabel: "Opcional. Ajuda a entender o contexto, não a te identificar.",
     options: [
       { id: "work_load", label: "Volume de trabalho", icon: TbBriefcase, score: 0, color: "text-foreground", bgColor: "", flag: "workload" },
-      { id: "leadership", label: "Liderança / Gestor(a)", icon: TbUserExclamation, score: 0, color: "text-foreground", bgColor: "", flag: "leadership_risk" },
+      { id: "leadership", label: "Liderança / Gestão", icon: TbUserExclamation, score: 0, color: "text-foreground", bgColor: "", flag: "leadership_risk" },
       { id: "peer", label: "Colega(s)", icon: TbUsers, score: 0, color: "text-foreground", bgColor: "", flag: "peer_risk" },
       { id: "client", label: "Cliente / Externo", icon: TbFriends, score: 0, color: "text-foreground", bgColor: "", flag: "external" },
       { id: "personal", label: "Situação pessoal", icon: TbUserOff, score: 0, color: "text-foreground", bgColor: "", flag: "personal" },
@@ -309,7 +309,7 @@ export const CHAT_TRIGGERS: Record<string, ChatTriggerConfig> = {
   },
   dreading_tomorrow: {
     message:
-      "Parece que pensar em amanhã não está sendo leve.\n\nIsso é mais comum do que parece, e você não precisa passar por isso sozinho(a).",
+      "Parece que pensar em amanhã não está sendo leve.\n\nIsso é mais comum do que parece, e você não precisa passar por isso só.",
     cta: "Conversar agora",
     anonymousNote: "Disponível 24h. Nenhuma resposta vai ao RH.",
   },
@@ -391,12 +391,12 @@ export const DAILY_STEPS: CheckInStep[] = [
   {
     id: "sleep",
     type: "single",
-    question: "Como você acordou hoje?",
+    question: "Como foi sua noite?",
     options: [
-      { id: "restorative", label: "Restauradora", icon: TbSparkles, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "restorative", label: "Com boa recuperação", icon: TbSparkles, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
       { id: "acceptable", label: "Aceitável", icon: TbMoonStars, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
-      { id: "agitated", label: "Agitada", icon: TbCloudStorm, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "terrible", label: "Péssima", icon: TbSkull, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+      { id: "agitated", label: "Com agitação", icon: TbCloudStorm, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "terrible", label: "Muito ruim", icon: TbSkull, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
   // Q2: Energy → Recarga
@@ -405,10 +405,10 @@ export const DAILY_STEPS: CheckInStep[] = [
     type: "single",
     question: "Quanta energia você sente que tem agora?",
     options: [
-      { id: "full", label: "Cheio(a)", icon: TbBattery4, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "full", label: "Com energia", icon: TbBattery4, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
       { id: "ok", label: "Ok", icon: TbBattery2, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
       { id: "low", label: "Baixo", icon: TbBattery1, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "empty", label: "Zerado(a)", icon: TbBatteryOff, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+      { id: "empty", label: "No limite", icon: TbBatteryOff, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
   // Q3: Work relation → Estado do dia
@@ -430,9 +430,9 @@ export const DAILY_STEPS: CheckInStep[] = [
     question: "Como o dia te deixou?",
     options: [
       { id: "light", label: "Leve", icon: TbMoodSmile, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "tired_ok", label: "Cansado(a), mas ok", icon: TbZzz, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
-      { id: "frustrated", label: "Frustrado(a)", icon: TbMoodAngry, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "overwhelmed", label: "Sobrecarregado(a)", icon: TbMoodNervous, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+      { id: "tired_ok", label: "Com cansaço, mas ok", icon: TbZzz, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
+      { id: "frustrated", label: "Com frustração", icon: TbMoodAngry, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "overwhelmed", label: "Com sobrecarga", icon: TbMoodNervous, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
   // Q5: Safety signal → Segurança relacional
@@ -444,9 +444,9 @@ export const DAILY_STEPS: CheckInStep[] = [
     options: [
       { id: "all_good", label: "Não, tranquilo", icon: TbCheck, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5", exclusive: true },
       { id: "heavy_air", label: "Clima pesado no ambiente", icon: TbTemperature, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5", flag: "climate_risk" },
-      { id: "pressured", label: "Me senti pressionado(a)", icon: TbAlertTriangle, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
-      { id: "isolated", label: "Me senti isolado(a) ou excluído(a)", icon: TbDoor, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
-      { id: "uncomfortable", label: "Desconfortável por causa de alguém", icon: TbMoodConfuzed, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
+      { id: "pressured", label: "Cobranças ou pressão excessiva", icon: TbAlertTriangle, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
+      { id: "isolated", label: "Alguém me ignorou ou me excluiu", icon: TbDoor, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
+      { id: "uncomfortable", label: "Situação constrangedora ou humilhante", icon: TbMoodConfuzed, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
     ],
   },
   // Q6: Context tags (optional, no score)
@@ -454,10 +454,10 @@ export const DAILY_STEPS: CheckInStep[] = [
     id: "context_tags",
     type: "tags",
     question: "O que mais influenciou como você ficou hoje?",
-    sublabel: "Opcional. Ajuda a entender o contexto.",
+    sublabel: "Opcional. Ajuda a entender o contexto, não a te identificar.",
     options: [
       { id: "work_load", label: "Volume de trabalho", icon: TbBriefcase, score: 0, color: "text-foreground", bgColor: "", flag: "workload" },
-      { id: "leadership", label: "Liderança / Gestor(a)", icon: TbUserExclamation, score: 0, color: "text-foreground", bgColor: "", flag: "leadership_risk" },
+      { id: "leadership", label: "Liderança / Gestão", icon: TbUserExclamation, score: 0, color: "text-foreground", bgColor: "", flag: "leadership_risk" },
       { id: "peer", label: "Colega(s)", icon: TbUsers, score: 0, color: "text-foreground", bgColor: "", flag: "peer_risk" },
       { id: "client", label: "Cliente / Externo", icon: TbFriends, score: 0, color: "text-foreground", bgColor: "", flag: "external" },
       { id: "personal", label: "Situação pessoal", icon: TbUserOff, score: 0, color: "text-foreground", bgColor: "", flag: "personal" },

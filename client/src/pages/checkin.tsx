@@ -421,7 +421,7 @@ export default function CheckInPage() {
         });
         toast({
           title: "Check-in salvo!",
-          description: "Obrigada por compartilhar como você está.",
+          description: "Valeu por compartilhar como você está.",
         });
         setPhase("done");
       } catch (error: unknown) {

@@ -45,10 +45,10 @@ export const SUPPORT_MESSAGES: SupportMessage[] = [
   { id: "courage-001", category: "coragem", text: "Você já passou por coisas difíceis antes. E está aqui.", tags: ["general"] },
   { id: "courage-002", category: "coragem", text: "Pedir ajuda é força, não fraqueza.", tags: ["general", "peer_risk"] },
   { id: "courage-003", category: "coragem", text: "Cada pequeno passo conta. Mesmo os invisíveis.", tags: ["general"] },
-  { id: "courage-004", category: "coragem", text: "Você não precisa ser perfeita para ser corajosa.", tags: ["general"] },
+  { id: "courage-004", category: "coragem", text: "Ter coragem não exige perfeição.", tags: ["general"] },
   { id: "courage-005", category: "coragem", text: "O medo é natural. Agir mesmo com medo — isso é coragem.", tags: ["general"] },
   { id: "courage-006", category: "coragem", text: "Dizer 'não' quando precisa é uma das coisas mais corajosas.", tags: ["workload", "leadership_risk"] },
-  { id: "courage-007", category: "coragem", text: "Você não está sozinha nessa jornada.", tags: ["general", "peer_risk"] },
+  { id: "courage-007", category: "coragem", text: "Você não está só nessa jornada.", tags: ["general", "peer_risk"] },
   { id: "courage-008", category: "coragem", text: "Seu valor não depende do que produziu hoje.", tags: ["overload", "workload"] },
   { id: "courage-009", category: "coragem", text: "Ter limite é sinal de maturidade, não de fraqueza.", tags: ["general", "workload"] },
   { id: "courage-010", category: "coragem", text: "Quem cuida de si cuida melhor dos outros também.", tags: ["general"] },
@@ -77,4 +77,12 @@ export const SUPPORT_MESSAGES: SupportMessage[] = [
   { id: "light-009", category: "leveza", text: "Hoje pode ser um dia de apenas... ser.", tags: ["general"] },
   { id: "light-010", category: "leveza", text: "Diminua o zoom. Veja o todo. A vida é mais que esse momento.", tags: ["general"] },
   { id: "light-011", category: "leveza", text: "Não se cobra tanto. Você está fazendo bom trabalho.", tags: ["overload"] },
+
+  // ── Reconhecimento & Autonomia (6) ──────────────
+  { id: "courage-011", category: "coragem", text: "Trabalhar muito sem ver reconhecimento é desgastante. Seu esforço tem valor, mesmo quando ninguém diz.", tags: ["leadership_risk", "workload"] },
+  { id: "courage-012", category: "coragem", text: "Você merece ter voz nas decisões que afetam o seu dia.", tags: ["leadership_risk"] },
+  { id: "warmth-011", category: "acolhimento", text: "Se a escuta não está vindo de quem deveria, saiba que aqui ela existe.", tags: ["leadership_risk", "peer_risk"] },
+  { id: "warmth-012", category: "acolhimento", text: "Sentir que ninguém nota o que você faz não é frescura. É um dado real sobre o ambiente.", tags: ["leadership_risk"] },
+  { id: "calm-011", category: "calma", text: "A sobrecarga diz mais sobre o sistema do que sobre você. Não carregue a culpa do que é estrutural.", tags: ["overload", "workload"] },
+  { id: "light-012", category: "leveza", text: "Autonomia se constrói aos poucos. Comece pelo limite mais simples de hoje.", tags: ["leadership_risk", "workload"] },
 ];

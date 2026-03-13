@@ -195,7 +195,7 @@ export default function DashboardPage() {
             transition={{ delay: 0.15 }}
             className="mt-4 glass-card rounded-2xl p-5 text-center border-brand-gold/15"
           >
-            <p className="text-lg font-semibold">Bem-vindo ao JuPhD Care</p>
+            <p className="text-lg font-semibold">Boas-vindas ao JuPhD Care</p>
             <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
               Aqui, cuidar de si é simples. Comece seu primeiro check-in — leva menos de 1 minuto.
             </p>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
                 <p className="text-sm font-semibold text-foreground">Check-in completo</p>
                 <p className="text-xs text-muted-foreground">
                   {justCompleted
-                    ? "Pronto! Seus scores estão atualizados."
+                    ? "Tudo certo! Seus scores estão atualizados."
                     : "Seus scores estão atualizados para hoje."}
                 </p>
               </div>

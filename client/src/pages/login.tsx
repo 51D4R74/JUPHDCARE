@@ -65,7 +65,7 @@ export default function LoginPage() {
       const res = await apiRequest("POST", "/api/auth/login", { username: email, password });
       const user = await res.json();
       setUser(user);
-      toast({ title: "Bem-vinda!", description: "Login realizado com sucesso." });
+      toast({ title: "Boas-vindas!", description: "Login realizado com sucesso." });
       if (user.role === "rh") {
         navigate("/rh");
       } else {
@@ -99,7 +99,7 @@ export default function LoginPage() {
       });
       const user = await res.json();
       setUser(user);
-      toast({ title: "Conta criada!", description: `Bem-vinda, ${user.name}!` });
+      toast({ title: "Conta criada!", description: "Boas-vindas, " + user.name + "!" });
       navigate("/dashboard");
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "";
@@ -159,7 +159,7 @@ export default function LoginPage() {
             >
               <div className="flex items-center gap-2 mb-6">
                 <Sparkles className="w-4 h-4 text-brand-gold" />
-                <h2 className="text-lg font-semibold text-foreground">Seja muito bem-vinda!</h2>
+                <h2 className="text-lg font-semibold text-foreground">Que bom ter você aqui!</h2>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-5">

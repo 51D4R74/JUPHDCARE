@@ -24,5 +24,8 @@
     "package-lock.json",
     "*.min.js",
     "*.min.css"
-  ]
+  ],
+
+  // Allow Copilot agent to kill stale processes (e.g. EADDRINUSE)
+  "github.copilot.chat.agent.terminalCommands.denyList": []
 }

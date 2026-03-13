@@ -71,7 +71,7 @@ export default function PanicButton() {
       });
       toast({
         title: "Relato registrado",
-        description: "Seu relato foi enviado de forma anônima e segura. Você não está sozinho(a).",
+        description: "Seu relato foi enviado de forma anônima e segura. Você não está só.",
       });
       handleClose();
     } catch (error: unknown) {

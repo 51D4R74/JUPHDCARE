@@ -112,7 +112,7 @@ const SCREENS: OnboardingScreen[] = [
   },
   {
     id: "lets-go",
-    title: "Pronto para começar?",
+    title: "Tudo certo para começar?",
     subtitle: "Seu primeiro check-in leva menos de 1 minuto. Depois disso, o céu é seu.",
     visual: (
       <div className="flex flex-col items-center gap-4">
