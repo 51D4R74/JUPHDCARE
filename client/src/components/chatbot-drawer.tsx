@@ -77,7 +77,7 @@ export default function ChatbotDrawer({ userId }: ChatbotDrawerProps) {
     <>
       {/* Floating trigger button */}
       <AnimatePresence>
-        {!open ? (
+        {open ? null : (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -93,7 +93,7 @@ export default function ChatbotDrawer({ userId }: ChatbotDrawerProps) {
               <MessageCircle className="h-6 w-6" />
             </Button>
           </motion.div>
-        ) : null}
+        )}
       </AnimatePresence>
 
       {/* Chat drawer */}

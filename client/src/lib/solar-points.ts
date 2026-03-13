@@ -128,6 +128,66 @@ function isNewWeek(lastDate: string, currentDate: string): boolean {
   return last.getFullYear() !== curr.getFullYear() || getWeek(last) !== getWeek(curr);
 }
 
+/** Check how many microchecks were logged today. */
+function todayMicrochecks(existingEntry: DailyLogEntry | undefined): number {
+  return (existingEntry?.actions ?? []).filter((a) => a === "microcheck").length;
+}
+
+/** Compute streak bonuses when the user checked in on consecutive days. */
+function computeConsecutiveBonuses(
+  streak: number,
+): { bonusPoints: number; bonusActions: string[] } {
+  let bonusPoints = POINT_VALUES.dailySequenceBonus;
+  const bonusActions = ["dailySequenceBonus"];
+
+  if (streak === 3) {
+    bonusPoints += POINT_VALUES.streak3Days;
+    bonusActions.push("streak3Days");
+  }
+  if (streak === 7) {
+    bonusPoints += POINT_VALUES.streak7Days;
+    bonusActions.push("streak7Days");
+  }
+  if (streak === 66) {
+    bonusPoints += POINT_VALUES.streak66Days;
+    bonusActions.push("streak66Days");
+  }
+  return { bonusPoints, bonusActions };
+}
+
+/** Resolve streak and associated bonuses for a checkin action. */
+function resolveCheckinStreak(
+  prev: SolarPointsState,
+  today: string,
+): { streak: number; bonusPoints: number; bonusActions: string[] } {
+  let streak = prev.currentStreak;
+  let bonusPoints = 0;
+  const bonusActions: string[] = [];
+
+  if (prev.lastCheckinDate && isConsecutiveDay(prev.lastCheckinDate, today)) {
+    streak += 1;
+    const cons = computeConsecutiveBonuses(streak);
+    bonusPoints += cons.bonusPoints;
+    bonusActions.push(...cons.bonusActions);
+  } else if (prev.lastCheckinDate && prev.lastCheckinDate !== today) {
+    if (streak > 0) {
+      bonusPoints += POINT_VALUES.returnAfterAbsence;
+      bonusActions.push("returnAfterAbsence");
+    }
+    streak = 1;
+  } else if (!prev.lastCheckinDate) {
+    streak = 1;
+  }
+
+  // First check-in of the week bonus
+  if (!prev.lastCheckinDate || isNewWeek(prev.lastCheckinDate, today)) {
+    bonusPoints += POINT_VALUES.firstCheckinOfWeek;
+    bonusActions.push("firstCheckinOfWeek");
+  }
+
+  return { streak, bonusPoints, bonusActions };
+}
+
 // ── Public API ────────────────────────────────────
 
 /**
@@ -141,57 +201,20 @@ export function awardPoints(
   const today = todayISO();
   let points = basePoints(action);
   let streak = prev.currentStreak;
-  const actions: string[] = [];
+  const actions: string[] = [action];
   const existingEntry = prev.dailyLog.find((e) => e.date === today);
 
   // Microcheck daily cap
-  if (action === "microcheck") {
-    const todayMicrochecks = (existingEntry?.actions ?? [])
-      .filter((a) => a === "microcheck").length;
-    if (todayMicrochecks >= POINT_VALUES.microchecksMaxPerDay) {
-      return { state: prev, awarded: 0 };
-    }
+  if (action === "microcheck" && todayMicrochecks(existingEntry) >= POINT_VALUES.microchecksMaxPerDay) {
+    return { state: prev, awarded: 0 };
   }
-
-  actions.push(action);
 
   // Streak logic (only on checkin/checkinPartial)
   if (action === "checkin" || action === "checkinPartial") {
-    if (prev.lastCheckinDate && isConsecutiveDay(prev.lastCheckinDate, today)) {
-      streak += 1;
-      // Daily sequence bonus
-      points += POINT_VALUES.dailySequenceBonus;
-      actions.push("dailySequenceBonus");
-
-      // Milestone bonuses
-      if (streak === 3) {
-        points += POINT_VALUES.streak3Days;
-        actions.push("streak3Days");
-      }
-      if (streak === 7) {
-        points += POINT_VALUES.streak7Days;
-        actions.push("streak7Days");
-      }
-      if (streak === 66) {
-        points += POINT_VALUES.streak66Days;
-        actions.push("streak66Days");
-      }
-    } else if (prev.lastCheckinDate && prev.lastCheckinDate !== today) {
-      // Gap detected — return bonus if coming back
-      if (streak > 0) {
-        points += POINT_VALUES.returnAfterAbsence;
-        actions.push("returnAfterAbsence");
-      }
-      streak = 1;
-    } else if (!prev.lastCheckinDate) {
-      streak = 1;
-    }
-
-    // First check-in of the week bonus
-    if (!prev.lastCheckinDate || isNewWeek(prev.lastCheckinDate, today)) {
-      points += POINT_VALUES.firstCheckinOfWeek;
-      actions.push("firstCheckinOfWeek");
-    }
+    const result = resolveCheckinStreak(prev, today);
+    streak = result.streak;
+    points += result.bonusPoints;
+    actions.push(...result.bonusActions);
   }
 
   // Build updated log entry
@@ -209,10 +232,11 @@ export function awardPoints(
   const cutoffISO = cutoff.toISOString().slice(0, 10);
   const trimmedLog = updatedLog.filter((e) => e.date >= cutoffISO);
 
+  const isCheckin = action === "checkin" || action === "checkinPartial";
   const newState: SolarPointsState = {
     totalPoints: prev.totalPoints + points,
     currentStreak: streak,
-    lastCheckinDate: (action === "checkin" || action === "checkinPartial") ? today : prev.lastCheckinDate,
+    lastCheckinDate: isCheckin ? today : prev.lastCheckinDate,
     frozenDays: prev.frozenDays,
     inRespiroMode: prev.inRespiroMode,
     dailyLog: trimmedLog,

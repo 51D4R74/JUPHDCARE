@@ -408,9 +408,9 @@ export const DAILY_STEPS: CheckInStep[] = [
     followUp: {
       question: "Isso está atrapalhando o seu trabalho hoje?",
       deltaOptions: [
-        { id: "sim", label: "Sim", delta: 0.50 },
-        { id: "mais_ou_menos", label: "Mais ou menos", delta: 0.20 },
-        { id: "nao", label: "Não", delta: 0.00 },
+        { id: "sim", label: "Sim", delta: 0.5 },
+        { id: "mais_ou_menos", label: "Mais ou menos", delta: 0.2 },
+        { id: "nao", label: "Não", delta: 0 },
       ],
     },
   },

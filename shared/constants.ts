@@ -37,9 +37,9 @@ export const POINT_VALUES = {
 // ── Follow-up delta (energy Q4) ───────────────────
 
 export const DELTA_FATIGUE = {
-  sim: 0.50,
-  maisOuMenos: 0.20,
-  nao: 0.00,
+  sim: 0.5,
+  maisOuMenos: 0.2,
+  nao: 0,
 } as const;
 
 // ── IRP formula helpers ───────────────────────────

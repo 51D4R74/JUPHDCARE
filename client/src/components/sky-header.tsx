@@ -89,6 +89,40 @@ const HALO_STROKE: Record<number, number> = {
   5: 6,
 } as const;
 
+/** Halo ring SVG overlay — renders the engagement indicator around the sun. */
+function SolarHaloRing({
+  haloMetrics,
+  compact,
+  tempoScale,
+}: Readonly<{ haloMetrics: HaloMetrics; compact: boolean; tempoScale: number }>) {
+  const pulseAnim = haloMetrics.pulse
+    ? { opacity: [0.8, 1, 0.8], scale: [1, 1.04, 1] }
+    : { opacity: 1 };
+  const pulseTrans = haloMetrics.pulse
+    ? { duration: 2.4 * tempoScale, repeat: Infinity, ease: "easeInOut" as const }
+    : {};
+  return (
+    <motion.svg
+      animate={pulseAnim}
+      transition={pulseTrans}
+      className={`absolute left-1/2 ${compact ? "top-0 h-10 w-10" : "top-2 h-16 w-16"}`}
+      style={{ transform: "translateX(-50%)" }}
+      viewBox="0 0 64 64"
+      fill="none"
+    >
+      <circle
+        cx="32"
+        cy="32"
+        r={28}
+        stroke={HALO_COLORS[haloMetrics.temperature]}
+        strokeWidth={HALO_STROKE[haloMetrics.thickness] ?? 2}
+        strokeLinecap="round"
+        opacity={0.7}
+      />
+    </motion.svg>
+  );
+}
+
 export default function SkyHeader({
   skyState,
   solarHaloLevel,
@@ -137,28 +171,7 @@ export default function SkyHeader({
 
         {/* Solar Halo Ring (engagement indicator) */}
         {haloMetrics ? (
-          <motion.svg
-            animate={haloMetrics.pulse
-              ? { opacity: [0.8, 1, 0.8], scale: [1, 1.04, 1] }
-              : { opacity: 1 }}
-            transition={haloMetrics.pulse
-              ? { duration: 2.4 * tempoScale, repeat: Infinity, ease: "easeInOut" }
-              : {}}
-            className={`absolute left-1/2 ${compact ? "top-0 h-10 w-10" : "top-2 h-16 w-16"}`}
-            style={{ transform: "translateX(-50%)" }}
-            viewBox="0 0 64 64"
-            fill="none"
-          >
-            <circle
-              cx="32"
-              cy="32"
-              r={28}
-              stroke={HALO_COLORS[haloMetrics.temperature]}
-              strokeWidth={HALO_STROKE[haloMetrics.thickness] ?? 2}
-              strokeLinecap="round"
-              opacity={0.7}
-            />
-          </motion.svg>
+          <SolarHaloRing haloMetrics={haloMetrics} compact={compact} tempoScale={tempoScale} />
         ) : null}
 
         {/* Cloud A — drifts left */}

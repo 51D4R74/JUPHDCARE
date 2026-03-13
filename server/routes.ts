@@ -333,7 +333,6 @@ export async function registerRoutes(
 
   app.delete("/api/my-data", requireAuth, async (req, res) => {
     const userId = req.userId!;
-    // DEBT: Implement full cascade delete [requires storage method]
     await storage.deleteUserData(userId);
     req.session.destroy(() => {
       res.clearCookie("juphd.sid");

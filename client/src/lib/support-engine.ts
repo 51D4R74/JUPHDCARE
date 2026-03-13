@@ -30,6 +30,8 @@ import {
 
 const RESPIRO_KEY = "juphdcare_respiro";
 
+export type CareLevel = 1 | 2 | 3;
+
 export interface RespiroState {
   active: boolean;
   activatedAt: string | null; // ISO timestamp
@@ -40,7 +42,7 @@ export interface RespiroState {
   /** Consecutive days in "partly-cloudy"+ for auto-exit tracking. */
   consecutiveRecoveryDays: number;
   /** Current escalation level: 1 = IA, 2 = CVV/CAPS, 3 = org. */
-  escalationLevel: 1 | 2 | 3;
+  escalationLevel: CareLevel;
 }
 
 function defaultRespiroState(): RespiroState {
@@ -171,7 +173,7 @@ export function getRespiroState(): RespiroState {
 export type EscalationLevel = typeof ESCALATION_LEVELS[keyof typeof ESCALATION_LEVELS];
 
 export interface EscalationAction {
-  level: 1 | 2 | 3;
+  level: CareLevel;
   type: EscalationLevel;
   message: string;
   cta: string;
@@ -210,7 +212,7 @@ export function getEscalationAction(): EscalationAction {
 export function escalateCareLevel(): EscalationAction {
   const state = readRespiroState();
   if (state.escalationLevel < 3) {
-    state.escalationLevel = (state.escalationLevel + 1) as 1 | 2 | 3;
+    state.escalationLevel = (state.escalationLevel + 1) as CareLevel;
     writeRespiroState(state);
   }
   return getEscalationAction();
