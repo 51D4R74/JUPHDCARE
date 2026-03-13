@@ -19,6 +19,12 @@ import {
   type SupportCategory,
   type SupportMessage,
 } from "@/lib/support-messages";
+import { enterRespiroFreeze, exitRespiroFreeze } from "@/lib/solar-points";
+import {
+  RESPIRO_AUTO_ENTRY_DAYS,
+  RESPIRO_AUTO_EXIT_DAYS,
+  ESCALATION_LEVELS,
+} from "@shared/constants";
 
 // ── Modo Respiro state ────────────────────────────
 
@@ -29,14 +35,35 @@ export interface RespiroState {
   activatedAt: string | null; // ISO timestamp
   needSupportCount: number;   // "Preciso de apoio" taps in last 24h
   lastNeedSupportAt: string | null;
+  /** Consecutive days in "respiro" sky state for auto-entry tracking. */
+  consecutiveRestDays: number;
+  /** Consecutive days in "partly-cloudy"+ for auto-exit tracking. */
+  consecutiveRecoveryDays: number;
+  /** Current escalation level: 1 = IA, 2 = CVV/CAPS, 3 = org. */
+  escalationLevel: 1 | 2 | 3;
+}
+
+function defaultRespiroState(): RespiroState {
+  return {
+    active: false,
+    activatedAt: null,
+    needSupportCount: 0,
+    lastNeedSupportAt: null,
+    consecutiveRestDays: 0,
+    consecutiveRecoveryDays: 0,
+    escalationLevel: 1,
+  };
 }
 
 function readRespiroState(): RespiroState {
   try {
     const raw = localStorage.getItem(RESPIRO_KEY);
-    if (raw) return JSON.parse(raw) as RespiroState;
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<RespiroState>;
+      return { ...defaultRespiroState(), ...parsed };
+    }
   } catch (e: unknown) { console.warn("Corrupted respiro state:", e); }
-  return { active: false, activatedAt: null, needSupportCount: 0, lastNeedSupportAt: null };
+  return defaultRespiroState();
 }
 
 function writeRespiroState(state: RespiroState): void {
@@ -47,39 +74,60 @@ function writeRespiroState(state: RespiroState): void {
 export function evaluateRespiro(scores: TodayScores): boolean {
   const state = readRespiroState();
 
-  // Auto-entry: skyState is respiro (score < 25) → activate
+  // Track consecutive rest days for auto-entry
   if (scores.skyState === "respiro") {
-    if (!state.active) {
-      state.active = true;
-      state.activatedAt = new Date().toISOString();
-      writeRespiroState(state);
-    }
+    state.consecutiveRestDays += 1;
+    state.consecutiveRecoveryDays = 0;
+  } else if (scores.skyState === "partly-cloudy" || scores.skyState === "clear") {
+    state.consecutiveRecoveryDays += 1;
+    state.consecutiveRestDays = 0;
+  } else {
+    // protective-cloud: neither entry nor exit trigger
+    state.consecutiveRestDays = 0;
+    state.consecutiveRecoveryDays = 0;
+  }
+
+  // Auto-entry: 2 consecutive days of sky rest
+  if (!state.active && state.consecutiveRestDays >= RESPIRO_AUTO_ENTRY_DAYS) {
+    state.active = true;
+    state.activatedAt = new Date().toISOString();
+    state.escalationLevel = 1;
+    enterRespiroFreeze();
+    writeRespiroState(state);
     return true;
   }
 
   // Auto-entry: "Preciso de apoio" tapped ≥ 2 times in 24h
-  if (state.needSupportCount >= 2) {
+  if (!state.active && state.needSupportCount >= 2) {
     const lastTap = state.lastNeedSupportAt
       ? new Date(state.lastNeedSupportAt).getTime()
       : 0;
     const within24h = Date.now() - lastTap < 24 * 60 * 60 * 1000;
-    if (within24h && !state.active) {
+    if (within24h) {
       state.active = true;
       state.activatedAt = new Date().toISOString();
+      state.escalationLevel = 1;
+      enterRespiroFreeze();
       writeRespiroState(state);
       return true;
     }
   }
 
-  // If currently active, check exit conditions
-  if (state.active) {
-    // Exit: scores improved (skyState not respiro for at least this read)
-    // For simplicity: if skyState ≥ partly-cloudy, allow manual deactivation
-    // Full spec: "scores improve for 2 consecutive days" — deferred to backend
-    return true;
+  // Auto-exit: 2 consecutive days of partly-cloudy or better
+  if (state.active && state.consecutiveRecoveryDays >= RESPIRO_AUTO_EXIT_DAYS) {
+    state.active = false;
+    state.activatedAt = null;
+    state.needSupportCount = 0;
+    state.consecutiveRestDays = 0;
+    state.consecutiveRecoveryDays = 0;
+    state.escalationLevel = 1;
+    exitRespiroFreeze();
+    writeRespiroState(state);
+    return false;
   }
 
-  return false;
+  writeRespiroState(state);
+  return state.active;
 }
 
 /** Record a "Preciso de apoio" tap for Modo Respiro entry tracking. */
@@ -100,18 +148,72 @@ export function recordNeedSupport(): void {
   writeRespiroState(state);
 }
 
-/** Manually deactivate Modo Respiro. */
+/** Manually deactivate Modo Respiro (user-initiated exit). */
 export function deactivateRespiro(): void {
   const state = readRespiroState();
   state.active = false;
   state.activatedAt = null;
   state.needSupportCount = 0;
+  state.consecutiveRestDays = 0;
+  state.consecutiveRecoveryDays = 0;
+  state.escalationLevel = 1;
+  exitRespiroFreeze();
   writeRespiroState(state);
 }
 
 /** Read current Modo Respiro state. */
 export function getRespiroState(): RespiroState {
   return readRespiroState();
+}
+
+// ── Stepped care escalation (PRD v2.0 S8) ────────
+
+export type EscalationLevel = typeof ESCALATION_LEVELS[keyof typeof ESCALATION_LEVELS];
+
+export interface EscalationAction {
+  level: 1 | 2 | 3;
+  type: EscalationLevel;
+  message: string;
+  cta: string;
+}
+
+/** Get the current escalation action based on Respiro state. */
+export function getEscalationAction(): EscalationAction {
+  const state = readRespiroState();
+  const level = state.escalationLevel;
+
+  if (level >= 3) {
+    return {
+      level: 3,
+      type: ESCALATION_LEVELS.level3,
+      message: "Percebemos que você pode precisar de apoio especializado. Com sua permissão, podemos acionar o suporte da organização.",
+      cta: "Autorizar contato",
+    };
+  }
+  if (level >= 2) {
+    return {
+      level: 2,
+      type: ESCALATION_LEVELS.level2,
+      message: "Se precisar conversar com alguém agora, ligue para o CVV: 188 (24h). Ou procure o CAPS mais próximo.",
+      cta: "Ver recursos de apoio",
+    };
+  }
+  return {
+    level: 1,
+    type: ESCALATION_LEVELS.level1,
+    message: "Estou aqui para ouvir. Quer conversar sobre como está se sentindo?",
+    cta: "Conversar com IA",
+  };
+}
+
+/** Escalate to the next care level. Returns the new level. */
+export function escalateCareLevel(): EscalationAction {
+  const state = readRespiroState();
+  if (state.escalationLevel < 3) {
+    state.escalationLevel = (state.escalationLevel + 1) as 1 | 2 | 3;
+    writeRespiroState(state);
+  }
+  return getEscalationAction();
 }
 
 // ── Favorites ─────────────────────────────────────

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer, real } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -19,6 +19,10 @@ export const checkIns = pgTable("check_ins", {
   domainScores: text("domain_scores").notNull(),
   flags: text("flags").array(),
   chatTriggered: boolean("chat_triggered").default(false),
+  /** Number of questions answered out of total (e.g. 5 of 6). */
+  confidence: real("confidence"),
+  /** If abandoned mid-flow, which question index they stopped at. */
+  abandonedAtQuestion: integer("abandoned_at_question"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -59,6 +63,28 @@ export const userSettings = pgTable("user_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// ── Solar points (engagement rewards) ─────────────
+
+export const solarPoints = pgTable("solar_points", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  action: text("action").notNull(),
+  points: integer("points").notNull(),
+  date: text("date").notNull(), // ISO "YYYY-MM-DD"
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const solarStreaks = pgTable("solar_streaks", {
+  userId: varchar("user_id").primaryKey(),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastCheckinDate: text("last_checkin_date"),
+  frozen: boolean("frozen").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// ── Insert schemas ────────────────────────────────
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -73,6 +99,8 @@ export const insertCheckInSchema = createInsertSchema(checkIns).pick({
   domainScores: true,
   flags: true,
   chatTriggered: true,
+  confidence: true,
+  abandonedAtQuestion: true,
 });
 
 export const insertMomentCheckInSchema = createInsertSchema(momentCheckIns).pick({
@@ -104,6 +132,15 @@ export const insertUserSettingsSchema = createInsertSchema(userSettings).pick({
   settings: true,
 });
 
+export const insertSolarPointsSchema = createInsertSchema(solarPoints).pick({
+  userId: true,
+  action: true,
+  points: true,
+  date: true,
+});
+
+// ── Type exports ──────────────────────────────────
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertCheckIn = z.infer<typeof insertCheckInSchema>;
@@ -114,6 +151,9 @@ export type InsertIncidentReport = z.infer<typeof insertIncidentReportSchema>;
 export type IncidentReport = typeof incidentReports.$inferSelect;
 export type InsertUserMission = z.infer<typeof insertUserMissionSchema>;
 export type UserMission = typeof userMissions.$inferSelect;
+export type InsertSolarPoints = z.infer<typeof insertSolarPointsSchema>;
+export type SolarPoints = typeof solarPoints.$inferSelect;
+export type SolarStreak = typeof solarStreaks.$inferSelect;
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
 export type UserSettings = typeof userSettings.$inferSelect;
 

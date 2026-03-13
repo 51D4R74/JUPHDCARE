@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
 import { Cloud } from "lucide-react";
 import type { SkyState } from "@/lib/checkin-data";
+import type { HaloMetrics } from "@/lib/solar-points";
 
 type SkyHeaderProps = Readonly<{
   skyState: SkyState;
   solarHaloLevel: number;
+  haloMetrics?: HaloMetrics | null;
   size?: "compact" | "hero";
   className?: string;
 }>;
@@ -73,9 +75,24 @@ const SKY_CONFIG: Record<SkyState, {
   },
 };
 
+const HALO_COLORS: Record<string, string> = {
+  cold: "#8BB8D0",   // cool blue
+  warm: "#F5C542",   // gold
+  hot: "#E8944A",    // warm orange
+} as const;
+
+const HALO_STROKE: Record<number, number> = {
+  1: 1.5,
+  2: 2.5,
+  3: 3.5,
+  4: 4.5,
+  5: 6,
+} as const;
+
 export default function SkyHeader({
   skyState,
   solarHaloLevel,
+  haloMetrics,
   size = "hero",
   className = "",
 }: SkyHeaderProps) {
@@ -117,6 +134,32 @@ export default function SkyHeader({
             boxShadow: `0 0 ${config.haloSpread}px rgba(${hexToRgb(config.sunColor)},${effectiveHalo})`,
           }}
         />
+
+        {/* Solar Halo Ring (engagement indicator) */}
+        {haloMetrics ? (
+          <motion.svg
+            animate={haloMetrics.pulse
+              ? { opacity: [0.8, 1, 0.8], scale: [1, 1.04, 1] }
+              : { opacity: 1 }}
+            transition={haloMetrics.pulse
+              ? { duration: 2.4 * tempoScale, repeat: Infinity, ease: "easeInOut" }
+              : {}}
+            className={`absolute left-1/2 ${compact ? "top-0 h-10 w-10" : "top-2 h-16 w-16"}`}
+            style={{ transform: "translateX(-50%)" }}
+            viewBox="0 0 64 64"
+            fill="none"
+          >
+            <circle
+              cx="32"
+              cy="32"
+              r={28}
+              stroke={HALO_COLORS[haloMetrics.temperature]}
+              strokeWidth={HALO_STROKE[haloMetrics.thickness] ?? 2}
+              strokeLinecap="round"
+              opacity={0.7}
+            />
+          </motion.svg>
+        ) : null}
 
         {/* Cloud A — drifts left */}
         <motion.div

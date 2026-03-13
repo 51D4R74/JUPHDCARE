@@ -35,12 +35,6 @@ import {
   TbCoin,
   TbHeartbeat,
   TbDots,
-  TbRun,
-  TbStethoscope,
-  TbHome,
-  TbCar,
-  TbCalendar,
-  TbHourglass,
 } from "react-icons/tb";
 
 // ── Types ─────────────────────────────────────────
@@ -77,6 +71,7 @@ export interface ProjectionCard {
 
 export interface FollowUp {
   question: string;
+  deltaOptions?: ReadonlyArray<{ readonly id: string; readonly label: string; readonly delta: number }>;
 }
 
 export type StepType = "single" | "projection" | "multi2" | "multi3" | "tags";
@@ -410,17 +405,30 @@ export const DAILY_STEPS: CheckInStep[] = [
       { id: "low", label: "Baixo", icon: TbBattery1, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
       { id: "empty", label: "No limite", icon: TbBatteryOff, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
+    followUp: {
+      question: "Isso está atrapalhando o seu trabalho hoje?",
+      deltaOptions: [
+        { id: "sim", label: "Sim", delta: 0.50 },
+        { id: "mais_ou_menos", label: "Mais ou menos", delta: 0.20 },
+        { id: "nao", label: "Não", delta: 0.00 },
+      ],
+    },
   },
-  // Q3: Work relation → Estado do dia
+  // Q3: Emotion retrospective → Estado do dia (multi3, max 3 of 8)
   {
-    id: "work_relation",
-    type: "single",
-    question: "Como você estava em relação ao trabalho hoje?",
+    id: "emotion",
+    type: "multi3",
+    question: "Como você sai de hoje?",
+    sublabel: "Pode escolher até 3. Emoções se misturam.",
     options: [
-      { id: "excited", label: "Com vontade", icon: TbFlame, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "ok", label: "Normal", icon: TbMoodEmpty, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
-      { id: "reluctant", label: "Sem muita vontade", icon: TbMoodSad, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "dreading", label: "Com receio", icon: TbMoodNervous, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", sensitive: true },
+      { id: "accomplished", label: "Realizado(a)", icon: TbTrophy, score: 10, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "calm", label: "Calmo(a)", icon: TbMoodHappy, score: 9, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "relieved", label: "Aliviado(a)", icon: TbMoodSmile, score: 8, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "tired", label: "Cansado(a)", icon: TbZzz, score: 6, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
+      { id: "frustrated", label: "Frustrado(a)", icon: TbMoodAngry, score: 4, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "sad", label: "Triste", icon: TbMoodSad, score: 3, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "anxious", label: "Ansioso(a)", icon: TbMoodNervous, score: 3, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "angry", label: "Irritado(a)", icon: TbMoodAngry, score: 2, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
   // Q4: Emotional exit → Estado do dia
@@ -435,40 +443,32 @@ export const DAILY_STEPS: CheckInStep[] = [
       { id: "overwhelmed", label: "Com sobrecarga", icon: TbMoodNervous, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
-  // Q5: Safety signal → Segurança relacional
+  // Q5: ICE momentânea → Segurança relacional (single)
   {
     id: "safety",
-    type: "multi2",
-    question: "No seu dia de trabalho, teve algo que te deixou desconfortável ou em alerta?",
-    sublabel: "Pode selecionar mais de uma opção.",
+    type: "single",
+    question: "Hoje você se sentiu apoiado(a) pelo seu ambiente de trabalho?",
     options: [
-      { id: "all_good", label: "Não, tranquilo", icon: TbCheck, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5", exclusive: true },
-      { id: "heavy_air", label: "Clima pesado no ambiente", icon: TbTemperature, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5", flag: "climate_risk" },
-      { id: "pressured", label: "Cobranças ou pressão excessiva", icon: TbAlertTriangle, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
-      { id: "isolated", label: "Alguém me ignorou ou me excluiu", icon: TbDoor, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
-      { id: "uncomfortable", label: "Situação constrangedora ou humilhante", icon: TbMoodConfuzed, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
+      { id: "supported", label: "Me senti apoiado(a) e seguro(a) 🤝", icon: TbCheck, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "normal", label: "Foi um dia normal, sem incidentes ⚖️", icon: TbMoodEmpty, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
+      { id: "tense", label: "O clima estava pesado ou tenso 🌡️", icon: TbTemperature, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5", flag: "climate_risk" },
+      { id: "pressured", label: "Me senti pressionado(a), isolado(a) ou constrangido(a) 🌩️", icon: TbAlertTriangle, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5", flag: "harassment_signal", triggerChat: true },
     ],
   },
-  // Q6: Context tags (optional, no score)
+  // Q6: Context tags (optional, no score) — PRD v2.0 S5
   {
     id: "context_tags",
     type: "tags",
     question: "O que mais influenciou como você ficou hoje?",
     sublabel: "Opcional. Ajuda a entender o contexto, não a te identificar.",
     options: [
-      { id: "work_load", label: "Volume de trabalho", icon: TbBriefcase, score: 0, color: "text-foreground", bgColor: "", flag: "workload" },
-      { id: "leadership", label: "Liderança / Gestão", icon: TbUserExclamation, score: 0, color: "text-foreground", bgColor: "", flag: "leadership_risk" },
-      { id: "peer", label: "Colega(s)", icon: TbUsers, score: 0, color: "text-foreground", bgColor: "", flag: "peer_risk" },
-      { id: "client", label: "Cliente / Externo", icon: TbFriends, score: 0, color: "text-foreground", bgColor: "", flag: "external" },
+      { id: "work_load", label: "Volume de demandas", icon: TbBriefcase, score: 0, color: "text-foreground", bgColor: "", flag: "workload" },
+      { id: "leadership", label: "Liderança / Gestão", icon: TbUserExclamation, score: 0, color: "text-foreground", bgColor: "", flag: "hlb_proxy" },
+      { id: "peer", label: "Colegas / Clima", icon: TbUsers, score: 0, color: "text-foreground", bgColor: "", flag: "peer_risk" },
+      { id: "role_ambiguity", label: "Falta de clareza", icon: TbMoodConfuzed, score: 0, color: "text-foreground", bgColor: "", flag: "role_ambiguity" },
       { id: "personal", label: "Situação pessoal", icon: TbUserOff, score: 0, color: "text-foreground", bgColor: "", flag: "personal" },
       { id: "finances", label: "Finanças", icon: TbCoin, score: 0, color: "text-foreground", bgColor: "", flag: "financial_stress" },
       { id: "health", label: "Saúde", icon: TbHeartbeat, score: 0, color: "text-foreground", bgColor: "", flag: "health" },
-      { id: "meetings", label: "Reuniões demais", icon: TbCalendar, score: 0, color: "text-foreground", bgColor: "", flag: "meetings" },
-      { id: "exercise", label: "Atividade física", icon: TbRun, score: 0, color: "text-score-good", bgColor: "", flag: "exercise" },
-      { id: "therapy", label: "Terapia", icon: TbStethoscope, score: 0, color: "text-brand-teal", bgColor: "", flag: "therapy" },
-      { id: "family", label: "Família", icon: TbHome, score: 0, color: "text-foreground", bgColor: "", flag: "family" },
-      { id: "commute", label: "Trânsito", icon: TbCar, score: 0, color: "text-foreground", bgColor: "", flag: "commute" },
-      { id: "no_breaks", label: "Sem pausas", icon: TbHourglass, score: 0, color: "text-score-attention", bgColor: "", flag: "no_breaks" },
       { id: "nothing", label: "Nada em especial", icon: TbDots, score: 0, color: "text-foreground", bgColor: "", exclusive: true },
     ],
   },
@@ -487,9 +487,9 @@ export const SCORE_DOMAINS: ScoreDomain[] = [
   {
     id: "estado-do-dia",
     label: "Estado do dia",
-    description: "Relação com o trabalho e impacto emocional",
-    questionIds: ["work_relation", "day_impact"],
-    maxRaw: 8,
+    description: "Temperatura emocional e impacto do dia",
+    questionIds: ["emotion", "day_impact"],
+    maxRaw: 14,
   },
   {
     id: "seguranca-relacional",
@@ -508,13 +508,24 @@ function resolveQuestionScore(
   val: string | string[],
 ): number {
   const ids = Array.isArray(val) ? val : [val];
-  // For multi-select (safety), take the worst signal
+
+  // multi2 (legacy safety): worst signal wins
   if (step.type === "multi2") {
     const scores = ids
       .map((id) => step.options.find((o) => o.id === id)?.score ?? 0)
       .filter((s) => s > 0);
     return scores.length > 0 ? Math.min(...scores) : 0;
   }
+
+  // multi3 (emotion): mean of selected scores
+  if (step.type === "multi3") {
+    const scores = ids
+      .map((id) => step.options.find((o) => o.id === id)?.score ?? 0);
+    return scores.length > 0
+      ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+      : 0;
+  }
+
   return step.options.find((o) => o.id === ids[0])?.score ?? 0;
 }
 
@@ -571,19 +582,13 @@ export function deriveSkyState(
  * Keys must match the `flag` property of context_tags options in DAILY_STEPS.
  */
 export const CONTEXT_TAG_LABELS: Record<string, string> = {
-  workload: "Volume de trabalho",
-  leadership_risk: "Liderança",
-  peer_risk: "Colega(s)",
-  external: "Cliente / Externo",
+  workload: "Volume de demandas",
+  hlb_proxy: "Liderança / Gestão",
+  peer_risk: "Colegas / Clima",
+  role_ambiguity: "Falta de clareza",
   personal: "Situação pessoal",
   financial_stress: "Finanças",
   health: "Saúde",
-  meetings: "Reuniões demais",
-  exercise: "Atividade física",
-  therapy: "Terapia",
-  family: "Família",
-  commute: "Trânsito",
-  no_breaks: "Sem pausas",
 };
 
 /** Flags eligible for tag cloud and discovery engine (context tags only, no system-derived flags). */

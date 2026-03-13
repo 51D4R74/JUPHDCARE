@@ -5,6 +5,7 @@
  *   (a) `computeCheckInResult` — pure domain-score + flag computation (no side-effects)
  *   (b) `computeTagCloud` — pure tag-frequency aggregator for server history
  *   (c) `getDomainMeta` — static metadata for score domains
+ *   (d) `computeIRP` — Índice de Risco Psicossocial (PRD v2.0 S7)
  */
 
 import {
@@ -17,6 +18,7 @@ import {
   computeDomainScores,
   collectFlags,
 } from "@/lib/checkin-data";
+import { HLB_MAX, ICE_MAX } from "@shared/constants";
 
 // ── Types ─────────────────────────────────────────
 
@@ -86,4 +88,49 @@ export function computeTagCloud(
   return Object.entries(counts)
     .map(([flag, count]) => ({ flag, label: CONTEXT_TAG_LABELS[flag] ?? flag, count }))
     .toSorted((a, b) => b.count - a.count);
+}
+
+// ── IRP (Índice de Risco Psicossocial) ────────────
+
+/**
+ * Compute IRP from recent check-in history.
+ *
+ * Formula (PRD v2.0 S7):
+ *   IRP = ((μHLB + (6 − μICE)) / 2 − 1) × 25
+ *
+ * Where:
+ *   μHLB = mean of "hlb_proxy" tag frequency over the window (0–5)
+ *   μICE = mean of Q5 ICE scores over the window (1–4 → inverted: 6−x ∈ [2,5])
+ *
+ * Result range: [0, 100]. Higher = worse risk.
+ */
+export function computeIRP(
+  records: ReadonlyArray<{
+    readonly flags: readonly string[];
+    readonly answers: Record<string, string | string[]>;
+  }>,
+): number {
+  if (records.length === 0) return 0;
+
+  // μHLB: how often "hlb_proxy" (Liderança/Gestão) tag was selected
+  const hlbCount = records.filter((r) => r.flags.includes("hlb_proxy")).length;
+  const muHLB = Math.min((hlbCount / records.length) * HLB_MAX, HLB_MAX);
+
+  // μICE: mean Q5 score (supported=4, normal=3, tense=2, pressured=1)
+  const iceScores = records
+    .map((r) => {
+      const safetyAnswer = r.answers.safety;
+      if (!safetyAnswer) return null;
+      const answerId = Array.isArray(safetyAnswer) ? safetyAnswer[0] : safetyAnswer;
+      const step = DAILY_STEPS.find((s) => s.id === "safety");
+      return step?.options.find((o) => o.id === answerId)?.score ?? null;
+    })
+    .filter((s): s is number => s !== null);
+
+  const muICE = iceScores.length > 0
+    ? iceScores.reduce((a, b) => a + b, 0) / iceScores.length
+    : ICE_MAX; // default = best case (no risk)
+
+  const raw = ((muHLB + (6 - muICE)) / 2 - 1) * 25;
+  return Math.round(Math.max(0, Math.min(100, raw)));
 }

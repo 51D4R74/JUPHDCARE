@@ -325,13 +325,9 @@ const MISSION_POOL: MissionTemplate[] = [
 ];
 
 // ── Scoring rules ─────────────────────────────────
-
-export const POINT_VALUES = {
-  checkin: 12,
-  microcheck: 3,
-  microchecksMaxPerDay: 2,
-  dailyConstancyBonus: 5,
-} as const;
+// Canonical POINT_VALUES lives in shared/constants.ts.
+// Re-export for backward compatibility with consumers that import from here.
+export { POINT_VALUES } from "@shared/constants";
 
 // ── Selection engine ──────────────────────────────
 
