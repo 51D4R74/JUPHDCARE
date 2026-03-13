@@ -17,6 +17,8 @@ type ScoreCardProps = Readonly<{
   score: number;
   contributors: ScoreContributor[];
   className?: string;
+  /** When false, renders a neutral muted card instead of a colored score. */
+  hasData?: boolean;
 }>;
 
 const SCORE_TIERS = [
@@ -38,9 +40,39 @@ export default function ScoreCard({
   score,
   contributors,
   className = "",
+  hasData = true,
 }: ScoreCardProps) {
   const [expanded, setExpanded] = useState(false);
   const tier = getTier(score);
+
+  if (!hasData) {
+    return (
+      <Card className={`overflow-hidden opacity-60 ${className}`.trim()}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base font-semibold">{title}</CardTitle>
+              <p className="text-xs text-muted-foreground">{description}</p>
+            </div>
+            <div className="flex flex-col items-end gap-0.5">
+              <span className="text-2xl font-bold tabular-nums text-muted-foreground/50">
+                —
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/50">
+                Pendente
+              </span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted" />
+          <p className="mt-3 text-xs text-muted-foreground">
+            Complete o check-in para ver
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={`overflow-hidden ${className}`.trim()}>

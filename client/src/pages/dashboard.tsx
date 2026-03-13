@@ -13,12 +13,13 @@ import SolarPointsBadge from "@/components/solar-points-badge";
 import NotificationBadge from "@/components/notification-badge";
 import NotificationDrawer from "@/components/notification-drawer";
 import InlineCheckin from "@/components/inline-checkin";
+import ConstancyDots from "@/components/constancy-dots";
 import { useAuth } from "@/lib/auth";
 import { getDomainMeta, type TodayScores } from "@/lib/score-engine";
 import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
 import { POINT_VALUES } from "@/lib/mission-engine";
-import { getCurrentChallenge } from "@/lib/team-challenge-engine";
-import type { UserMission } from "@shared/schema";
+import { getCurrentChallenge, describeChallenge } from "@/lib/team-challenge-engine";
+import type { UserMission, CheckInHistoryRecord } from "@shared/schema";
 
 function getDailyInsight(scores: TodayScores): string {
   if (!scores.hasCheckedIn) {
@@ -97,7 +98,22 @@ export default function DashboardPage() {
     enabled: !!userId,
   });
 
+  const { data: history = [] } = useQuery<CheckInHistoryRecord[]>({
+    queryKey: ["/api/checkins/user", userId, "history"],
+    queryFn: () =>
+      fetch(`/api/checkins/user/${userId}/history?days=10`, { credentials: "include" })
+        .then((r) => r.json()) as Promise<CheckInHistoryRecord[]>,
+    enabled: !!userId,
+  });
+
+  const checkedInDates = history.map((h) => h.date);
+
   const checkedIn = scores.hasCheckedIn || justCompleted;
+  const isFirstVisit = !checkedIn && history.length === 0;
+  const CRISIS_THRESHOLD = 25;
+  const hasCrisisSignal = checkedIn && Object.values(scores.domainScores).some(
+    (s) => s < CRISIS_THRESHOLD,
+  );
 
   const missionPointsToday = todayMissions.reduce((sum, m) => sum + m.pointsEarned, 0);
   const solarPoints = (checkedIn ? POINT_VALUES.checkin : 0) + missionPointsToday;
@@ -166,7 +182,25 @@ export default function DashboardPage() {
           <p className="text-center text-sm text-muted-foreground mt-2">
             {greeting()}, {firstName}!
           </p>
+          <div className="flex justify-center mt-2">
+            <ConstancyDots checkedInDates={checkedInDates} />
+          </div>
         </motion.section>
+
+        {/* First-visit welcome */}
+        {isFirstVisit && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mt-4 glass-card rounded-2xl p-5 text-center border-brand-gold/15"
+          >
+            <p className="text-lg font-semibold">Bem-vindo ao JuPhD Care</p>
+            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+              Aqui, cuidar de si é simples. Comece seu primeiro check-in — leva menos de 1 minuto.
+            </p>
+          </motion.section>
+        )}
 
         {/* Inline check-in OR post-check-in completion card */}
         <motion.section
@@ -176,17 +210,29 @@ export default function DashboardPage() {
           className="mt-4"
         >
           {checkedIn ? (
-            <div className="glass-card rounded-2xl p-4 flex items-center gap-3 border-score-good/20">
-              <div className="w-10 h-10 rounded-xl bg-score-good/10 flex items-center justify-center flex-shrink-0">
+            <motion.div
+              initial={justCompleted ? { scale: 0.9, opacity: 0 } : false}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              className="glass-card rounded-2xl p-4 flex items-center gap-3 border-score-good/20"
+            >
+              <motion.div
+                initial={justCompleted ? { rotate: -90, scale: 0 } : false}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ delay: 0.15, type: "spring", stiffness: 300, damping: 15 }}
+                className="w-10 h-10 rounded-xl bg-score-good/10 flex items-center justify-center flex-shrink-0"
+              >
                 <CheckCircle2 className="w-5 h-5 text-score-good" />
-              </div>
+              </motion.div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground">Check-in completo</p>
                 <p className="text-xs text-muted-foreground">
-                  Seus scores estão atualizados para hoje.
+                  {justCompleted
+                    ? "Pronto! Seus scores estão atualizados."
+                    : "Seus scores estão atualizados para hoje."}
                 </p>
               </div>
-            </div>
+            </motion.div>
           ) : (
             <InlineCheckin
               userId={userId}
@@ -206,15 +252,21 @@ export default function DashboardPage() {
               transition={{ delay: 0.3 }}
               className="mt-5 space-y-3"
             >
-              {domains.map((d) => (
-                <ScoreCard
+              {domains.map((d, i) => (
+                <motion.div
                   key={d.id}
-                  domainId={d.id}
-                  title={d.label}
-                  description={d.description}
-                  score={scores.domainScores[d.id] ?? 0}
-                  contributors={buildContributors(d.id, scores)}
-                />
+                  initial={justCompleted ? { opacity: 0, y: 16 } : false}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={justCompleted ? { delay: 0.3 + i * 0.12 } : undefined}
+                >
+                  <ScoreCard
+                    domainId={d.id}
+                    title={d.label}
+                    description={d.description}
+                    score={scores.domainScores[d.id] ?? 0}
+                    contributors={buildContributors(d.id, scores)}
+                  />
+                </motion.div>
               ))}
             </motion.section>
           )}
@@ -235,6 +287,33 @@ export default function DashboardPage() {
             <p className="text-sm text-foreground leading-relaxed">
               {getDailyInsight(scores)}
             </p>
+          </motion.section>
+        )}
+
+        {/* Crisis-aware support CTA — surfaces before missions when score is critical */}
+        {hasCrisisSignal && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="mt-4"
+          >
+            <button
+              onClick={() => navigate("/support")}
+              className="w-full glass-card rounded-2xl p-4 flex items-center gap-3 border-score-attention/20 hover:border-score-attention/30 transition-colors text-left"
+              data-testid="button-crisis-support"
+            >
+              <div className="w-10 h-10 rounded-xl bg-score-attention/10 flex items-center justify-center flex-shrink-0">
+                <Heart className="w-5 h-5 text-score-attention" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold">Precisa de apoio?</p>
+                <p className="text-xs text-muted-foreground">
+                  Mensagens de cuidado e recursos pra dias mais difíceis
+                </p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            </button>
           </motion.section>
         )}
 
@@ -284,7 +363,7 @@ export default function DashboardPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{tc.template.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {tc.progressPct}% · {tc.daysRemaining} dias restantes
+                    {describeChallenge(tc.progressPct, tc.daysRemaining)}
                   </p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />

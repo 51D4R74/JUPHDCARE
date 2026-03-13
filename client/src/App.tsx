@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth";
 import { hasCompletedOnboarding } from "@/lib/onboarding-state";
+import PanicButton from "@/components/panic-button";
 
 // ── Lazy-loaded pages ─────────────────────────────
 
@@ -120,6 +121,7 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Router />
+        {isAuthenticated && <PanicButton />}
       </TooltipProvider>
     </QueryClientProvider>
   );

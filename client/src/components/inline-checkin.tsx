@@ -18,7 +18,7 @@ import {
   type StepOption,
   type ProjectionOption,
   type ProjectionCard,
-  DAILY_STEPS,
+  getTimeAwareSteps,
   detectChatTrigger,
   CHAT_TRIGGERS,
 } from "@/lib/checkin-data";
@@ -389,7 +389,7 @@ export default function InlineCheckin({
   onNavigateProtection,
 }: Readonly<InlineCheckinProps>) {
   const { toast } = useToast();
-  const steps = DAILY_STEPS;
+  const steps = getTimeAwareSteps();
 
   // Restore partial progress
   const partial = useRef(loadPartial());

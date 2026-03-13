@@ -130,15 +130,16 @@ Priority tiers: **P0** = blocks engagement, **P1** = high impact, **P2** = polis
 
 | # | Priority | Item | Notes |
 | --- | --- | --- | --- |
-| B01 | P0 | **Inline progressive check-in on dashboard** | Check-in happens IN the dashboard (Q1→Q6 sliding), no navigation. Dashboard = pre-check-in state → in-progress state → post-check-in state. Eliminates friction entirely. Scoring model stays intact (all 6 Qs required). |
-| B02 | P0 | **Score card "no data" state (neutral/gray)** | Score 0 + no check-in must show gray/muted placeholder ("Complete o check-in para ver"), never red "Cuidado". Distinguish "no data" from "bad data". |
-| B03 | P0 | **Collapse scores before check-in** | Pre-check-in dashboard should show 1 inviting CTA, not 3 red zeroes. Scores only expand after check-in is complete. |
-| B04 | P1 | **Post-check-in celebration micro-moment** | After Q6 → scores animate from 0→N, sky transitions, brief particle/confetti burst. Gratification feedback loop. |
-| B05 | P1 | **ConstancyDots visible on dashboard** | Show 10-day dots (sun/cloud) below sky header or above check-in card. Best positive reinforcement available. |
-| B06 | P1 | **Time-aware first question** | Q1 adapts to time of day: morning → "Como você acordou?", afternoon → "Como está sua energia agora?", evening → "Como o dia te deixou?". Prevents irrelevant questions. |
-| B07 | P1 | **First-visit warm welcome state** | New users (0 check-ins) see a dedicated welcome card instead of empty scores: "Seu dia começa aqui. Um check-in de 2 minutos revela seu mapa de cuidado." |
-| B08 | P1 | **Crisis-aware layout reordering** | If score < 25 in any domain, promote Support card above missions/team in the hierarchy. Don't bury help below 5 CTAs. |
+| B01 | P0 | ~~**Inline progressive check-in on dashboard**~~ | ✅ S22 — done |
+| B02 | P0 | ~~**Score card "no data" state (neutral/gray)**~~ | ✅ S23 — `hasData` prop, gray placeholder |
+| B03 | P0 | ~~**Collapse scores before check-in**~~ | ✅ S22 — scores hidden until checkedIn |
+| B04 | P1 | ~~**Post-check-in celebration micro-moment**~~ | ✅ S23 — spring animation on completion card, staggered score reveal |
+| B05 | P1 | ~~**ConstancyDots visible on dashboard**~~ | ✅ S23 — wired below sky header with history query |
+| B06 | P1 | ~~**Time-aware first question**~~ | ✅ S23 — `getTimeAwareSteps()` reorders by hour |
+| B07 | P1 | ~~**First-visit warm welcome state**~~ | ✅ S23 — welcome card when history.length === 0 |
+| B08 | P1 | ~~**Crisis-aware layout reordering**~~ | ✅ S23 — Support CTA above missions when score < 25 |
 | B09 | P2 | **Solar Points "0" contextual tooltip** | First-time tooltip on the ☀ badge explaining what Solar Points are and how to earn them. |
-| B10 | P2 | **Team Challenge human language** | Replace "0% · 19 dias restantes" with "Desafio recém começado — 19 dias para completar juntos". |
+| B10 | P2 | ~~**Team Challenge human language**~~ | ✅ S23 — `describeChallenge()` helper |
 | B11 | P2 | **Micro-pulse OneTapMood integration** | Use existing `one-tap-mood.tsx` as optional quick signal between full check-ins. Separate data layer from check-in scores. |
 | B12 | P2 | **Reduce vertical card count** | Merge Mission CTA + Team Challenge into single "Atividades" card with 2 rows. Target ≤ 4 scrollable sections post-check-in. |
+| B13 | P0 | ~~**Panic button — always-visible FAB**~~ | ✅ S23 — fixed bottom-right ShieldAlert, 7 categories (Sobrecarga, Assédio, Reconhecimento, Saúde Mental, Liderança, Abuso, Segurança), anonymous reporting, visible on all authenticated pages |

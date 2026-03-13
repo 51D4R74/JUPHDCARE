@@ -259,3 +259,13 @@ export function getCollectiveSkyLevel(): number {
   // Map 0–100% progress to 0.2–1.0 brightness
   return 0.2 + (progressPct / 100) * 0.8;
 }
+
+/** Human-readable summary for the team challenge CTA on dashboard. */
+export function describeChallenge(progressPct: number, daysRemaining: number): string {
+  if (progressPct >= 100) return "Meta atingida! Parabéns, equipe!";
+  if (progressPct === 0) return daysRemaining + " dias para completar juntos";
+  if (progressPct < 25) return "Recém começado — " + daysRemaining + " dias restantes";
+  if (progressPct < 50) return "Bom ritmo — " + daysRemaining + " dias restantes";
+  if (progressPct < 75) return "Mais da metade! " + daysRemaining + " dias restantes";
+  return "Quase lá — " + daysRemaining + " dias para fechar!";
+}

@@ -588,3 +588,26 @@ export const CONTEXT_TAG_LABELS: Record<string, string> = {
 
 /** Flags eligible for tag cloud and discovery engine (context tags only, no system-derived flags). */
 export const CONTEXT_TAG_FLAGS: string[] = Object.keys(CONTEXT_TAG_LABELS);
+
+/**
+ * Reorder DAILY_STEPS so the first question is contextually relevant
+ * to the time of day. Remaining questions keep their relative order.
+ *
+ * Morning  (before 12h): sleep first (default order)
+ * Afternoon (12–17h):    energy first
+ * Evening  (after 17h):  day_impact first
+ */
+export function getTimeAwareSteps(hour?: number): CheckInStep[] {
+  const h = hour ?? new Date().getHours();
+
+  if (h < 12) return DAILY_STEPS; // default order starts with sleep
+
+  const leadId = h < 18 ? "energy" : "day_impact";
+  const leadIdx = DAILY_STEPS.findIndex((s) => s.id === leadId);
+  if (leadIdx <= 0) return DAILY_STEPS; // already first or not found
+
+  return [
+    DAILY_STEPS[leadIdx],
+    ...DAILY_STEPS.filter((_, i) => i !== leadIdx),
+  ];
+}
