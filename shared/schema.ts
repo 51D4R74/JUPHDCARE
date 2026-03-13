@@ -83,6 +83,18 @@ export const solarStreaks = pgTable("solar_streaks", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// ── Team challenges ───────────────────────────────
+
+export const teamChallengeContributions = pgTable("team_challenge_contributions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  challengeId: text("challenge_id").notNull(),
+  amount: integer("amount").notNull().default(1),
+  /** ISO date "YYYY-MM-DD" — workday of contribution */
+  date: text("date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // ── Insert schemas ────────────────────────────────
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -139,6 +151,13 @@ export const insertSolarPointsSchema = createInsertSchema(solarPoints).pick({
   date: true,
 });
 
+export const insertTeamChallengeContributionSchema = createInsertSchema(teamChallengeContributions).pick({
+  userId: true,
+  challengeId: true,
+  amount: true,
+  date: true,
+});
+
 // ── Type exports ──────────────────────────────────
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -156,6 +175,8 @@ export type SolarPoints = typeof solarPoints.$inferSelect;
 export type SolarStreak = typeof solarStreaks.$inferSelect;
 export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
 export type UserSettings = typeof userSettings.$inferSelect;
+export type InsertTeamChallengeContribution = z.infer<typeof insertTeamChallengeContributionSchema>;
+export type TeamChallengeContribution = typeof teamChallengeContributions.$inferSelect;
 
 /** Canonical check-in history record returned by GET /api/checkins/user/:id/history */
 export interface CheckInHistoryRecord {

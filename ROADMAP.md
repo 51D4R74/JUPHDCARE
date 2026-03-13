@@ -54,6 +54,7 @@ Two products in one: personal well-being tool (collaborator) + aggregate analyti
 | **S22 — PRD v2.0 Core** ✅ | Solar Points schema + API; IRP formula; ICE momentânea; stepped care; chatbot drawer UI; inline check-in on dashboard | Solar Points tables, 7 new endpoints, `shared/constants.ts`, chatbot drawer, inline progressive check-in |
 | **S23 — UX Backlog Sweep** ✅ | B01–B08, B10, B13 — inline check-in, score states, celebration, constancy, time-aware Q1, first-visit welcome, crisis layout, team language, panic FAB | All B-items P0/P1 closed; panic button visible on all authenticated pages |
 | **S24 — Feature Completeness** ✅ | Day boundary enforcement (04:00); k-anonymity filter on RH aggregate (n≥5); halo metrics wired to SkyHeader; OneTapMood FAB (post-check-in); confidence score on submission; B09 Solar tooltip; B11 micro-pulse; B12 merge CTA cards | `DAY_BOUNDARY_HOUR` + `ANONYMITY_THRESHOLD` active in server; `haloMetrics` prop flowing to SkyHeader; mood FAB live after check-in; `confidence` field sent on submit |
+| **S25 — Data Continuity** ✅ | Team challenge persistence (localStorage → PostgreSQL); baseline status endpoint; `/checkin` route redirect to dashboard | `teamChallengeContributions` table in schema; `GET /api/team-challenges/current` + `POST /api/team-challenges/:id/contribute`; `GET /api/users/:id/baseline-status`; `shared/challenges.ts` single source of truth; `team-challenge-engine.ts` fully async; `team-challenge.tsx` uses React Query + useMutation |
 
 ---
 
@@ -97,7 +98,7 @@ Frontend uses local stubs (localStorage + mock data) until each backend delivery
 | S4 | Missions CRUD + Solar Points ledger | Implemented: `GET/POST /api/missions/:userId/today`, missions persist server-side |
 | S6 | Support messages CRUD + basic moderation flag | Deferred: messages are curated static content (ADR-004); no server CRUD needed |
 | S8 | History aggregation queries + discovery data | Implemented: `GET /api/checkins/user/:id/history` — canonical history per user; discoveries computed client-side from server data (pure correlation, no server state needed) |
-| S10 | Team challenges + RH aggregate endpoints | Aggregate endpoint implemented; challenge persistence pending |
+| S10 | Team challenges + RH aggregate endpoints | ✅ S25 — `teamChallengeContributions` table, `GET/POST /api/team-challenges/*`, `GET /api/users/:id/baseline-status` |
 
 ---
 

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import RHAggregateCard from "@/components/rh-aggregate-card";
-import { getCurrentChallenge } from "@/lib/team-challenge-engine";
+import { fetchCurrentChallenge, buildOfflineSnapshot, type TeamChallengeSnapshot } from "@/lib/team-challenge-engine";
 
 // ── Aggregate data types (match API contract) ─────
 
@@ -115,7 +115,10 @@ export default function RHDashboardPage() {
   const { data, isPending, isError } = useQuery<RHAggregateData>({
     queryKey: ["/api/rh/aggregate"],
   });
-  const teamChallenge = getCurrentChallenge();
+  const { data: teamChallenge = buildOfflineSnapshot() } = useQuery<TeamChallengeSnapshot>({
+    queryKey: ["/api/team-challenges/current"],
+    queryFn: fetchCurrentChallenge,
+  });
 
   if (isPending) {
     return (

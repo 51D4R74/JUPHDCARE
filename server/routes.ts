@@ -6,6 +6,7 @@ import type { IStorage } from "./storage";
 import { requireAuth, requireOwner, requireRole } from "./middleware";
 import { insertCheckInSchema, insertMomentCheckInSchema, insertIncidentReportSchema, insertUserMissionSchema } from "@shared/schema";
 import { getWorkday, getWorkdayDate } from "@shared/constants";
+import { selectMonthlyChallenge, getMonthBounds } from "@shared/challenges";
 
 /** Type-safe extraction of a single route param (Express 5 returns string | string[]). */
 function param(req: Request, name: string): string {
@@ -395,6 +396,91 @@ export async function registerRoutes(
       reply: "Estou aqui para ajudar. No momento, o serviço de IA está sendo configurado. Se precisar de apoio imediato, ligue para o CVV: 188.",
       source: "fallback",
     });
+  });
+
+  // ── Team challenges ──────────────────────────────────────────────────
+
+  app.get("/api/team-challenges/current", requireAuth, async (req, res) => {
+    const template = selectMonthlyChallenge();
+    const bounds = getMonthBounds();
+    const contributions = await storage.getTeamContributionsByChallengeAndMonth(
+      template.id,
+      bounds.start,
+      bounds.end,
+    );
+    const progress = contributions.reduce((sum, c) => sum + c.amount, 0);
+
+    const userId = req.userId!;
+    const today = getWorkday(new Date());
+    const todayContribs = await storage.getUserTodayTeamContributions(userId, template.id, today);
+    const todayCount = todayContribs.reduce((sum, c) => sum + c.amount, 0);
+
+    const now = new Date();
+    const endDate = new Date(bounds.end + "T23:59:59");
+    const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / 86_400_000));
+    const progressPct = Math.min(100, Math.round((progress / template.target) * 100));
+
+    return res.json({
+      challengeId: template.id,
+      template,
+      startDate: bounds.start,
+      endDate: bounds.end,
+      progress,
+      progressPct,
+      daysRemaining,
+      todayCount,
+    });
+  });
+
+  app.post("/api/team-challenges/:challengeId/contribute", requireAuth, async (req, res) => {
+    const challengeId = param(req, "challengeId");
+    const template = selectMonthlyChallenge();
+
+    // Only accept contributions for the current month's challenge
+    if (challengeId !== template.id) {
+      return res.status(409).json({
+        accepted: false,
+        reason: "Desafio não corresponde ao mês atual",
+        newTotal: 0,
+      });
+    }
+
+    const bounds = getMonthBounds();
+    const userId = req.userId!;
+    const today = getWorkday(new Date());
+
+    // Check daily cap
+    const todayContribs = await storage.getUserTodayTeamContributions(userId, challengeId, today);
+    const todayCount = todayContribs.reduce((sum, c) => sum + c.amount, 0);
+    if (todayCount >= template.capPerPersonPerDay) {
+      const contributions = await storage.getTeamContributionsByChallengeAndMonth(challengeId, bounds.start, bounds.end);
+      const newTotal = contributions.reduce((sum, c) => sum + c.amount, 0);
+      return res.json({
+        accepted: false,
+        reason: `Limite diário atingido (${template.capPerPersonPerDay} ${template.unit}/dia)`,
+        newTotal,
+      });
+    }
+
+    // Check if target already reached
+    const currentContribs = await storage.getTeamContributionsByChallengeAndMonth(challengeId, bounds.start, bounds.end);
+    const currentProgress = currentContribs.reduce((sum, c) => sum + c.amount, 0);
+    if (currentProgress >= template.target) {
+      return res.json({ accepted: false, reason: "Meta já atingida! 🎉", newTotal: currentProgress });
+    }
+
+    await storage.createTeamContribution({ userId, challengeId, amount: 1, date: today });
+    const newTotal = currentProgress + 1;
+    return res.json({ accepted: true, newTotal });
+  });
+
+  // ── Baseline status ──────────────────────────────────────────────────
+
+  app.get("/api/users/:id/baseline-status", requireAuth, requireOwner("id"), async (req, res) => {
+    const id = param(req, "id");
+    const history = await storage.getHistoryByUserId(id, null);
+    const checkInCount = history.length;
+    return res.json({ baselineReady: checkInCount >= 15, checkInCount });
   });
 
   return httpServer;

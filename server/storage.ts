@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport, type UserMission, type InsertUserMission, type UserSettings, type CheckInHistoryRecord, type SolarPoints, type InsertSolarPoints } from "@shared/schema";
+import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport, type UserMission, type InsertUserMission, type UserSettings, type CheckInHistoryRecord, type SolarPoints, type InsertSolarPoints, type TeamChallengeContribution, type InsertTeamChallengeContribution } from "@shared/schema";
 import { ANONYMITY_THRESHOLD, getWorkdayDate } from "@shared/constants";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
@@ -268,6 +268,10 @@ export interface IStorage {
   createSolarPointEntry(entry: InsertSolarPoints): Promise<SolarPoints>;
   getSolarPointsByUserId(userId: string): Promise<SolarPoints[]>;
   deleteUserData(userId: string): Promise<void>;
+  // ── Team challenges ───────────────────────────────
+  createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution>;
+  getTeamContributionsByChallengeAndMonth(challengeId: string, startDate: string, endDate: string): Promise<TeamChallengeContribution[]>;
+  getUserTodayTeamContributions(userId: string, challengeId: string, date: string): Promise<TeamChallengeContribution[]>;
 }
 
 /** Algorithm-heavy computed methods shared across all storage backends. */
@@ -293,6 +297,9 @@ export abstract class BaseStorage implements IStorage {
   abstract createSolarPointEntry(entry: InsertSolarPoints): Promise<SolarPoints>;
   abstract getSolarPointsByUserId(userId: string): Promise<SolarPoints[]>;
   abstract deleteUserData(userId: string): Promise<void>;
+  abstract createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution>;
+  abstract getTeamContributionsByChallengeAndMonth(challengeId: string, startDate: string, endDate: string): Promise<TeamChallengeContribution[]>;
+  abstract getUserTodayTeamContributions(userId: string, challengeId: string, date: string): Promise<TeamChallengeContribution[]>;
 
   async getTodayScoresByUserId(userId: string): Promise<TodayScoresSnapshot> {
     const todayCheckIn = (await this.getCheckInsByUserIdAndDate(userId, getWorkdayDate(new Date()))).at(0);
@@ -501,6 +508,7 @@ export class MemStorage extends BaseStorage {
   private readonly userMissionsMap: Map<string, UserMission>;
   private readonly userSettingsMap: Map<string, UserSettings>;
   private readonly solarPointsMap: Map<string, SolarPoints>;
+  private readonly teamContributionsMap: Map<string, TeamChallengeContribution>;
 
   constructor() {
     super();
@@ -511,6 +519,7 @@ export class MemStorage extends BaseStorage {
     this.userMissionsMap = new Map();
     this.userSettingsMap = new Map();
     this.solarPointsMap = new Map();
+    this.teamContributionsMap = new Map();
     this.seedData();
   }
 
@@ -927,6 +936,25 @@ export class MemStorage extends BaseStorage {
       .toSorted((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
   }
 
+  async createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution> {
+    const id = randomUUID();
+    const record: TeamChallengeContribution = { ...data, id, amount: data.amount ?? 1, createdAt: new Date() };
+    this.teamContributionsMap.set(id, record);
+    return record;
+  }
+
+  async getTeamContributionsByChallengeAndMonth(challengeId: string, startDate: string, endDate: string): Promise<TeamChallengeContribution[]> {
+    return Array.from(this.teamContributionsMap.values()).filter(
+      (c) => c.challengeId === challengeId && c.date >= startDate && c.date <= endDate,
+    );
+  }
+
+  async getUserTodayTeamContributions(userId: string, challengeId: string, date: string): Promise<TeamChallengeContribution[]> {
+    return Array.from(this.teamContributionsMap.values()).filter(
+      (c) => c.userId === userId && c.challengeId === challengeId && c.date === date,
+    );
+  }
+
   async deleteUserData(userId: string): Promise<void> {
     this.users.delete(userId);
     for (const [id, c] of this.checkIns) {
@@ -945,6 +973,9 @@ export class MemStorage extends BaseStorage {
     // Incident reports with userId=null (anonymous) are not deleted
     for (const [id, r] of this.incidentReports) {
       if (r.userId === userId) this.incidentReports.delete(id);
+    }
+    for (const [id, c] of this.teamContributionsMap) {
+      if (c.userId === userId) this.teamContributionsMap.delete(id);
     }
   }
 }

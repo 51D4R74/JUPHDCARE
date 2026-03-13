@@ -20,7 +20,7 @@ import { useAuth } from "@/lib/auth";
 import { getDomainMeta, type TodayScores } from "@/lib/score-engine";
 import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
 import { POINT_VALUES } from "@/lib/mission-engine";
-import { getCurrentChallenge, describeChallenge } from "@/lib/team-challenge-engine";
+import { fetchCurrentChallenge, buildOfflineSnapshot, describeChallenge, type TeamChallengeSnapshot } from "@/lib/team-challenge-engine";
 import { getHaloMetrics } from "@/lib/solar-points";
 import { apiRequest } from "@/lib/queryClient";
 import type { UserMission, CheckInHistoryRecord } from "@shared/schema";
@@ -127,6 +127,11 @@ export default function DashboardPage() {
       fetch(`/api/checkins/user/${userId}/history?days=10`, { credentials: "include" })
         .then((r) => r.json()) as Promise<CheckInHistoryRecord[]>,
     enabled: !!userId,
+  });
+
+  const { data: teamChallenge = buildOfflineSnapshot() } = useQuery<TeamChallengeSnapshot>({
+    queryKey: ["/api/team-challenges/current"],
+    queryFn: fetchCurrentChallenge,
   });
 
   const checkedInDates = history.map((h) => h.date);
@@ -365,27 +370,22 @@ export default function DashboardPage() {
             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </button>
           <div className="mx-4 border-t border-border/30" />
-          {(() => {
-            const tc = getCurrentChallenge();
-            return (
-              <button
-                onClick={() => navigate("/team")}
-                className="w-full p-4 flex items-center gap-3 hover:bg-black/[0.02] transition-colors text-left"
-                data-testid="button-team-challenge"
-              >
-                <div className="w-10 h-10 rounded-xl bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
-                  <Trophy className="w-5 h-5 text-brand-gold-dark" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold">{tc.template.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {describeChallenge(tc.progressPct, tc.daysRemaining)}
-                  </p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-              </button>
-            );
-          })()}
+          <button
+            onClick={() => navigate("/team")}
+            className="w-full p-4 flex items-center gap-3 hover:bg-black/[0.02] transition-colors text-left"
+            data-testid="button-team-challenge"
+          >
+            <div className="w-10 h-10 rounded-xl bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
+              <Trophy className="w-5 h-5 text-brand-gold-dark" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">{teamChallenge.template.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {describeChallenge(teamChallenge.progressPct, teamChallenge.daysRemaining)}
+              </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          </button>
         </motion.section>
 
         {/* Minha Jornada CTA — M3 */}

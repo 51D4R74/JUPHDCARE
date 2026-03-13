@@ -17,12 +17,14 @@ import {
 import { Button } from "@/components/ui/button";
 import TeamProgressArc from "@/components/team-progress-arc";
 import SkyHeader from "@/components/sky-header";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  getCurrentChallenge,
-  getTodayContributionCount,
-  contribute,
+  fetchCurrentChallenge,
+  contributeToChallenge,
   getCollectiveSkyLevel,
+  buildOfflineSnapshot,
   type ChallengeCategory,
+  type TeamChallengeSnapshot,
 } from "@/lib/team-challenge-engine";
 import type { SkyState } from "@/lib/checkin-data";
 import { useToast } from "@/hooks/use-toast";
@@ -46,10 +48,7 @@ function getCollectiveSkyState(pct: number): SkyState {
   return "respiro";
 }
 
-function contributeLabel(
-  challenge: ReturnType<typeof getCurrentChallenge>,
-  canContribute: boolean,
-): string {
+function contributeLabel(challenge: TeamChallengeSnapshot, canContribute: boolean): string {
   if (challenge.progressPct >= 100) return "Meta atingida! 🎉";
   if (canContribute) return `Contribuir +1 ${challenge.template.unit.slice(0, -1) || challenge.template.unit}`;
   return `Limite diário atingido (${challenge.template.capPerPersonPerDay}×)`;
@@ -139,60 +138,56 @@ function MilestoneCelebration({
 export default function TeamChallengePage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-
-  const [tick, setTick] = useState(0);
-  const forceUpdate = () => setTick((t) => t + 1);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- tick forces re-render
-  const _tick = tick;
+  const qc = useQueryClient();
 
   const [celebrationMilestone, setCelebrationMilestone] = useState<{
     label: string;
     pct: number;
   } | null>(null);
 
-  const challenge = getCurrentChallenge();
-  const todayCount = getTodayContributionCount();
-  const canContribute = todayCount < challenge.template.capPerPersonPerDay && challenge.progressPct < 100;
-  const skyLevel = getCollectiveSkyLevel();
+  const { data: challenge = buildOfflineSnapshot() } = useQuery<TeamChallengeSnapshot>({
+    queryKey: ["/api/team-challenges/current"],
+    queryFn: fetchCurrentChallenge,
+  });
+
+  const canContribute = challenge.todayCount < challenge.template.capPerPersonPerDay && challenge.progressPct < 100;
+  const todayCount = challenge.todayCount;
+  const skyLevel = getCollectiveSkyLevel(challenge.progressPct);
   const collectiveSkyState = getCollectiveSkyState(challenge.progressPct);
 
-  // Track previously reached milestones to detect new ones
+  const prevMilestonesRef = challenge.milestones;
+
+  const contributeMutation = useMutation({
+    mutationFn: () => contributeToChallenge(challenge.challengeId),
+    onSuccess: async (result) => {
+      if (!result.accepted) {
+        toast({
+          title: "Contribuição não registrada",
+          description: result.reason,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const prevReached = new Set(prevMilestonesRef.filter((m) => m.reached).map((m) => m.pct));
+      await qc.invalidateQueries({ queryKey: ["/api/team-challenges/current"] });
+      const updated = qc.getQueryData<TeamChallengeSnapshot>(["/api/team-challenges/current"]);
+      const newMilestone = updated?.milestones.find((m) => m.reached && !prevReached.has(m.pct));
+
+      if (newMilestone) {
+        setCelebrationMilestone({ label: newMilestone.label, pct: newMilestone.pct });
+      } else {
+        toast({
+          title: "Contribuição registrada!",
+          description: `+1 ${challenge.template.unit}. Total: ${result.newTotal}/${challenge.template.target}`,
+        });
+      }
+    },
+  });
+
   const handleContribute = useCallback(() => {
-    const prevMilestones = new Set(
-      challenge.milestones
-        .filter((m) => m.reached)
-        .map((m) => m.pct),
-    );
-
-    const result = contribute();
-
-    if (!result.accepted) {
-      toast({
-        title: "Contribuição não registrada",
-        description: result.reason,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    forceUpdate();
-
-    // Check for new milestone crossed
-    const updated = getCurrentChallenge();
-    const newMilestone = updated.milestones.find(
-      (m) => m.reached && !prevMilestones.has(m.pct),
-    );
-
-    if (newMilestone) {
-      setCelebrationMilestone({ label: newMilestone.label, pct: newMilestone.pct });
-    } else {
-      toast({
-        title: "Contribuição registrada!",
-        description: `+1 ${challenge.template.unit}. Total: ${result.newTotal}/${challenge.template.target}`,
-      });
-    }
-  }, [challenge, toast]);
+    contributeMutation.mutate();
+  }, [contributeMutation]);
 
   return (
     <div className="min-h-screen gradient-sunrise">
@@ -303,7 +298,7 @@ export default function TeamChallengePage() {
         >
           <Button
             onClick={handleContribute}
-            disabled={!canContribute}
+            disabled={!canContribute || contributeMutation.isPending}
             className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base rounded-2xl border-0 glow-amber relative overflow-hidden group disabled:opacity-50"
             data-testid="button-contribute"
           >

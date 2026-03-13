@@ -8,6 +8,7 @@ import {
   userSettings,
   solarPoints,
   solarStreaks,
+  teamChallengeContributions,
 } from "@shared/schema";
 import type {
   User,
@@ -23,6 +24,8 @@ import type {
   UserSettings,
   SolarPoints,
   InsertSolarPoints,
+  TeamChallengeContribution,
+  InsertTeamChallengeContribution,
 } from "@shared/schema";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
@@ -244,6 +247,42 @@ export class DrizzleStorage extends BaseStorage {
       .orderBy(desc(solarPoints.createdAt));
   }
 
+  async createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution> {
+    const rows = await getDb()
+      .insert(teamChallengeContributions)
+      .values({ id: randomUUID(), ...data, createdAt: new Date() })
+      .returning();
+    const record = rows.at(0);
+    if (!record) throw new Error("Falha ao registrar contribuição");
+    return record;
+  }
+
+  async getTeamContributionsByChallengeAndMonth(challengeId: string, startDate: string, endDate: string): Promise<TeamChallengeContribution[]> {
+    return getDb()
+      .select()
+      .from(teamChallengeContributions)
+      .where(
+        and(
+          eq(teamChallengeContributions.challengeId, challengeId),
+          gte(teamChallengeContributions.date, startDate),
+          lte(teamChallengeContributions.date, endDate),
+        ),
+      );
+  }
+
+  async getUserTodayTeamContributions(userId: string, challengeId: string, date: string): Promise<TeamChallengeContribution[]> {
+    return getDb()
+      .select()
+      .from(teamChallengeContributions)
+      .where(
+        and(
+          eq(teamChallengeContributions.userId, userId),
+          eq(teamChallengeContributions.challengeId, challengeId),
+          eq(teamChallengeContributions.date, date),
+        ),
+      );
+  }
+
   async deleteUserData(userId: string): Promise<void> {
     const db = getDb();
     await db.delete(checkIns).where(eq(checkIns.userId, userId));
@@ -252,6 +291,7 @@ export class DrizzleStorage extends BaseStorage {
     await db.delete(solarPoints).where(eq(solarPoints.userId, userId));
     await db.delete(solarStreaks).where(eq(solarStreaks.userId, userId));
     await db.delete(userSettings).where(eq(userSettings.userId, userId));
+    await db.delete(teamChallengeContributions).where(eq(teamChallengeContributions.userId, userId));
     await db.delete(users).where(eq(users.id, userId));
   }
 }
