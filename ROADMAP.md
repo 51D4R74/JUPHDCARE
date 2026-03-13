@@ -121,3 +121,24 @@ Frontend uses local stubs (localStorage + mock data) until each backend delivery
 | ADR-002 | Sky state and Solar Halo as independent visual layers | Accepted |
 | ADR-003 | Client-side score engine with localStorage until backend ready | Accepted |
 | ADR-004 | Curated message library before community moderation | Accepted |
+
+---
+
+## UX / Dashboard Backlog
+
+Priority tiers: **P0** = blocks engagement, **P1** = high impact, **P2** = polish.
+
+| # | Priority | Item | Notes |
+| --- | --- | --- | --- |
+| B01 | P0 | **Inline progressive check-in on dashboard** | Check-in happens IN the dashboard (Q1→Q6 sliding), no navigation. Dashboard = pre-check-in state → in-progress state → post-check-in state. Eliminates friction entirely. Scoring model stays intact (all 6 Qs required). |
+| B02 | P0 | **Score card "no data" state (neutral/gray)** | Score 0 + no check-in must show gray/muted placeholder ("Complete o check-in para ver"), never red "Cuidado". Distinguish "no data" from "bad data". |
+| B03 | P0 | **Collapse scores before check-in** | Pre-check-in dashboard should show 1 inviting CTA, not 3 red zeroes. Scores only expand after check-in is complete. |
+| B04 | P1 | **Post-check-in celebration micro-moment** | After Q6 → scores animate from 0→N, sky transitions, brief particle/confetti burst. Gratification feedback loop. |
+| B05 | P1 | **ConstancyDots visible on dashboard** | Show 10-day dots (sun/cloud) below sky header or above check-in card. Best positive reinforcement available. |
+| B06 | P1 | **Time-aware first question** | Q1 adapts to time of day: morning → "Como você acordou?", afternoon → "Como está sua energia agora?", evening → "Como o dia te deixou?". Prevents irrelevant questions. |
+| B07 | P1 | **First-visit warm welcome state** | New users (0 check-ins) see a dedicated welcome card instead of empty scores: "Seu dia começa aqui. Um check-in de 2 minutos revela seu mapa de cuidado." |
+| B08 | P1 | **Crisis-aware layout reordering** | If score < 25 in any domain, promote Support card above missions/team in the hierarchy. Don't bury help below 5 CTAs. |
+| B09 | P2 | **Solar Points "0" contextual tooltip** | First-time tooltip on the ☀ badge explaining what Solar Points are and how to earn them. |
+| B10 | P2 | **Team Challenge human language** | Replace "0% · 19 dias restantes" with "Desafio recém começado — 19 dias para completar juntos". |
+| B11 | P2 | **Micro-pulse OneTapMood integration** | Use existing `one-tap-mood.tsx` as optional quick signal between full check-ins. Separate data layer from check-in scores. |
+| B12 | P2 | **Reduce vertical card count** | Merge Mission CTA + Team Challenge into single "Atividades" card with 2 rows. Target ≤ 4 scrollable sections post-check-in. |

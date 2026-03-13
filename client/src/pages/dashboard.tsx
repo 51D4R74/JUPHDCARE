@@ -1,18 +1,18 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sun, ChevronRight, Sparkles, Activity, Shield, Target, Lightbulb,
-  Heart, Trophy, Settings,
+  Sun, ChevronRight, Activity, Shield, Target, Lightbulb,
+  Heart, Trophy, Settings, CheckCircle2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import AnimatedBrandLogo from "@/components/animated-brand-logo";
 import SkyHeader from "@/components/sky-header";
 import ScoreCard, { type ScoreContributor } from "@/components/score-card";
 import SolarPointsBadge from "@/components/solar-points-badge";
 import NotificationBadge from "@/components/notification-badge";
 import NotificationDrawer from "@/components/notification-drawer";
+import InlineCheckin from "@/components/inline-checkin";
 import { useAuth } from "@/lib/auth";
 import { getDomainMeta, type TodayScores } from "@/lib/score-engine";
 import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
@@ -83,6 +83,8 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Track local completion to show celebration immediately (before server refetch)
+  const [justCompleted, setJustCompleted] = useState(false);
 
   const { data: scores = EMPTY_SCORES } = useQuery<TodayScores>({
     queryKey: ["/api/scores/user", userId, "today"],
@@ -95,8 +97,14 @@ export default function DashboardPage() {
     enabled: !!userId,
   });
 
+  const checkedIn = scores.hasCheckedIn || justCompleted;
+
   const missionPointsToday = todayMissions.reduce((sum, m) => sum + m.pointsEarned, 0);
-  const solarPoints = (scores.hasCheckedIn ? POINT_VALUES.checkin : 0) + missionPointsToday;
+  const solarPoints = (checkedIn ? POINT_VALUES.checkin : 0) + missionPointsToday;
+
+  const handleCheckinComplete = useCallback(() => {
+    setJustCompleted(true);
+  }, []);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -143,7 +151,7 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       <main className="relative z-10 max-w-lg mx-auto px-4 pb-24">
-        {/* Sky visualization */}
+        {/* Sky visualization — compact when check-in pending, hero when done */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -153,66 +161,82 @@ export default function DashboardPage() {
           <SkyHeader
             skyState={scores.skyState}
             solarHaloLevel={scores.solarHaloLevel}
-            size="hero"
+            size={checkedIn ? "hero" : "compact"}
           />
           <p className="text-center text-sm text-muted-foreground mt-2">
             {greeting()}, {firstName}!
           </p>
         </motion.section>
 
-        {/* Check-in CTA */}
+        {/* Inline check-in OR post-check-in completion card */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="mt-4"
         >
-          <Button
-            onClick={() => navigate("/checkin")}
-            className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-base rounded-2xl border-0 glow-amber relative overflow-hidden group"
-            data-testid="button-checkin"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-            <Sparkles className="w-5 h-5 mr-3 text-accent" />
-            {scores.hasCheckedIn ? "Check-in realizado ✓" : "Fazer check-in diário"}
-            <ChevronRight className="w-5 h-5 ml-3" />
-          </Button>
-        </motion.section>
-
-        {/* Score cards */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-5 space-y-3"
-        >
-          {domains.map((d) => (
-            <ScoreCard
-              key={d.id}
-              domainId={d.id}
-              title={d.label}
-              description={d.description}
-              score={scores.domainScores[d.id] ?? 0}
-              contributors={buildContributors(d.id, scores)}
+          {checkedIn ? (
+            <div className="glass-card rounded-2xl p-4 flex items-center gap-3 border-score-good/20">
+              <div className="w-10 h-10 rounded-xl bg-score-good/10 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-5 h-5 text-score-good" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Check-in completo</p>
+                <p className="text-xs text-muted-foreground">
+                  Seus scores estão atualizados para hoje.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <InlineCheckin
+              userId={userId}
+              onComplete={handleCheckinComplete}
+              onNavigateProtection={() => navigate("/protecao")}
             />
-          ))}
+          )}
         </motion.section>
 
-        {/* Insight do dia */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mt-5 glass-card rounded-2xl p-4"
-        >
-          <h3 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
-            <Lightbulb className="w-3.5 h-3.5 text-accent" />
-            Insight do dia
-          </h3>
-          <p className="text-sm text-foreground leading-relaxed">
-            {getDailyInsight(scores)}
-          </p>
-        </motion.section>
+        {/* Score cards — only visible after check-in */}
+        <AnimatePresence>
+          {checkedIn && (
+            <motion.section
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ delay: 0.3 }}
+              className="mt-5 space-y-3"
+            >
+              {domains.map((d) => (
+                <ScoreCard
+                  key={d.id}
+                  domainId={d.id}
+                  title={d.label}
+                  description={d.description}
+                  score={scores.domainScores[d.id] ?? 0}
+                  contributors={buildContributors(d.id, scores)}
+                />
+              ))}
+            </motion.section>
+          )}
+        </AnimatePresence>
+
+        {/* Insight do dia — only after check-in */}
+        {checkedIn && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-5 glass-card rounded-2xl p-4"
+          >
+            <h3 className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Lightbulb className="w-3.5 h-3.5 text-accent" />
+              Insight do dia
+            </h3>
+            <p className="text-sm text-foreground leading-relaxed">
+              {getDailyInsight(scores)}
+            </p>
+          </motion.section>
+        )}
 
         {/* Mission CTA */}
         <motion.section
