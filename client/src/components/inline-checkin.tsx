@@ -92,20 +92,20 @@ function InlineGridCard({
     <motion.button
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
-      className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl transition-all border aspect-square p-3 ${
+      className={`relative flex flex-col items-center justify-center gap-1.5 rounded-2xl transition-all border py-4 px-2 ${
         selected
           ? "border-primary/40 bg-primary/8"
           : "glass-card hover:border-black/5"
       }`}
     >
       <div
-        className={`w-12 h-12 rounded-xl bg-gradient-to-br ${option.bgColor} ring-1 ring-black/5 flex items-center justify-center`}
+        className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${option.bgColor} ring-1 ring-black/5 flex items-center justify-center`}
       >
-        <Icon className={`w-6 h-6 ${option.color}`} />
+        <Icon className={`w-7 h-7 ${option.color}`} />
       </div>
       <span
-        className={`text-xs leading-tight text-center ${
-          selected ? "font-semibold text-foreground" : "text-muted-foreground"
+        className={`text-[11px] leading-tight text-center font-medium ${
+          selected ? "text-foreground" : "text-muted-foreground"
         }`}
       >
         {option.label}
