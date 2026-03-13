@@ -24,6 +24,16 @@
     "endday",
     "sublabel",
     "testid",
+    "chatbot",
+    "recarga",
+    "respiro", "Respiro",
+    "solares",
+    "halo",
+    "hlb", "HLB",
+    "IRP",
+    "CVV",
+    "momentanea",
+    "escalacao",
 
     // Product feature names (intentional compound words)
     "microcheck", "microchecks", "Microcheck", "Microchecks",

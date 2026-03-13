@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import AnimatedBrandLogo from "@/components/animated-brand-logo";
+import ChatbotDrawer from "@/components/chatbot-drawer";
 import SkyHeader from "@/components/sky-header";
 import ScoreCard, { type ScoreContributor } from "@/components/score-card";
 import SolarPointsBadge from "@/components/solar-points-badge";
@@ -443,6 +444,9 @@ export default function DashboardPage() {
           </button>
         </div>
       </nav>
+
+      {/* Chatbot floating button + drawer */}
+      <ChatbotDrawer userId={userId} />
     </div>
   );
 }
