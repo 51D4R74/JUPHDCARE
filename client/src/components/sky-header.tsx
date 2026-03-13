@@ -137,37 +137,47 @@ function CloudCircles({ circles, fill }: Readonly<{ circles: readonly CloudCircl
  * SVG viewBox is always 0 0 360 128.  With preserveAspectRatio="xMidYMid slice"
  * the compact container (h-14 ≈ 56 px) shows the top 56 viewBox units, so
  * compact clouds must live in y ≤ 50.
+ *
+ * SIZING RULE: circle radius must be ≥ 3× the filter σ so the shape survives
+ * the blur step and the feColorMatrix threshold has visible mass to cut into.
  */
 const CLOUD_LAYOUTS = {
   hero: {
-    sunCX: 180, sunCY: 40, sunR: 18,
+    sunCX: 180, sunCY: 38, sunR: 18,
+    // Back cloud: left cluster, large circles → σ=5 → threshold(soft) → re-blur
     back: [
-      { cx: 78,  cy: 76, r: 20 }, { cx: 104, cy: 70, r: 17 },
-      { cx: 58,  cy: 80, r: 14 }, { cx: 124, cy: 76, r: 14 },
-      { cx: 46,  cy: 76, r: 10 },
+      { cx: 70,  cy: 80, r: 32 }, { cx: 106, cy: 73, r: 28 },
+      { cx: 44,  cy: 85, r: 22 }, { cx: 132, cy: 80, r: 22 },
+      { cx: 26,  cy: 82, r: 16 },
     ],
+    // Mid cloud: right cluster
     mid: [
-      { cx: 258, cy: 62, r: 18 }, { cx: 282, cy: 56, r: 16 },
-      { cx: 240, cy: 66, r: 12 }, { cx: 300, cy: 64, r: 13 },
+      { cx: 264, cy: 66, r: 26 }, { cx: 294, cy: 58, r: 24 },
+      { cx: 242, cy: 72, r: 18 }, { cx: 316, cy: 66, r: 18 },
+      { cx: 226, cy: 76, r: 13 },
     ],
+    // Fore cloud: bottom-center, overlapping sun axis
     fore: [
-      { cx: 158, cy: 100, r: 16 }, { cx: 180, cy: 94,  r: 18 },
-      { cx: 140, cy: 104, r: 11 }, { cx: 198, cy: 102, r: 13 },
+      { cx: 162, cy: 102, r: 24 }, { cx: 188, cy: 95,  r: 26 },
+      { cx: 138, cy: 108, r: 17 }, { cx: 210, cy: 103, r: 18 },
+      { cx: 122, cy: 110, r: 12 },
     ],
   },
   compact: {
-    sunCX: 180, sunCY: 22, sunR: 10,
+    sunCX: 180, sunCY: 20, sunR: 10,
+    // Compact: all clouds must stay in y ≤ 50 to be visible in the sliced viewport
     back: [
-      { cx: 70,  cy: 31, r: 11 }, { cx: 88,  cy: 26, r: 10 },
-      { cx: 56,  cy: 34, r: 8  }, { cx: 104, cy: 31, r: 8  },
+      { cx: 68,  cy: 34, r: 17 }, { cx: 90,  cy: 28, r: 15 },
+      { cx: 50,  cy: 38, r: 11 }, { cx: 108, cy: 34, r: 11 },
+      { cx: 36,  cy: 36, r: 9  },
     ],
     mid: [
-      { cx: 262, cy: 24, r: 10 }, { cx: 280, cy: 19, r: 9 },
-      { cx: 247, cy: 28, r: 7  }, { cx: 294, cy: 27, r: 8 },
+      { cx: 264, cy: 28, r: 14 }, { cx: 284, cy: 22, r: 13 },
+      { cx: 248, cy: 32, r: 10 }, { cx: 300, cy: 28, r: 10 },
     ],
     fore: [
-      { cx: 156, cy: 42, r: 9 }, { cx: 174, cy: 38, r: 10 },
-      { cx: 141, cy: 45, r: 6 }, { cx: 188, cy: 44, r: 7  },
+      { cx: 158, cy: 44, r: 13 }, { cx: 178, cy: 39, r: 14 },
+      { cx: 140, cy: 47, r: 9  }, { cx: 194, cy: 44, r: 10 },
     ],
   },
 } as const;
@@ -234,29 +244,52 @@ export default function SkyHeader({
               <feGaussianBlur stdDeviation="10" />
             </filter>
 
-            {/* Background cloud: pure atmospheric haze (σ=11) */}
-            <filter id={`fb-${uid}`} x="-30%" y="-40%" width="160%" height="180%">
-              <feGaussianBlur stdDeviation="11" />
-            </filter>
-
-            {/* Mid cloud: moderate blur, circles merge softly (σ=7) */}
-            <filter id={`fm-${uid}`} x="-20%" y="-30%" width="140%" height="160%">
-              <feGaussianBlur stdDeviation="7" />
+            {/*
+             * All three cloud layers share the same pipeline:
+             *   blur → feColorMatrix alpha-threshold → re-soften
+             * This preserves an organic silhouette while smoothing the cut edge.
+             * feColorMatrix: A_out = N·A − k  (threshold at A > k/N)
+             *
+             * SIZING RULE kept here too: σ is intentionally small (3–5) so the
+             * blurred mass retains visible density before the threshold step.
+             *
+             * Back cloud: σ=5, soft threshold (10·A − 3), re-blur σ=2.5
+             */}
+            <filter id={`fb-${uid}`} x="-28%" y="-38%" width="156%" height="176%">
+              <feGaussianBlur stdDeviation="5" result="b" />
+              <feColorMatrix
+                in="b" type="matrix"
+                values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 10 -3"
+                result="t"
+              />
+              <feGaussianBlur in="t" stdDeviation="2.5" />
             </filter>
 
             {/*
-             * Foreground cloud: blur → alpha threshold (organic silhouette)
-             * → light re-blur (softened edge).
-             * feColorMatrix row 3: A_out = 20·A − 8  →  threshold at A > 0.4
+             * Mid cloud: σ=4, medium threshold (14·A − 5), re-blur σ=1.8
              */}
-            <filter id={`ff-${uid}`} x="-16%" y="-28%" width="132%" height="156%">
-              <feGaussianBlur stdDeviation="4.5" result="b" />
+            <filter id={`fm-${uid}`} x="-22%" y="-32%" width="144%" height="164%">
+              <feGaussianBlur stdDeviation="4" result="b" />
               <feColorMatrix
                 in="b" type="matrix"
-                values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8"
+                values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 14 -5"
                 result="t"
               />
-              <feGaussianBlur in="t" stdDeviation="1.2" />
+              <feGaussianBlur in="t" stdDeviation="1.8" />
+            </filter>
+
+            {/*
+             * Foreground cloud: σ=3.5, sharp threshold (18·A − 7), re-blur σ=1.0
+             * Produces the crispest silhouette — this is the dominant cloud layer.
+             */}
+            <filter id={`ff-${uid}`} x="-18%" y="-30%" width="136%" height="160%">
+              <feGaussianBlur stdDeviation="3.5" result="b" />
+              <feColorMatrix
+                in="b" type="matrix"
+                values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
+                result="t"
+              />
+              <feGaussianBlur in="t" stdDeviation="1.0" />
             </filter>
           </defs>
 
@@ -304,7 +337,7 @@ export default function SkyHeader({
           {/* ── Background cloud — distant atmospheric haze ── */}
           <motion.g
             filter={`url(#fb-${uid})`}
-            style={{ opacity: config.cloudOpacity * 0.44 }}
+            style={{ opacity: config.cloudOpacity * 0.65 }}
             animate={{ x: [0, 14, 0], y: [0, 3, 0] }}
             transition={{ duration: 15 * tempoScale, repeat: Infinity, ease: "easeInOut" }}
           >
@@ -314,7 +347,7 @@ export default function SkyHeader({
           {/* ── Mid cloud — soft volume ── */}
           <motion.g
             filter={`url(#fm-${uid})`}
-            style={{ opacity: config.cloudOpacity * 0.72 }}
+            style={{ opacity: config.cloudOpacity * 0.80 }}
             animate={{ x: [0, -9, 0], y: [0, -2, 0] }}
             transition={{ duration: 10 * tempoScale, repeat: Infinity, ease: "easeInOut", delay: 1.4 }}
           >
@@ -324,7 +357,7 @@ export default function SkyHeader({
           {/* ── Foreground cloud — organic silhouette ── */}
           <motion.g
             filter={`url(#ff-${uid})`}
-            style={{ opacity: config.cloudOpacity * 0.88 }}
+            style={{ opacity: config.cloudOpacity * 0.92 }}
             animate={{ x: [0, 6, 0], y: [0, 1.5, 0] }}
             transition={{ duration: 8 * tempoScale, repeat: Infinity, ease: "easeInOut", delay: 2.7 }}
           >
