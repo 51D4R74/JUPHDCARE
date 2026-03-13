@@ -5,7 +5,7 @@
  * Individual contributions are private — only aggregate total is visible.
  * Per-person daily cap prevents gaming.
  *
- * DEBT: replace localStorage stub with API integration when backend ready [M5]
+ * BACKLOG: replace localStorage stub with API integration when backend ready [future milestone]
  *   Server endpoints: GET /api/team-challenges/:teamId/current
  *                     POST /api/team-challenges/:id/contribute
  */

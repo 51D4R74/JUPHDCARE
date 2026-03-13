@@ -53,6 +53,13 @@ export function getDomainMeta() {
   return SCORE_DOMAINS;
 }
 
+/** Chart color per score domain — single source of truth. */
+export const DOMAIN_COLORS: Record<ScoreDomainId, string> = {
+  recarga: "hsl(142 71% 45%)",              // score-good
+  "estado-do-dia": "hsl(44 90% 51%)",        // brand-gold
+  "seguranca-relacional": "hsl(187 62% 44%)", // brand-teal
+};
+
 // ── M3 helpers ────────────────────────────────────
 
 export interface TagCount {

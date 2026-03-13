@@ -171,7 +171,7 @@ export default function RHDashboardPage() {
             </button>
             <span className="text-sm text-muted-foreground">{user?.name}</span>
             <button
-              onClick={() => { logout(); navigate("/"); }}
+              onClick={() => { void logout(); navigate("/"); }}
               className="p-2 rounded-lg hover:bg-black/5 transition-colors text-muted-foreground"
               data-testid="button-rh-logout"
             >

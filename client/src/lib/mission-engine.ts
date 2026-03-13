@@ -7,7 +7,7 @@
  *   3. Time of day (morning vs afternoon mix)
  *   4. Recency bias (avoid repeating yesterday's missions)
  *
- * DEBT: calibrate weights with engagement data [post-pilot]
+ * BACKLOG: calibrate weights with engagement data [post-pilot]
  */
 
 import type { LucideIcon } from "lucide-react";

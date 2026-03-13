@@ -4,7 +4,7 @@
  * 40+ messages across 4 categories: calma, coragem, acolhimento, leveza.
  * Tags link messages to specific risk flags from checkin-data.
  *
- * DEBT: moderation pipeline needed before enabling community messages
+ * BACKLOG: moderation pipeline needed before enabling community messages [future milestone]
  */
 
 export type SupportCategory = "calma" | "coragem" | "acolhimento" | "leveza";

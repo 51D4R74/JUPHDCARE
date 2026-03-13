@@ -18,20 +18,14 @@ import { useQuery } from "@tanstack/react-query";
 import ConstancyDots from "@/components/constancy-dots";
 import InsightCard from "@/components/insight-card";
 import SupportMessageCard from "@/components/support-message-card";
-import { computeTagCloud, type TagCount } from "@/lib/score-engine";
+import { computeTagCloud, DOMAIN_COLORS, type TagCount } from "@/lib/score-engine";
 import { computeDiscoveries, daysUntilDiscovery, DISCOVERY_MIN_RECORDS } from "@/lib/discovery-engine";
 import { getFavoriteMessages, toggleFavorite, isFavorite } from "@/lib/support-engine";
 import { useAuth } from "@/lib/auth";
 import type { ScoreDomainId } from "@/lib/checkin-data";
 import type { CheckInHistoryRecord } from "@shared/schema";
 
-// ── Chart config ──────────────────────────────────
-
-const DOMAIN_COLORS: Record<ScoreDomainId, string> = {
-  recarga: "hsl(142 71% 45%)",            // score-good
-  "estado-do-dia": "hsl(44 90% 51%)",      // brand-gold
-  "seguranca-relacional": "hsl(187 62% 44%)", // brand-teal
-};
+// ── Chart config ────────────────────────────────────────────
 
 const DOMAIN_LABELS: Record<ScoreDomainId, string> = {
   recarga: "Recarga",

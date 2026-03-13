@@ -336,7 +336,7 @@ export default function SupportCenterPage() {
                               });
                               return;
                             }
-                            // DEBT: POST /api/support-messages — requires moderation pipeline [M5]
+                            // BACKLOG: POST /api/support-messages — requires moderation pipeline [future milestone]
                             setAuthorSubmitted(true);
                             toast({
                               title: "Mensagem enviada",

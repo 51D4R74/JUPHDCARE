@@ -7,22 +7,23 @@ applyTo: "server/**,client/src/lib/auth.ts,shared/schema.ts"
 
 ## Current auth model
 
-**WARNING**: The current auth has known critical gaps tracked as debt.
-
 - Login: `POST /api/auth/login` compares with `bcrypt.compare`. Passwords hashed on registration.
-- Session: client-side only via `localStorage`. No server session or JWT.
-- Roles: `collaborator`, `rh`. Checked client-side in `ProtectedRoute`.
-- No server-side auth middleware on API routes. // DEBT: add Express middleware [S19]
+- Session: `express-session` with httpOnly, sameSite=lax cookies. `SESSION_SECRET` env var in production.
+- Session validation: `GET /api/auth/me` — client validates on mount via `validateSession()`.
+- Logout: `POST /api/auth/logout` destroys server session + clears client localStorage.
+- Roles: `collaborator`, `rh`. Enforced server-side via `requireRole()` middleware.
+- All user-specific routes protected by `requireAuth` + `requireOwner` (or `requireRole("rh")` for admin routes).
+- Rate limiting: `express-rate-limit` on auth endpoints (20 attempts / 15 min window).
 
 ## Known vulnerabilities (tracked debt)
 
 | Issue | Severity | Location |
 |---|---|---|
 | ~~Plaintext password storage/comparison~~ | ~~CRITICAL~~ | Resolved — bcrypt hashing in `storage.ts` + `routes.ts` |
-| No server-side auth on API routes | CRITICAL | `server/routes.ts` |
-| No rate limiting on login | HIGH | `server/routes.ts` |
-| Client-side only access control | HIGH | `client/src/lib/auth.ts` |
-| No CSRF protection | MEDIUM | `server/index.ts` |
+| ~~No server-side auth on API routes~~ | ~~CRITICAL~~ | Resolved S19 — `requireAuth` + `requireOwner` middleware in `server/middleware.ts` |
+| ~~No rate limiting on login~~ | ~~HIGH~~ | Resolved S19 — `express-rate-limit` on `/api/auth/*` |
+| ~~Client-side only access control~~ | ~~HIGH~~ | Resolved S19 — server session + middleware; client `ProtectedRoute` is UX layer only |
+| No CSRF protection | MEDIUM | SameSite=lax cookie + JSON-only API mitigates; explicit token deferred |
 | Hardcoded passwords in seed data | LOW | `server/storage.ts` |
 
 ## Input validation

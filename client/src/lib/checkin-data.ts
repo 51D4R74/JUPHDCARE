@@ -531,7 +531,7 @@ export function computeDomainScores(
       const val = answers[qId];
       if (step && val) raw += resolveQuestionScore(step, val);
     }
-    // DEBT: calibrate weights with clinical input
+    // BACKLOG: calibrate weights with clinical input [post-pilot]
     result[domain.id] = Math.round((raw / domain.maxRaw) * 100);
   }
 

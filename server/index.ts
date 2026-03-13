@@ -1,4 +1,6 @@
+import crypto from "node:crypto";
 import express, { type Request, Response, NextFunction } from "express";
+import session from "express-session";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "node:http";
@@ -25,6 +27,24 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+
+const isProd = process.env.NODE_ENV === "production";
+const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
+
+app.use(
+  session({
+    secret: sessionSecret,
+    name: "juphd.sid",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    },
+  }),
+);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -65,9 +85,14 @@ app.use((req, res, next) => {
 
 await registerRoutes(httpServer, app, storage);
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+  app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
+    let status = 500;
+    if (typeof err === "object" && err !== null) {
+      const obj = err as Record<string, unknown>;
+      if (typeof obj.status === "number") status = obj.status;
+      else if (typeof obj.statusCode === "number") status = obj.statusCode;
+    }
+    const message = err instanceof Error ? err.message : "Erro interno do servidor";
 
     console.error("Internal Server Error:", err);
 

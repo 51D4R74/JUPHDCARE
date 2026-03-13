@@ -90,6 +90,8 @@
 
     // Storage / database terms
     "upsert", "Upsert",
+    "resave",
+    "dedup",
 
     // cSpell itself
     "streetsidesoftware"

@@ -17,24 +17,18 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import ConstancyDots from "@/components/constancy-dots";
 import InsightCard from "@/components/insight-card";
-import { computeTagCloud } from "@/lib/score-engine";
+import { computeTagCloud, DOMAIN_COLORS } from "@/lib/score-engine";
 import { computeDiscoveries } from "@/lib/discovery-engine";
 import { POINT_VALUES } from "@/lib/mission-engine";
 import { useAuth } from "@/lib/auth";
 import type { ScoreDomainId } from "@/lib/checkin-data";
 import type { CheckInHistoryRecord, UserMission } from "@shared/schema";
 
-// ── Constants ─────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────
 
 type ReportPeriod = "week" | "month";
 
 const PERIOD_DAYS: Record<ReportPeriod, number> = { week: 7, month: 30 };
-
-const DOMAIN_COLORS: Record<ScoreDomainId, string> = {
-  recarga: "hsl(142 71% 45%)",
-  "estado-do-dia": "hsl(44 90% 51%)",
-  "seguranca-relacional": "hsl(187 62% 44%)",
-};
 
 const DOMAIN_LABELS: Record<ScoreDomainId, string> = {
   recarga: "Recarga",
@@ -418,7 +412,7 @@ export default function ReportPage() {
         )}
 
         {/* ── Share placeholder (T9) ── */}
-        {/* DEBT: enable when backend supports encrypted report sharing [M5] */}
+        {/* BACKLOG: enable when backend supports encrypted report sharing [future milestone] */}
         <motion.section
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}

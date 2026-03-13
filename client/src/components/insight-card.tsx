@@ -46,9 +46,9 @@ export default function InsightCard({ discovery, className = "" }: InsightCardPr
         {/* Direction indicator */}
         <div className={`w-9 h-9 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
           {discovery.direction === "up" ? (
-            <TrendingUp className={`w-4 h-4 ${colors.text}`} />
+            <TrendingUp className={`w-4 h-4 ${colors.text}`} aria-label="Tendência de alta" />
           ) : (
-            <TrendingDown className={`w-4 h-4 ${colors.text}`} />
+            <TrendingDown className={`w-4 h-4 ${colors.text}`} aria-label="Tendência de baixa" />
           )}
         </div>
 

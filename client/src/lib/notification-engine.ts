@@ -7,7 +7,7 @@
  * - No sensitive content in previews
  * - User can disable each type independently
  *
- * DEBT: replace with server-push when WebSocket layer is ready [future]
+ * BACKLOG: replace with server-push when WebSocket layer is ready [future milestone]
  */
 
 // ── Types ─────────────────────────────────────────

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -105,6 +105,16 @@ function Router() {
 }
 
 function App() {
+  const { isAuthenticated, validateSession } = useAuth();
+
+  // On mount, validate localStorage user against server session.
+  // Clears stale client state if session expired.
+  useEffect(() => {
+    if (isAuthenticated) {
+      void validateSession();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

@@ -100,8 +100,9 @@ export default function LoginPage() {
       setUser(user);
       toast({ title: "Conta criada!", description: `Bem-vinda, ${user.name}!` });
       navigate("/dashboard");
-    } catch (err: any) {
-      const msg = err.message?.includes("409") ? "Este email já está cadastrado." : "Não foi possível criar a conta. Tente novamente.";
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "";
+      const msg = errMsg.includes("409") ? "Este email já está cadastrado." : "Não foi possível criar a conta. Tente novamente.";
       toast({ title: "Erro", description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);

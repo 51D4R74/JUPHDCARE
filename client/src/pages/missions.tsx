@@ -131,7 +131,7 @@ export default function MissionCenterPage() {
 
   const handleMicrocheckRespond = useCallback(
     (mood: MicroMoodId, _context?: string) => {
-      // DEBT: POST /api/microchecks when micro-mood API exists [M3]
+      // BACKLOG: POST /api/microchecks — server microcheck API [future milestone]
       setMicrocheckCount((c) => c + 1);
       if (mood === "need-support") {
         recordNeedSupport();

@@ -298,7 +298,6 @@ export default function ProtecaoPage() {
                   className="w-2 h-2 bg-score-critical rounded-full"
                 />
               </div>
-              <p className="text-xs text-muted-foreground mb-4">(Simulação — em produção, conectaria ao conselheiro real)</p>
               <Button
                 onClick={() => setShowCrisis(false)}
                 variant="outline"

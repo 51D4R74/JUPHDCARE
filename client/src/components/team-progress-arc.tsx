@@ -41,7 +41,7 @@ export default function TeamProgressArc({
 
   return (
     <div className={`relative inline-flex items-center justify-center ${className ?? ""}`}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-label={`Progresso do desafio: ${Math.min(progressPct, 100)}%`}>
         {/* Track ring */}
         <circle
           cx={center}

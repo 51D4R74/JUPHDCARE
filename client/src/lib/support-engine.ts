@@ -9,7 +9,7 @@
  *
  * Support messages are static curated content — intentionally client-side.
  * Favorites persist in localStorage.
- * DEBT: server-side favorites when user-profile API exists [M4]
+ * BACKLOG: server-side favorites when user-profile API exists [future milestone]
  */
 
 import type { SkyState } from "@/lib/checkin-data";

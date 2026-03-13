@@ -329,7 +329,7 @@ export default function SettingsPage() {
         >
           <Button
             variant="outline"
-            onClick={() => { logout(); navigate("/"); }}
+            onClick={() => { void logout(); navigate("/"); }}
             className="w-full rounded-xl text-sm"
           >
             Sair da conta
