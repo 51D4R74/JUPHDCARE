@@ -9,7 +9,8 @@
  *   - Output at most 3 discoveries, sorted by magnitude
  *   - Always phrase as observation (correlation), never causation
  *
- * DEBT: replace with server-side computation when dataset grows [M5]
+ * Discovery computation stays client-side (pure deterministic correlation — no server needed).
+ * Input comes from the server history endpoint (CheckInHistoryRecord[]).
  */
 
 import {
@@ -18,7 +19,13 @@ import {
   SCORE_DOMAINS,
   type ScoreDomainId,
 } from "@/lib/checkin-data";
-import type { DailyCheckInRecord } from "@/lib/score-engine";
+
+// Minimum record shape required by the discovery algorithm.
+// Compatible with CheckInHistoryRecord (API).
+type DiscoveryInput = {
+  readonly flags: string[];
+  readonly domainScores: Record<string, number>;
+};
 
 // ── Constants ─────────────────────────────────────
 
@@ -64,11 +71,12 @@ function buildText(
 // ── Public API ────────────────────────────────────
 
 /**
- * Compute discoveries from all stored check-in records.
+ * Compute discoveries from a check-in record array.
+ * Works with both DailyCheckInRecord (localStorage) and CheckInHistoryRecord (API).
  * Returns [] if not enough data yet.
  */
 export function computeDiscoveries(
-  records: DailyCheckInRecord[],
+  records: ReadonlyArray<DiscoveryInput>,
 ): Discovery[] {
   if (records.length < DISCOVERY_MIN_RECORDS) return [];
 

@@ -7,8 +7,9 @@
  *   3. Recency avoidance: messages seen recently are deprioritized
  *   4. State-aware ordering: respiro/protective skew toward calma and acolhimento
  *
+ * Support messages are static curated content — intentionally client-side.
  * Favorites persist in localStorage.
- * DEBT: replace with API calls when backend delivers GET /api/support-messages
+ * DEBT: server-side favorites when user-profile API exists [M4]
  */
 
 import type { SkyState } from "@/lib/checkin-data";

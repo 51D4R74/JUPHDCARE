@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-03-12
 **Owner:** @51D4R74
-**Status:** Planning — no sprint started yet
+**Status:** In execution — product surface delivered, core backend convergence in progress
 
 ---
 
@@ -37,6 +37,17 @@ Two products in one: personal well-being tool (collaborator) + aggregate analyti
 - **Duration:** 2 weeks per sprint
 - **Demo:** End of each sprint, working software
 - **Backlog:** `.github/issues/M{n}-*.md`
+
+## Current execution focus
+
+| Sprint slice | Scope | Exit criteria |
+| ------------ | ----- | ------------- |
+| **S13 — Core Data Convergence** ✅ | Align daily check-in contract, score snapshot, RH aggregate API, and core pages | `POST /api/checkins`, `GET /api/scores/user/:id/today`, and `GET /api/rh/aggregate` running against shared storage contract |
+| **S14 — Loop Persistence** ✅ | Move missions and settings off local-only state; server-side persistence with typed API | `GET/POST /api/missions/:userId/today`, `GET/PATCH /api/users/:id/settings` — missions survive reload, settings sync cross-device |
+| **S15 — History Hardening** ✅ | Temporal aggregates and discoveries from server-side check-in history; report data server-canonical | `GET /api/checkins/user/:id/history` live; meu-cuidado + report no longer depend on isolated browser state |
+| **S16 — Production Database** ✅ | Replace in-memory store with PostgreSQL via Drizzle ORM; zero-downtime swap via `IStorage` abstraction | `DrizzleStorage` passes all IStorage contracts; `DATABASE_URL` toggles backend; `npm run db:push` seeds schema |
+| **S17 — Dashboard & Points Convergence** ✅ | Core pages read scores, missions, and constancy from server queries; eliminate remaining localStorage reads for canonical data | dashboard, missions, support, meu-cuidado, report all derive state from `useQuery`; Solar Points computed from server truth; ConstancyDots accepts server history; stale DEBT comments updated |
+| **S18 — Write-Path Purification** ✅ | Eliminate localStorage dual-writes; remove dead code from score-engine + points-ledger; all check-in data flows server-only | `checkin.tsx` uses pure `computeCheckInResult` (no localStorage); `SolarPointsBadge` requires `points` prop (no fallback); `ConstancyDots` requires `checkedInDates` (no fallback); `score-engine.ts` zero localStorage; `points-ledger.ts` deprecated |
 
 ---
 
@@ -73,14 +84,14 @@ ScoreEngine    Persistência   Proteção v2    Constância    Marcos        Cle
 
 Frontend uses local stubs (localStorage + mock data) until each backend delivery.
 
-| Sprint | Backend must deliver |
-| ------ | ------------------- |
-| S2 | API contract for new check-in (`POST /api/checkins` schema + endpoint) |
-| S3 | `GET /api/scores/user/:id/today` (even simplified calculation) |
-| S4 | Missions CRUD + Solar Points ledger |
-| S6 | Support messages CRUD + basic moderation flag |
-| S8 | History aggregation queries + discovery data |
-| S10 | Team challenges + RH aggregate endpoints |
+| Sprint | Backend must deliver | Status |
+| ------ | ------------------- | ------ |
+| S2 | API contract for new check-in (`POST /api/checkins` schema + endpoint) | Implemented in shared schema + MemStorage |
+| S3 | `GET /api/scores/user/:id/today` (even simplified calculation) | Implemented in shared storage snapshot |
+| S4 | Missions CRUD + Solar Points ledger | Implemented: `GET/POST /api/missions/:userId/today`, missions persist server-side |
+| S6 | Support messages CRUD + basic moderation flag | Deferred: messages are curated static content (ADR-004); no server CRUD needed |
+| S8 | History aggregation queries + discovery data | Implemented: `GET /api/checkins/user/:id/history` — canonical history per user; discoveries computed client-side from server data (pure correlation, no server state needed) |
+| S10 | Team challenges + RH aggregate endpoints | Aggregate endpoint implemented; challenge persistence pending |
 
 ---
 
@@ -103,7 +114,7 @@ Frontend uses local stubs (localStorage + mock data) until each backend delivery
 
 | ADR | Decision | Status |
 | --- | -------- | ------ |
-| ADR-001 | Replace 3-moment EMA with single daily check-in | Proposed |
+| ADR-001 | Replace 3-moment EMA with single daily check-in | Accepted |
 | ADR-002 | Sky state and Solar Halo as independent visual layers | Accepted |
-| ADR-003 | Client-side score engine with localStorage until backend ready | Proposed |
+| ADR-003 | Client-side score engine with localStorage until backend ready | Accepted |
 | ADR-004 | Curated message library before community moderation | Accepted |

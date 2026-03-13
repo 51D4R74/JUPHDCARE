@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
+import { computeCheckInResult } from "@/lib/score-engine";
 import {
   type CheckInStep,
   type StepOption,
@@ -17,7 +18,6 @@ import {
   CHAT_TRIGGERS,
   detectChatTrigger,
   collectFlags,
-  computeDomainScores,
   deriveSkyState,
 } from "@/lib/checkin-data";
 import ScoreCard from "@/components/score-card";
@@ -400,21 +400,24 @@ export default function CheckInPage() {
       if (!user) return;
       setIsSaving(true);
       try {
-        const domainScores = computeDomainScores(finalAnswers);
-        const flags = collectFlags(finalAnswers, steps);
-        setFinalScores(domainScores);
+        const result = computeCheckInResult(finalAnswers);
+        setFinalScores(result.domainScores);
 
-        // DEBT: migrate to POST /api/checkins (new format) when backend ready
-        await apiRequest("POST", "/api/moment-checkins", {
+        await apiRequest("POST", "/api/checkins", {
           userId: user.id,
-          moment: "daily",
           answers: JSON.stringify(finalAnswers),
-          scores: JSON.stringify(domainScores),
-          flags: flags.length > 0 ? flags : null,
+          domainScores: JSON.stringify(result.domainScores),
+          flags: result.flags.length > 0 ? result.flags : null,
           chatTriggered: chatTrigger !== null,
         });
         queryClient.invalidateQueries({
-          queryKey: ["/api/moment-checkins/user", user.id, "today"],
+          queryKey: ["/api/checkins/user", user.id, "today"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/scores/user", user.id, "today"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/checkins/user", user.id, "history"],
         });
         toast({
           title: "Check-in salvo!",
@@ -474,7 +477,6 @@ export default function CheckInPage() {
 
   const handleChatTriggerOpen = useCallback(() => {
     setChatTrigger(null);
-    // DEBT: integrate with real chatbot [feature/chatbot]
     navigate("/protecao");
   }, [navigate]);
 

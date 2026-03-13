@@ -5,6 +5,7 @@ import {
   ChevronLeft, Sun, Activity, Target, Shield,
   Heart, Sparkles, RefreshCw, Send, PenLine,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import SupportMessageCard from "@/components/support-message-card";
 import SolarPointsBadge from "@/components/solar-points-badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,16 +19,42 @@ import {
   evaluateRespiro,
   deactivateRespiro,
 } from "@/lib/support-engine";
-import { getTodayScores } from "@/lib/score-engine";
+import { POINT_VALUES } from "@/lib/mission-engine";
+import type { TodayScores } from "@/lib/score-engine";
+import type { UserMission } from "@shared/schema";
+import { useAuth } from "@/lib/auth";
 
 // ── Tabs ──────────────────────────────────────────
 
 type Tab = "receive" | "favorites" | "leave";
 
+const EMPTY_SCORES: TodayScores = {
+  domainScores: { recarga: 0, "estado-do-dia": 0, "seguranca-relacional": 0 },
+  skyState: "partly-cloudy",
+  solarHaloLevel: 0.5,
+  flags: [],
+  hasCheckedIn: false,
+};
+
 export default function SupportCenterPage() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const scores = getTodayScores();
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
+
+  const { data: scores = EMPTY_SCORES } = useQuery<TodayScores>({
+    queryKey: ["/api/scores/user", userId, "today"],
+    enabled: !!userId,
+  });
+
+  const { data: todayMissions = [] } = useQuery<UserMission[]>({
+    queryKey: ["/api/missions", userId, "today"],
+    enabled: !!userId,
+  });
+
+  const missionPointsToday = todayMissions.reduce((sum, m) => sum + m.pointsEarned, 0);
+  const solarPoints = (scores.hasCheckedIn ? POINT_VALUES.checkin : 0) + missionPointsToday;
+
   const isRespiro = evaluateRespiro(scores);
 
   const [tab, setTab] = useState<Tab>("receive");
@@ -92,7 +119,7 @@ export default function SupportCenterPage() {
             Mensagens de cuidado para você
           </p>
         </div>
-        <SolarPointsBadge />
+        <SolarPointsBadge points={solarPoints} />
       </header>
 
       <main className="relative z-10 max-w-lg mx-auto px-4 pb-24">
@@ -309,7 +336,7 @@ export default function SupportCenterPage() {
                               });
                               return;
                             }
-                            // DEBT: POST /api/support-messages when backend ready
+                            // DEBT: POST /api/support-messages — requires moderation pipeline [M5]
                             setAuthorSubmitted(true);
                             toast({
                               title: "Mensagem enviada",

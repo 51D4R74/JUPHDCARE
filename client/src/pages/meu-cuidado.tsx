@@ -14,13 +14,16 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { useQuery } from "@tanstack/react-query";
 import ConstancyDots from "@/components/constancy-dots";
 import InsightCard from "@/components/insight-card";
 import SupportMessageCard from "@/components/support-message-card";
-import { getRecentRecords, getAllRecords, getTagCloud, type TagCount } from "@/lib/score-engine";
+import { computeTagCloud, type TagCount } from "@/lib/score-engine";
 import { computeDiscoveries, daysUntilDiscovery, DISCOVERY_MIN_RECORDS } from "@/lib/discovery-engine";
 import { getFavoriteMessages, toggleFavorite, isFavorite } from "@/lib/support-engine";
+import { useAuth } from "@/lib/auth";
 import type { ScoreDomainId } from "@/lib/checkin-data";
+import type { CheckInHistoryRecord } from "@shared/schema";
 
 // ── Chart config ──────────────────────────────────
 
@@ -92,23 +95,38 @@ function plural(n: number, singular: string, pluralForm: string): string {
 
 export default function MeuCuidadoPage() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
   const [range, setRange] = useState<7 | 30>(7);
 
-  // Data
-  const records = getRecentRecords(range);
-  const allRecords = getAllRecords();
-  const tagCloud = getTagCloud(30);
-  const [, forceFavUpdate] = useReducer((x: number) => x + 1, 0); // force re-render on favorite toggle
+  // Server-canonical check-in history — primary data source
+  const { data: allHistory = [] } = useQuery<CheckInHistoryRecord[]>({
+    queryKey: ["/api/checkins/user", user?.id ?? "", "history"],
+    enabled: !!user?.id,
+  });
+
+  // Client-side range filter (no re-fetch needed)
+  const records = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - range);
+    const cutoffDate = cutoff.toISOString().slice(0, 10);
+    return allHistory.filter((r) => r.date >= cutoffDate);
+  }, [allHistory, range]);
+
+  const tagCloud = useMemo(
+    () => computeTagCloud(allHistory.slice(-30)),
+    [allHistory],
+  );
+  const [, forceFavUpdate] = useReducer((x: number) => x + 1, 0);
   const favorites = getFavoriteMessages();
 
   const discoveries = useMemo(
-    () => computeDiscoveries(allRecords),
-    [allRecords],
+    () => computeDiscoveries(allHistory),
+    [allHistory],
   );
-  const daysLeft = daysUntilDiscovery(allRecords.length);
-  const hasEnoughData = allRecords.length >= DISCOVERY_MIN_RECORDS;
+  const daysLeft = daysUntilDiscovery(allHistory.length);
+  const hasEnoughData = allHistory.length >= DISCOVERY_MIN_RECORDS;
 
-  // Chart data: oldest → newest, reverse since getRecentRecords returns newest first
+  // Chart data: oldest → newest
   const chartData = useMemo(
     () =>
       [...records]
@@ -164,11 +182,11 @@ export default function MeuCuidadoPage() {
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
             Constância — últimos 10 dias
           </p>
-          <ConstancyDots days={10} />
+          <ConstancyDots days={10} checkedInDates={allHistory.map((r) => r.date)} />
           <p className="text-xs text-muted-foreground mt-2">
-            {allRecords.length === 0
+            {allHistory.length === 0
               ? "Faça seu primeiro check-in para começar."
-              : `${allRecords.length} check-in${plural(allRecords.length, "", "s")} no total.`}
+              : `${allHistory.length} check-in${plural(allHistory.length, "", "s")} no total.`}
           </p>
         </motion.section>
 

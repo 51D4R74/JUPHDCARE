@@ -5,7 +5,7 @@
  * All UI text in PT-BR.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import type { NotificationType } from "@/lib/notification-engine";
 
 // ── Settings storage ──────────────────────────────
@@ -83,10 +85,45 @@ export default function SettingsPage() {
   const { user, logout } = useAuth();
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
 
-  // Persist on every change
+  // Load settings from API on mount; merge into local state once
+  const { data: remoteSettings } = useQuery<{ settings: string } | null>({
+    queryKey: ["/api/users", user?.id, "settings"],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const res = await fetch(`/api/users/${user!.id}/settings`, { credentials: "include" });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<{ settings: string }>;
+    },
+  });
+
+  useEffect(() => {
+    if (!remoteSettings?.settings) return;
+    try {
+      const remote = JSON.parse(remoteSettings.settings) as Partial<AppSettings>;
+      setSettings((prev) => ({ ...structuredClone(DEFAULT_SETTINGS), ...prev, ...remote }));
+    } catch { /* malformed remote data — ignore */ }
+  }, [remoteSettings]);
+
+  const { mutate: rawSaveToApi } = useMutation({
+    mutationFn: (json: string) =>
+      apiRequest("PATCH", `/api/users/${user!.id}/settings`, { settings: json }),
+  });
+  const saveToApiRef = useRef(rawSaveToApi);
+  saveToApiRef.current = rawSaveToApi;
+
+  const apiTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Persist to localStorage immediately; debounce API sync 800 ms
   useEffect(() => {
     saveSettings(settings);
-  }, [settings]);
+    if (!user?.id) return;
+    clearTimeout(apiTimerRef.current);
+    apiTimerRef.current = setTimeout(() => {
+      saveToApiRef.current(JSON.stringify(settings));
+    }, 800);
+    return () => { clearTimeout(apiTimerRef.current); };
+  }, [settings, user?.id]);
 
   const updateNotif = (patch: Partial<NotificationPreferences>) => {
     setSettings((prev) => ({

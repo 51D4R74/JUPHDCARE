@@ -1,22 +1,43 @@
 /**
  * ConstancyDots — last 10 days of check-in constancy as mini icons.
  * Sun = checked in, Cloud = missed.
+ *
+ * Derives constancy from `checkedInDates` (server history).
  */
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Sun, Cloud } from "lucide-react";
-import { getConstancyDays } from "@/lib/points-ledger";
 
 interface ConstancyDotsProps {
   readonly days?: number;
   readonly className?: string;
+  /** ISO date strings ("YYYY-MM-DD") from server history. */
+  readonly checkedInDates: ReadonlyArray<string>;
+}
+
+function deriveConstancy(days: number, checkedInDates: ReadonlyArray<string>) {
+  const dateSet = new Set(checkedInDates);
+  const now = new Date();
+  const result: { date: string; active: boolean }[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    result.push({ date: key, active: dateSet.has(key) });
+  }
+  return result;
 }
 
 export default function ConstancyDots({
   days = 10,
   className = "",
+  checkedInDates,
 }: Readonly<ConstancyDotsProps>) {
-  const constancy = getConstancyDays(days);
+  const constancy = useMemo(
+    () => deriveConstancy(days, checkedInDates),
+    [days, checkedInDates],
+  );
   // Reverse to show oldest → newest (left to right)
   const ordered = [...constancy].reverse();
 

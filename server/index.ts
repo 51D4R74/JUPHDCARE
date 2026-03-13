@@ -2,9 +2,13 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "node:http";
+import { MemStorage } from "./storage";
+import { DrizzleStorage } from "./drizzle-storage";
 
 const app = express();
 const httpServer = createServer(app);
+
+const storage = process.env.DATABASE_URL ? new DrizzleStorage() : new MemStorage();
 
 declare module "node:http" {
   interface IncomingMessage {
@@ -59,7 +63,7 @@ app.use((req, res, next) => {
   next();
 });
 
-await registerRoutes(httpServer, app);
+await registerRoutes(httpServer, app, storage);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

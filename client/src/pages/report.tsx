@@ -14,12 +14,15 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { useQuery } from "@tanstack/react-query";
 import ConstancyDots from "@/components/constancy-dots";
 import InsightCard from "@/components/insight-card";
-import { getRecentRecords, getAllRecords, getTagCloud } from "@/lib/score-engine";
+import { computeTagCloud } from "@/lib/score-engine";
 import { computeDiscoveries } from "@/lib/discovery-engine";
-import { getTotalPointsToday } from "@/lib/points-ledger";
+import { POINT_VALUES } from "@/lib/mission-engine";
+import { useAuth } from "@/lib/auth";
 import type { ScoreDomainId } from "@/lib/checkin-data";
+import type { CheckInHistoryRecord, UserMission } from "@shared/schema";
 
 // ── Constants ─────────────────────────────────────
 
@@ -109,14 +112,50 @@ function ChartTooltip({
 
 export default function ReportPage() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
   const [period, setPeriod] = useState<ReportPeriod>("week");
   const days = PERIOD_DAYS[period];
 
-  const records = getRecentRecords(days);
-  const allRecords = getAllRecords();
-  const tagCloud = getTagCloud(days);
-  const discoveries = useMemo(() => computeDiscoveries(allRecords), [allRecords]);
-  const points = getTotalPointsToday();
+  const { data: allHistory = [] } = useQuery<CheckInHistoryRecord[]>({
+    queryKey: ["/api/checkins/user", user?.id ?? "", "history"],
+    enabled: !!user?.id,
+  });
+
+  const { data: todayMissions = [] } = useQuery<UserMission[]>({
+    queryKey: ["/api/missions", user?.id ?? "", "today"],
+    enabled: !!user?.id,
+  });
+
+  // Period records = last N days from server history
+  const records = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffDate = cutoff.toISOString().slice(0, 10);
+    return allHistory.filter((r) => r.date >= cutoffDate);
+  }, [allHistory, days]);
+
+  // Previous period records for trend arrows
+  const prevRecords = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffDate = cutoff.toISOString().slice(0, 10);
+    const prevCutoff = new Date();
+    prevCutoff.setDate(prevCutoff.getDate() - days * 2);
+    const prevCutoffDate = prevCutoff.toISOString().slice(0, 10);
+    return allHistory.filter((r) => r.date >= prevCutoffDate && r.date < cutoffDate);
+  }, [allHistory, days]);
+
+  const tagCloud = useMemo(
+    () => computeTagCloud(records),
+    [records],
+  );
+  const discoveries = useMemo(() => computeDiscoveries(allHistory), [allHistory]);
+
+  // Points: check-in base + mission completions (all from server truth)
+  const today = new Date().toISOString().slice(0, 10);
+  const hasCheckedInToday = allHistory.some((r) => r.date === today);
+  const missionPointsToday = todayMissions.reduce((sum, m) => sum + m.pointsEarned, 0);
+  const points = (hasCheckedInToday ? POINT_VALUES.checkin : 0) + missionPointsToday;
 
   // Score averages for period
   const avgScores = useMemo<Record<ScoreDomainId, number>>(
@@ -130,8 +169,6 @@ export default function ReportPage() {
     [records],
   );
 
-  // Compare to previous period (trend direction)
-  const prevRecords = getRecentRecords(days * 2).slice(records.length);
   const prevAvg = useMemo<Record<ScoreDomainId, number>>(
     () => ({
       recarga: mean(prevRecords.map((r) => r.domainScores.recarga)),
@@ -324,7 +361,7 @@ export default function ReportPage() {
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
             Constância — últimos 10 dias
           </p>
-          <ConstancyDots days={10} />
+          <ConstancyDots days={10} checkedInDates={allHistory.map((r) => r.date)} />
         </motion.section>
 
         {/* ── Top tags ── */}

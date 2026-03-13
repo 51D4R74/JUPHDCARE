@@ -1,0 +1,224 @@
+import { eq, and, gte, lte, desc } from "drizzle-orm";
+import {
+  users,
+  checkIns,
+  momentCheckIns,
+  incidentReports,
+  userMissions,
+  userSettings,
+} from "@shared/schema";
+import type {
+  User,
+  InsertUser,
+  CheckIn,
+  InsertCheckIn,
+  MomentCheckIn,
+  InsertMomentCheckIn,
+  IncidentReport,
+  InsertIncidentReport,
+  UserMission,
+  InsertUserMission,
+  UserSettings,
+} from "@shared/schema";
+import { randomUUID } from "node:crypto";
+import bcrypt from "bcryptjs";
+import { BaseStorage } from "./storage";
+import { getDb } from "./db";
+
+export class DrizzleStorage extends BaseStorage {
+  async getAllUsers(): Promise<User[]> {
+    return getDb().select().from(users);
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    const rows = await getDb().select().from(users).where(eq(users.id, id)).limit(1);
+    return rows.at(0);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const rows = await getDb()
+      .select()
+      .from(users)
+      .where(eq(users.username, username))
+      .limit(1);
+    return rows.at(0);
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+    const rows = await getDb()
+      .insert(users)
+      .values({
+        id: randomUUID(),
+        ...insertUser,
+        password: hashedPassword,
+        role: insertUser.role ?? "collaborator",
+        department: insertUser.department ?? null,
+      })
+      .returning();
+    const user = rows.at(0);
+    if (!user) throw new Error("Falha ao criar usuário");
+    return user;
+  }
+
+  async createCheckIn(insertCheckIn: InsertCheckIn): Promise<CheckIn> {
+    const rows = await getDb()
+      .insert(checkIns)
+      .values({
+        id: randomUUID(),
+        ...insertCheckIn,
+        createdAt: new Date(),
+        flags: insertCheckIn.flags ?? null,
+        chatTriggered: insertCheckIn.chatTriggered ?? false,
+      })
+      .returning();
+    const checkIn = rows.at(0);
+    if (!checkIn) throw new Error("Falha ao registrar check-in");
+    return checkIn;
+  }
+
+  async getCheckInsByUserId(userId: string): Promise<CheckIn[]> {
+    return getDb()
+      .select()
+      .from(checkIns)
+      .where(eq(checkIns.userId, userId))
+      .orderBy(desc(checkIns.createdAt));
+  }
+
+  async getCheckInsByUserIdAndDate(userId: string, date: Date): Promise<CheckIn[]> {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+    return getDb()
+      .select()
+      .from(checkIns)
+      .where(
+        and(
+          eq(checkIns.userId, userId),
+          gte(checkIns.createdAt, dayStart),
+          lte(checkIns.createdAt, dayEnd),
+        ),
+      )
+      .orderBy(desc(checkIns.createdAt));
+  }
+
+  async getAllCheckIns(): Promise<CheckIn[]> {
+    return getDb().select().from(checkIns).orderBy(desc(checkIns.createdAt));
+  }
+
+  async getDailyMissions(userId: string, isoDate: string): Promise<UserMission[]> {
+    return getDb()
+      .select()
+      .from(userMissions)
+      .where(
+        and(
+          eq(userMissions.userId, userId),
+          eq(userMissions.date, isoDate),
+        ),
+      );
+  }
+
+  async completeMission(insert: InsertUserMission): Promise<UserMission> {
+    const rows = await getDb()
+      .insert(userMissions)
+      .values({ ...insert, id: randomUUID(), completedAt: new Date() })
+      .returning();
+    const mission = rows.at(0);
+    if (!mission) throw new Error("Falha ao completar missão");
+    return mission;
+  }
+
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    const rows = await getDb()
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId))
+      .limit(1);
+    return rows.at(0);
+  }
+
+  async upsertUserSettings(userId: string, settingsJson: string): Promise<UserSettings> {
+    const rows = await getDb()
+      .insert(userSettings)
+      .values({ userId, settings: settingsJson, updatedAt: new Date() })
+      .onConflictDoUpdate({
+        target: userSettings.userId,
+        set: { settings: settingsJson, updatedAt: new Date() },
+      })
+      .returning();
+    const record = rows.at(0);
+    if (!record) throw new Error("Falha ao salvar configurações");
+    return record;
+  }
+
+  async createMomentCheckIn(insert: InsertMomentCheckIn): Promise<MomentCheckIn> {
+    const rows = await getDb()
+      .insert(momentCheckIns)
+      .values({
+        id: randomUUID(),
+        ...insert,
+        createdAt: new Date(),
+        flags: insert.flags ?? null,
+        chatTriggered: insert.chatTriggered ?? false,
+      })
+      .returning();
+    const checkIn = rows.at(0);
+    if (!checkIn) throw new Error("Falha ao registrar momento");
+    return checkIn;
+  }
+
+  async getMomentCheckInsByUserId(userId: string): Promise<MomentCheckIn[]> {
+    return getDb()
+      .select()
+      .from(momentCheckIns)
+      .where(eq(momentCheckIns.userId, userId))
+      .orderBy(desc(momentCheckIns.createdAt));
+  }
+
+  async getMomentCheckInsByUserIdAndDate(userId: string, date: Date): Promise<MomentCheckIn[]> {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+    return getDb()
+      .select()
+      .from(momentCheckIns)
+      .where(
+        and(
+          eq(momentCheckIns.userId, userId),
+          gte(momentCheckIns.createdAt, dayStart),
+          lte(momentCheckIns.createdAt, dayEnd),
+        ),
+      )
+      .orderBy(desc(momentCheckIns.createdAt));
+  }
+
+  async getAllMomentCheckIns(): Promise<MomentCheckIn[]> {
+    return getDb()
+      .select()
+      .from(momentCheckIns)
+      .orderBy(desc(momentCheckIns.createdAt));
+  }
+
+  async createIncidentReport(insertReport: InsertIncidentReport): Promise<IncidentReport> {
+    const rows = await getDb()
+      .insert(incidentReports)
+      .values({
+        id: randomUUID(),
+        ...insertReport,
+        createdAt: new Date(),
+        userId: insertReport.userId ?? null,
+        description: insertReport.description ?? null,
+        anonymous: insertReport.anonymous ?? true,
+      })
+      .returning();
+    const report = rows.at(0);
+    if (!report) throw new Error("Falha ao registrar ocorrência");
+    return report;
+  }
+
+  async getAllIncidentReports(): Promise<IncidentReport[]> {
+    return getDb().select().from(incidentReports);
+  }
+}

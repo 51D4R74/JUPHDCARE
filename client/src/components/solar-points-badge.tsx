@@ -2,16 +2,14 @@
  * SolarPointsBadge — animated point counter for the dashboard header.
  *
  * Shows today's Solar Points with a scale pop on increment.
- * Reads from the points-ledger persistence layer.
+ * Points are computed by the parent from server data.
  */
 
 import { motion } from "framer-motion";
 import { Sun } from "lucide-react";
-import { getTotalPointsToday } from "@/lib/points-ledger";
 
 interface SolarPointsBadgeProps {
-  /** Override point value (e.g. if parent already has it). */
-  readonly points?: number;
+  readonly points: number;
   readonly className?: string;
 }
 
@@ -19,11 +17,9 @@ export default function SolarPointsBadge({
   points,
   className = "",
 }: Readonly<SolarPointsBadgeProps>) {
-  const displayPoints = points ?? getTotalPointsToday();
-
   return (
     <motion.div
-      key={displayPoints}
+      key={points}
       initial={{ scale: 0.85, opacity: 0.7 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: "spring", stiffness: 400, damping: 22 }}
@@ -31,7 +27,7 @@ export default function SolarPointsBadge({
     >
       <Sun className="w-4 h-4 text-brand-gold" />
       <span className="text-sm font-bold text-brand-gold-dark tabular-nums">
-        {displayPoints}
+        {points}
       </span>
     </motion.div>
   );

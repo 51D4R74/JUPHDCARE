@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun, ChevronRight, Sparkles, Activity, Shield, Target, Lightbulb,
   Heart, Trophy, Settings,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import AnimatedBrandLogo from "@/components/animated-brand-logo";
 import SkyHeader from "@/components/sky-header";
@@ -13,25 +14,43 @@ import SolarPointsBadge from "@/components/solar-points-badge";
 import NotificationBadge from "@/components/notification-badge";
 import NotificationDrawer from "@/components/notification-drawer";
 import { useAuth } from "@/lib/auth";
-import { getTodayScores, getDomainMeta, type TodayScores } from "@/lib/score-engine";
+import { getDomainMeta, type TodayScores } from "@/lib/score-engine";
 import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
+import { POINT_VALUES } from "@/lib/mission-engine";
 import { getCurrentChallenge } from "@/lib/team-challenge-engine";
+import type { UserMission } from "@shared/schema";
 
-// ── Insight do dia (static placeholder) ───────────
-// DEBT: replace with dynamic insight engine [M3]
-const DAILY_INSIGHTS = [
-  "Sua recarga está boa — manter o padrão de sono faz diferença.",
-  "Que tal uma pausa de 5 minutos? Pequenos intervalos turbam sua energia.",
-  "Pessoas que fazem check-in consistentemente percebem melhorias em 2 semanas.",
-  "Respiração pausada por 1 minuto já reduz tensão perceptível.",
-  "Lembre-se: dias difíceis fazem parte. O importante é o padrão, não o ponto.",
-];
+function getDailyInsight(scores: TodayScores): string {
+  if (!scores.hasCheckedIn) {
+    return "Seu check-in de hoje abre o mapa do dia: scores, missões e sinais de cuidado ficam mais precisos depois dele.";
+  }
 
-function pickDailyInsight(): string {
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86_400_000,
-  );
-  return DAILY_INSIGHTS[dayOfYear % DAILY_INSIGHTS.length];
+  if (scores.flags.includes("harassment_signal")) {
+    return "Hoje apareceu um sinal de proteção relacional. Priorize segurança psicológica e use a trilha de apoio se algo estiver pesando no ambiente.";
+  }
+
+  const orderedDomains = [
+    { id: "recarga", score: scores.domainScores.recarga },
+    { id: "estado-do-dia", score: scores.domainScores["estado-do-dia"] },
+    { id: "seguranca-relacional", score: scores.domainScores["seguranca-relacional"] },
+  ].toSorted((left, right) => left.score - right.score);
+  const lowestDomain = orderedDomains[0];
+
+  if (lowestDomain.id === "recarga") {
+    return lowestDomain.score < 50
+      ? "Sua recarga está pedindo proteção de ritmo. Missões curtas e pausas restaurativas tendem a gerar mais valor hoje do que esforço extra."
+      : "Sua recarga está estável. Manter pausas pequenas ao longo do dia ajuda a proteger esse nível até o fim do expediente.";
+  }
+
+  if (lowestDomain.id === "estado-do-dia") {
+    return lowestDomain.score < 50
+      ? "O estado do dia merece aterrissagem. Comece por uma missão simples para reduzir atrito e recuperar tração sem se sobrecarregar."
+      : "Seu estado do dia está responsivo. Vale aproveitar essa janela para avançar no que exige foco antes da energia oscilar.";
+  }
+
+  return lowestDomain.score < 50
+    ? "A segurança relacional está mais sensível hoje. Prefira interações previsíveis e registre sinais do contexto antes que eles virem ruído contínuo."
+    : "O contexto relacional parece mais estável. Esse é um bom momento para sustentar conversas objetivas e preservar clareza no ambiente.";
 }
 
 /** Build ScoreContributor list for a domain from stored answers. */
@@ -51,18 +70,33 @@ function buildContributors(domainId: ScoreDomainId, scores: TodayScores): ScoreC
   }).filter(Boolean) as ScoreContributor[];
 }
 
+const EMPTY_SCORES: TodayScores = {
+  domainScores: { recarga: 0, "estado-do-dia": 0, "seguranca-relacional": 0 },
+  skyState: "partly-cloudy",
+  solarHaloLevel: 0.5,
+  flags: [],
+  hasCheckedIn: false,
+};
+
 export default function DashboardPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const [scores, setScores] = useState<TodayScores>(getTodayScores);
+  const userId = user?.id ?? "";
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Re-read scores when page gains focus (e.g. coming back from check-in)
-  useEffect(() => {
-    function refresh() { setScores(getTodayScores()); }
-    window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
-  }, []);
+  const { data: scores = EMPTY_SCORES } = useQuery<TodayScores>({
+    queryKey: ["/api/scores/user", userId, "today"],
+    enabled: !!userId,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: todayMissions = [] } = useQuery<UserMission[]>({
+    queryKey: ["/api/missions", userId, "today"],
+    enabled: !!userId,
+  });
+
+  const missionPointsToday = todayMissions.reduce((sum, m) => sum + m.pointsEarned, 0);
+  const solarPoints = (scores.hasCheckedIn ? POINT_VALUES.checkin : 0) + missionPointsToday;
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -90,7 +124,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <SolarPointsBadge />
+          <SolarPointsBadge points={solarPoints} />
           <NotificationBadge onClick={() => setDrawerOpen(true)} />
           <button
             onClick={() => navigate("/settings")}
@@ -176,7 +210,7 @@ export default function DashboardPage() {
             Insight do dia
           </h3>
           <p className="text-sm text-foreground leading-relaxed">
-            {pickDailyInsight()}
+            {getDailyInsight(scores)}
           </p>
         </motion.section>
 

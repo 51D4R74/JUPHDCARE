@@ -1,12 +1,13 @@
 import type { Express } from "express";
 import type { Server } from "node:http";
 import bcrypt from "bcryptjs";
-import { storage } from "./storage";
-import { insertCheckInSchema, insertMomentCheckInSchema, insertIncidentReportSchema } from "@shared/schema";
+import type { IStorage } from "./storage";
+import { insertCheckInSchema, insertMomentCheckInSchema, insertIncidentReportSchema, insertUserMissionSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
-  app: Express
+  app: Express,
+  storage: IStorage,
 ): Promise<Server> {
   // DEBT: add rate limiting on auth endpoints [security]
   // DEBT: replace localStorage auth with JWT/session middleware [security]
@@ -70,6 +71,26 @@ export async function registerRoutes(
     return res.json(safeUser);
   });
 
+  app.get("/api/users/:id/settings", async (req, res) => {
+    const settings = await storage.getUserSettings(req.params.id);
+    if (!settings) return res.status(404).json({ message: "Configurações não encontradas" });
+    return res.json(settings);
+  });
+
+  app.patch("/api/users/:id/settings", async (req, res) => {
+    const body = req.body as { settings?: unknown };
+    if (typeof body.settings !== "string" || body.settings.length > 10_000) {
+      return res.status(400).json({ message: "Dados inválidos" });
+    }
+    try {
+      JSON.parse(body.settings);
+    } catch {
+      return res.status(400).json({ message: "Configurações inválidas" });
+    }
+    const result = await storage.upsertUserSettings(req.params.id, body.settings);
+    return res.json(result);
+  });
+
   app.post("/api/checkins", async (req, res) => {
     try {
       const data = insertCheckInSchema.parse(req.body);
@@ -85,12 +106,57 @@ export async function registerRoutes(
     return res.json(checkIns);
   });
 
+  app.get("/api/checkins/user/:userId/today", async (req, res) => {
+    const checkIns = await storage.getCheckInsByUserIdAndDate(req.params.userId, new Date());
+    return res.json(checkIns);
+  });
+
+  app.get("/api/checkins/user/:userId/history", async (req, res) => {
+    const daysParam = req.query.days;
+    const days = typeof daysParam === "string" && daysParam !== "all"
+      ? Number.parseInt(daysParam, 10) || null
+      : null;
+    const history = await storage.getHistoryByUserId(req.params.userId, days);
+    return res.json(history);
+  });
+
   app.get("/api/checkins", async (_req, res) => {
     const checkIns = await storage.getAllCheckIns();
     return res.json(checkIns);
   });
 
-  // Moment check-ins (3-moment EMA)
+  app.get("/api/scores/user/:userId/today", async (req, res) => {
+    const scores = await storage.getTodayScoresByUserId(req.params.userId);
+    return res.json(scores);
+  });
+
+  app.get("/api/rh/aggregate", async (_req, res) => {
+    const aggregate = await storage.getRhAggregate();
+    return res.json(aggregate);
+  });
+
+  // User missions
+  app.get("/api/missions/:userId/today", async (req, res) => {
+    const isoDate = new Date().toISOString().slice(0, 10);
+    const missions = await storage.getDailyMissions(req.params.userId, isoDate);
+    return res.json(missions);
+  });
+
+  app.post("/api/missions/:userId", async (req, res) => {
+    try {
+      const body = insertUserMissionSchema.omit({ userId: true, date: true }).parse(req.body);
+      const mission = await storage.completeMission({
+        userId: req.params.userId,
+        date: new Date().toISOString().slice(0, 10),
+        ...body,
+      });
+      return res.json(mission);
+    } catch (e: any) {
+      return res.status(400).json({ message: e.message });
+    }
+  });
+
+  // Legacy moment check-ins (3-moment EMA)
   app.post("/api/moment-checkins", async (req, res) => {
     try {
       const data = insertMomentCheckInSchema.parse(req.body);

@@ -1,17 +1,6 @@
-/**
- * RH Dashboard — Organizational Risk Dashboard.
- *
- * Rewritten for M4 with aggregate data structure matching the API contract:
- *   GET /api/rh/aggregate → { departments, alerts, participation }
- *
- * Current implementation uses structured stubs. The data shape is stable;
- * only the source changes when backend is connected.
- *
- * DEBT: connect to real API endpoint when backend aggregate service is ready [M5]
- */
-
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, Cell, PieChart, Pie,
@@ -63,128 +52,6 @@ interface RHAggregateData {
   moodDistribution: { name: string; value: number; color: string }[];
 }
 
-// ── Structured stub data ──────────────────────────
-
-function getAggregateData(): RHAggregateData {
-  return {
-    totalCollaborators: 87,
-    activeCollaborators: 72,
-    participation: 83,
-    averageWellbeing: 64,
-    departments: [
-      {
-        department: "Vendas",
-        headcount: 22,
-        participationRate: 78,
-        riskLevel: "high",
-        stressIndex: 72,
-        burnoutIndex: 65,
-        domainAverages: [
-          { domain: "recarga", label: "Recarga", avg: 42 },
-          { domain: "estado-do-dia", label: "Estado do dia", avg: 48 },
-          { domain: "seguranca-relacional", label: "Segurança relacional", avg: 38 },
-        ],
-      },
-      {
-        department: "TI",
-        headcount: 18,
-        participationRate: 88,
-        riskLevel: "medium",
-        stressIndex: 58,
-        burnoutIndex: 52,
-        domainAverages: [
-          { domain: "recarga", label: "Recarga", avg: 61 },
-          { domain: "estado-do-dia", label: "Estado do dia", avg: 55 },
-          { domain: "seguranca-relacional", label: "Segurança relacional", avg: 58 },
-        ],
-      },
-      {
-        department: "Marketing",
-        headcount: 15,
-        participationRate: 92,
-        riskLevel: "low",
-        stressIndex: 45,
-        burnoutIndex: 38,
-        domainAverages: [
-          { domain: "recarga", label: "Recarga", avg: 74 },
-          { domain: "estado-do-dia", label: "Estado do dia", avg: 72 },
-          { domain: "seguranca-relacional", label: "Segurança relacional", avg: 78 },
-        ],
-      },
-      {
-        department: "Financeiro",
-        headcount: 12,
-        participationRate: 75,
-        riskLevel: "medium",
-        stressIndex: 62,
-        burnoutIndex: 58,
-        domainAverages: [
-          { domain: "recarga", label: "Recarga", avg: 52 },
-          { domain: "estado-do-dia", label: "Estado do dia", avg: 56 },
-          { domain: "seguranca-relacional", label: "Segurança relacional", avg: 50 },
-        ],
-      },
-      {
-        department: "Operações",
-        headcount: 20,
-        participationRate: 80,
-        riskLevel: "high",
-        stressIndex: 68,
-        burnoutIndex: 60,
-        domainAverages: [
-          { domain: "recarga", label: "Recarga", avg: 45 },
-          { domain: "estado-do-dia", label: "Estado do dia", avg: 50 },
-          { domain: "seguranca-relacional", label: "Segurança relacional", avg: 42 },
-        ],
-      },
-    ],
-    alerts: [
-      {
-        id: "a1",
-        severity: "high",
-        title: "Padrões de risco relacional elevados",
-        description: "Equipe de Vendas — 6 colaboradores com segurança relacional abaixo de 30 nos últimos 14 dias.",
-        department: "Vendas",
-        timestamp: "2h atrás",
-      },
-      {
-        id: "a2",
-        severity: "medium",
-        title: "Pico de estresse detectado",
-        description: "Departamento de TI — aumento de 15% no índice de estresse nos últimos 7 dias.",
-        department: "TI",
-        timestamp: "6h atrás",
-      },
-      {
-        id: "a3",
-        severity: "low",
-        title: "Tendência positiva em Marketing",
-        description: "Indicadores de bem-estar melhoraram 18% nas últimas 2 semanas. Recarga média: 74.",
-        department: "Marketing",
-        timestamp: "1d atrás",
-      },
-    ],
-    trendBurnout: [
-      { month: "Jan", value: 35, forecast: null },
-      { month: "Fev", value: 38, forecast: null },
-      { month: "Mar", value: 42, forecast: null },
-      { month: "Abr", value: 45, forecast: null },
-      { month: "Mai", value: 48, forecast: null },
-      { month: "Jun", value: 52, forecast: null },
-      { month: "Jul", value: null, forecast: 56 },
-      { month: "Ago", value: null, forecast: 61 },
-      { month: "Set", value: null, forecast: 58 },
-    ],
-    moodDistribution: [
-      { name: "Bem", value: 32, color: "#34d399" },
-      { name: "Ansioso", value: 22, color: "#f87171" },
-      { name: "Calmo", value: 18, color: "#22d3ee" },
-      { name: "Tenso", value: 15, color: "#fb923c" },
-      { name: "Outros", value: 13, color: "#94a3b8" },
-    ],
-  };
-}
-
 // ── Helpers ────────────────────────────────────────
 
 function participationColor(rate: number) {
@@ -218,28 +85,57 @@ function getSeverityBorder(s: string) {
   return "border-l-score-good";
 }
 
-const ChartTooltip = ({ active, payload, label }: any) => {
+function ChartTooltip({
+  active,
+  payload,
+  label,
+}: Readonly<{
+  active?: boolean;
+  payload?: Array<{ name: string; value: number; color: string }>;
+  label?: string;
+}>) {
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-white border border-border-soft rounded-lg px-3 py-2 shadow-xl text-xs">
       <p className="font-medium text-foreground mb-1">{label}</p>
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <p key={p.name} style={{ color: p.color }}>
           {p.name}: {p.value}%
         </p>
       ))}
     </div>
   );
-};
+}
 
 // ── Main Page ─────────────────────────────────────
 
 export default function RHDashboardPage() {
   const [, navigate] = useLocation();
   const { user, logout } = useAuth();
-
-  const data = getAggregateData();
+  const { data, isPending, isError } = useQuery<RHAggregateData>({
+    queryKey: ["/api/rh/aggregate"],
+  });
   const teamChallenge = getCurrentChallenge();
+
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-surface-warm flex items-center justify-center px-6">
+        <div className="rounded-xl border border-border-soft bg-white px-5 py-4 text-sm text-muted-foreground">
+          Carregando visão agregada do RH...
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="min-h-screen bg-surface-warm flex items-center justify-center px-6">
+        <div className="max-w-md rounded-xl border border-score-critical/20 bg-white px-5 py-4 text-sm text-muted-foreground">
+          Não foi possível carregar os indicadores agregados agora. Tente novamente em instantes.
+        </div>
+      </div>
+    );
+  }
 
   // Chart data for department stress/burnout comparison
   const deptChartData = data.departments.map((d) => ({

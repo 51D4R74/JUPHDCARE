@@ -88,6 +88,9 @@
     // Intentional dummy bcrypt hash used for constant-time comparison
     "invalidhashtopreventtimingattac",
 
+    // Storage / database terms
+    "upsert", "Upsert",
+
     // cSpell itself
     "streetsidesoftware"
   ],

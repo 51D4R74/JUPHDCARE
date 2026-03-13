@@ -1,35 +1,101 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Sun, Activity, Shield, Target, ChevronLeft, Heart,
 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MissionCard, { type MissionDef, type MissionStatus } from "@/components/mission-card";
 import SolarPointsBadge from "@/components/solar-points-badge";
 import ConstancyDots from "@/components/constancy-dots";
 import Microcheck from "@/components/microcheck";
-import { getTodayScores, saveMicroMood } from "@/lib/score-engine";
+import { type TodayScores } from "@/lib/score-engine";
 import { selectMissions, POINT_VALUES } from "@/lib/mission-engine";
 import { recordNeedSupport } from "@/lib/support-engine";
 import type { MicroMoodId } from "@/components/one-tap-mood";
-import {
-  readMissionState, writeMissionState,
-  getTotalPointsToday, type MissionDayState,
-} from "@/lib/points-ledger";
+import type { UserMission, CheckInHistoryRecord } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
+
+const EMPTY_SCORES: TodayScores = {
+  domainScores: { recarga: 0, "estado-do-dia": 0, "seguranca-relacional": 0 },
+  skyState: "partly-cloudy",
+  solarHaloLevel: 0.5,
+  flags: [],
+  hasCheckedIn: false,
+};
 
 // ── Page ──────────────────────────────────────────
 
 export default function MissionCenterPage() {
   const [, navigate] = useLocation();
-  const [state, setState] = useState<MissionDayState>(readMissionState);
-  const scores = getTodayScores();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const userId = user?.id ?? "";
   const [microcheckOpen, setMicrocheckOpen] = useState(false);
   const [microcheckCount, setMicrocheckCount] = useState(0);
 
-  // Persist on change
-  useEffect(() => {
-    writeMissionState(state);
-  }, [state]);
+  const { data: scores = EMPTY_SCORES } = useQuery<TodayScores>({
+    queryKey: ["/api/scores/user", userId, "today"],
+    enabled: !!userId,
+  });
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { data: completedMissions = [] } = useQuery<UserMission[]>({
+    queryKey: ["/api/missions", userId, "today"],
+    enabled: !!userId,
+  });
+
+  const { data: historyRecords = [] } = useQuery<CheckInHistoryRecord[]>({
+    queryKey: ["/api/checkins/user", userId, "history"],
+    enabled: !!userId,
+  });
+
+  const checkedInDates = useMemo(
+    () => historyRecords.map((r) => r.date),
+    [historyRecords],
+  );
+
+  const completedIds = useMemo(
+    () => completedMissions.map((m) => m.missionId),
+    [completedMissions],
+  );
+
+  const completeMissionMut = useMutation({
+    mutationFn: async (data: { missionId: string; pointsEarned: number }) => {
+      const res = await apiRequest("POST", `/api/missions/${userId}`, {
+        missionId: data.missionId,
+        pointsEarned: data.pointsEarned,
+      });
+      return res.json() as Promise<UserMission>;
+    },
+    onMutate: async ({ missionId, pointsEarned }) => {
+      await qc.cancelQueries({ queryKey: ["/api/missions", userId, "today"] });
+      const prev = qc.getQueryData<UserMission[]>(["/api/missions", userId, "today"]);
+      const optimistic: UserMission = {
+        id: `opt-${missionId}`,
+        userId,
+        missionId,
+        date: today,
+        pointsEarned,
+        completedAt: new Date(),
+      };
+      qc.setQueryData<UserMission[]>(
+        ["/api/missions", userId, "today"],
+        (old = []) => [...old, optimistic],
+      );
+      return { prev };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.prev !== undefined) {
+        qc.setQueryData(["/api/missions", userId, "today"], ctx.prev);
+      }
+    },
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ["/api/missions", userId, "today"] });
+    },
+  });
 
   // Adaptive mission selection via engine
   const missions: MissionDef[] = useMemo(() => {
@@ -37,38 +103,35 @@ export default function MissionCenterPage() {
       skyState: scores.skyState,
       domainScores: scores.domainScores,
       flags: scores.flags,
-      recentMissionIds: state.completed,
+      recentMissionIds: completedIds,
     });
-  }, [scores.skyState, scores.domainScores, scores.flags, state.completed]);
+  }, [scores.skyState, scores.domainScores, scores.flags, completedIds]);
 
   const totalMissions = missions.length;
-  const completedCount = state.completed.filter(
+  const completedCount = completedIds.filter(
     (id) => missions.some((m) => m.id === id),
   ).length;
   const progress = totalMissions > 0 ? Math.round((completedCount / totalMissions) * 100) : 0;
 
-  const totalPoints = getTotalPointsToday();
+  // Points: check-in + mission completions (microcheck + constancy migrated to server in S15)
+  const missionPoints = completedMissions.reduce((sum, m) => sum + m.pointsEarned, 0);
+  const checkinPoints = scores.hasCheckedIn ? POINT_VALUES.checkin : 0;
+  const totalPoints = checkinPoints + missionPoints;
 
   const handleComplete = useCallback((missionId: string) => {
-    setState((prev) => {
-      if (prev.completed.includes(missionId)) return prev;
-      const mission = missions.find((m) => m.id === missionId);
-      const pts = mission?.points ?? 5;
-      return {
-        ...prev,
-        completed: [...prev.completed, missionId],
-        solarPoints: prev.solarPoints + pts,
-      };
-    });
+    if (completedIds.includes(missionId)) return;
+    const mission = missions.find((m) => m.id === missionId);
+    const pts = mission?.points ?? 5;
+    completeMissionMut.mutate({ missionId, pointsEarned: pts });
     // Trigger microcheck after mission (max 2/day)
     if (microcheckCount < POINT_VALUES.microchecksMaxPerDay) {
       setTimeout(() => setMicrocheckOpen(true), 600);
     }
-  }, [missions, microcheckCount]);
+  }, [completedIds, missions, microcheckCount, completeMissionMut]);
 
   const handleMicrocheckRespond = useCallback(
-    (mood: MicroMoodId, context?: string) => {
-      saveMicroMood(mood);
+    (mood: MicroMoodId, _context?: string) => {
+      // DEBT: POST /api/microchecks when micro-mood API exists [M3]
       setMicrocheckCount((c) => c + 1);
       if (mood === "need-support") {
         recordNeedSupport();
@@ -79,7 +142,7 @@ export default function MissionCenterPage() {
   );
 
   function getStatus(missionId: string): MissionStatus {
-    return state.completed.includes(missionId) ? "done" : "pending";
+    return completedIds.includes(missionId) ? "done" : "pending";
   }
 
   return (
@@ -190,7 +253,7 @@ export default function MissionCenterPage() {
           <p className="text-xs font-semibold text-muted-foreground mb-2">
             Constância — últimos 10 dias
           </p>
-          <ConstancyDots days={10} />
+          <ConstancyDots days={10} checkedInDates={checkedInDates} />
         </motion.section>
       </main>
 

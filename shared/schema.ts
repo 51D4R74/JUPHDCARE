@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -12,20 +12,17 @@ export const users = pgTable("users", {
   department: text("department"),
 });
 
-// DEBT: Legacy check-in table — kept for backward compat with existing seed data [remove after migration]
 export const checkIns = pgTable("check_ins", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
-  humor: text("humor").notNull(),
-  energy: text("energy").notNull(),
-  mind: text("mind").notNull(),
-  sleep: text("sleep").notNull(),
-  contextTags: text("context_tags").array(),
-  notes: text("notes"),
+  answers: text("answers").notNull(),
+  domainScores: text("domain_scores").notNull(),
+  flags: text("flags").array(),
+  chatTriggered: boolean("chat_triggered").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// New 3-moment EMA check-in (morning / midday / endday)
+// Legacy 3-moment EMA check-in kept for compatibility while historical data is migrated.
 export const momentCheckIns = pgTable("moment_check_ins", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
@@ -47,6 +44,21 @@ export const incidentReports = pgTable("incident_reports", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const userMissions = pgTable("user_missions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  missionId: text("mission_id").notNull(),
+  date: text("date").notNull(), // ISO date "YYYY-MM-DD"
+  pointsEarned: integer("points_earned").notNull(),
+  completedAt: timestamp("completed_at").defaultNow(),
+});
+
+export const userSettings = pgTable("user_settings", {
+  userId: varchar("user_id").primaryKey(),
+  settings: text("settings").notNull(), // JSON string of AppSettings
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -57,12 +69,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export const insertCheckInSchema = createInsertSchema(checkIns).pick({
   userId: true,
-  humor: true,
-  energy: true,
-  mind: true,
-  sleep: true,
-  contextTags: true,
-  notes: true,
+  answers: true,
+  domainScores: true,
+  flags: true,
+  chatTriggered: true,
 });
 
 export const insertMomentCheckInSchema = createInsertSchema(momentCheckIns).pick({
@@ -82,6 +92,18 @@ export const insertIncidentReportSchema = createInsertSchema(incidentReports).pi
   anonymous: true,
 });
 
+export const insertUserMissionSchema = createInsertSchema(userMissions).pick({
+  userId: true,
+  missionId: true,
+  date: true,
+  pointsEarned: true,
+});
+
+export const insertUserSettingsSchema = createInsertSchema(userSettings).pick({
+  userId: true,
+  settings: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertCheckIn = z.infer<typeof insertCheckInSchema>;
@@ -90,3 +112,18 @@ export type InsertMomentCheckIn = z.infer<typeof insertMomentCheckInSchema>;
 export type MomentCheckIn = typeof momentCheckIns.$inferSelect;
 export type InsertIncidentReport = z.infer<typeof insertIncidentReportSchema>;
 export type IncidentReport = typeof incidentReports.$inferSelect;
+export type InsertUserMission = z.infer<typeof insertUserMissionSchema>;
+export type UserMission = typeof userMissions.$inferSelect;
+export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
+export type UserSettings = typeof userSettings.$inferSelect;
+
+/** Canonical check-in history record returned by GET /api/checkins/user/:id/history */
+export interface CheckInHistoryRecord {
+  readonly date: string; // "YYYY-MM-DD"
+  readonly domainScores: {
+    readonly recarga: number;
+    readonly "estado-do-dia": number;
+    readonly "seguranca-relacional": number;
+  };
+  readonly flags: string[];
+}

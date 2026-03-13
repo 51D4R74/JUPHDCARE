@@ -1,6 +1,243 @@
-import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport } from "@shared/schema";
+import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport, type UserMission, type InsertUserMission, type UserSettings, type CheckInHistoryRecord } from "@shared/schema";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
+
+type ScoreDomainId = "recarga" | "estado-do-dia" | "seguranca-relacional";
+type SkyState = "clear" | "partly-cloudy" | "protective-cloud" | "respiro";
+type RiskLevel = "low" | "medium" | "high";
+type AlertSeverity = "low" | "medium" | "high";
+
+interface DomainScores {
+  recarga: number;
+  "estado-do-dia": number;
+  "seguranca-relacional": number;
+}
+
+interface DomainAverage {
+  domain: ScoreDomainId;
+  label: string;
+  avg: number;
+}
+
+interface DeptAggregate {
+  department: string;
+  headcount: number;
+  participationRate: number;
+  domainAverages: DomainAverage[];
+  riskLevel: RiskLevel;
+  stressIndex: number;
+  burnoutIndex: number;
+}
+
+interface AggregateAlert {
+  id: string;
+  severity: AlertSeverity;
+  title: string;
+  description: string;
+  department: string;
+  timestamp: string;
+}
+
+interface TrendPoint {
+  month: string;
+  value: number | null;
+  forecast: number | null;
+}
+
+interface MoodSlice {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface TodayScoresSnapshot {
+  domainScores: DomainScores;
+  skyState: SkyState;
+  solarHaloLevel: number;
+  flags: string[];
+  hasCheckedIn: boolean;
+}
+
+export interface RHAggregateData {
+  departments: DeptAggregate[];
+  alerts: AggregateAlert[];
+  participation: number;
+  totalCollaborators: number;
+  activeCollaborators: number;
+  averageWellbeing: number;
+  trendBurnout: TrendPoint[];
+  moodDistribution: MoodSlice[];
+}
+
+const DOMAIN_LABELS: Record<ScoreDomainId, string> = {
+  recarga: "Recarga",
+  "estado-do-dia": "Estado do dia",
+  "seguranca-relacional": "Segurança relacional",
+};
+
+const EMPTY_DOMAIN_SCORES: DomainScores = {
+  recarga: 0,
+  "estado-do-dia": 0,
+  "seguranca-relacional": 0,
+};
+
+function emptyDomainScores(): DomainScores {
+  return { ...EMPTY_DOMAIN_SCORES };
+}
+
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function average(values: number[]): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  return clampScore(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
+
+function arithmeticMean(values: number[]): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function getIsoDay(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function isSameDay(left: Date | null | undefined, right: Date): boolean {
+  return left instanceof Date && getIsoDay(left) === getIsoDay(right);
+}
+
+function parseDomainScores(raw: string): DomainScores {
+  try {
+    const parsed = JSON.parse(raw) as Partial<DomainScores>;
+    return {
+      recarga: clampScore(parsed.recarga ?? 0),
+      "estado-do-dia": clampScore(parsed["estado-do-dia"] ?? 0),
+      "seguranca-relacional": clampScore(parsed["seguranca-relacional"] ?? 0),
+    };
+  } catch {
+    return emptyDomainScores();
+  }
+}
+
+function buildSkySnapshot(domainScores: DomainScores, flags: string[]): Omit<TodayScoresSnapshot, "flags" | "hasCheckedIn" | "domainScores"> {
+  const lowestScore = Math.min(
+    domainScores.recarga,
+    domainScores["estado-do-dia"],
+    domainScores["seguranca-relacional"],
+  );
+
+  if (flags.includes("harassment_signal") || lowestScore < 25) {
+    return { skyState: "respiro", solarHaloLevel: 0.2 };
+  }
+  if (lowestScore < 45) {
+    return { skyState: "protective-cloud", solarHaloLevel: 0.4 };
+  }
+  if (lowestScore < 75) {
+    return { skyState: "partly-cloudy", solarHaloLevel: 0.65 };
+  }
+  return { skyState: "clear", solarHaloLevel: 0.9 };
+}
+
+function getSleepAnswer(recargaScore: number): string {
+  if (recargaScore >= 75) {
+    return "restorative";
+  }
+  if (recargaScore >= 50) {
+    return "acceptable";
+  }
+  if (recargaScore >= 25) {
+    return "agitated";
+  }
+  return "terrible";
+}
+
+function getEnergyAnswer(recargaScore: number): string {
+  if (recargaScore >= 75) {
+    return "full";
+  }
+  if (recargaScore >= 50) {
+    return "ok";
+  }
+  if (recargaScore >= 25) {
+    return "low";
+  }
+  return "empty";
+}
+
+function getWorkRelationAnswer(relationalScore: number): string {
+  if (relationalScore >= 75) {
+    return "supported";
+  }
+  if (relationalScore >= 50) {
+    return "neutral";
+  }
+  if (relationalScore >= 25) {
+    return "tense";
+  }
+  return "unsafe";
+}
+
+function buildSeedAnswers(domainScores: DomainScores, flags: string[]): string {
+  return JSON.stringify({
+    sleep: getSleepAnswer(domainScores.recarga),
+    energy: getEnergyAnswer(domainScores.recarga),
+    work_relation: getWorkRelationAnswer(domainScores["seguranca-relacional"]),
+    context_tags: flags,
+  });
+}
+
+function getMonthLabel(date: Date): string {
+  const label = date.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function getMonthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function addMonths(date: Date, delta: number): Date {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + delta);
+  return next;
+}
+
+function getRiskLevel(stressIndex: number, burnoutIndex: number): RiskLevel {
+  const peak = Math.max(stressIndex, burnoutIndex);
+  if (peak >= 65) {
+    return "high";
+  }
+  if (peak >= 45) {
+    return "medium";
+  }
+  return "low";
+}
+
+function getAlertSeverity(riskLevel: RiskLevel): AlertSeverity {
+  return riskLevel;
+}
+
+function categorizeMood(record: CheckIn): string {
+  const scores = parseDomainScores(record.domainScores);
+  const flags = record.flags ?? [];
+  if (flags.includes("harassment_signal") || scores["seguranca-relacional"] < 30) {
+    return "Tenso";
+  }
+  if (scores["estado-do-dia"] < 45) {
+    return "Ansioso";
+  }
+  if (scores.recarga >= 70 && scores["seguranca-relacional"] >= 60) {
+    return "Calmo";
+  }
+  if (average(Object.values(scores)) >= 70) {
+    return "Bem";
+  }
+  return "Outros";
+}
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -8,7 +245,16 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   createCheckIn(checkIn: InsertCheckIn): Promise<CheckIn>;
   getCheckInsByUserId(userId: string): Promise<CheckIn[]>;
+  getCheckInsByUserIdAndDate(userId: string, date: Date): Promise<CheckIn[]>;
   getAllCheckIns(): Promise<CheckIn[]>;
+  getAllUsers(): Promise<User[]>;
+  getTodayScoresByUserId(userId: string): Promise<TodayScoresSnapshot>;
+  getRhAggregate(): Promise<RHAggregateData>;
+  getDailyMissions(userId: string, isoDate: string): Promise<UserMission[]>;
+  completeMission(mission: InsertUserMission): Promise<UserMission>;
+  getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  upsertUserSettings(userId: string, settingsJson: string): Promise<UserSettings>;
+  getHistoryByUserId(userId: string, days: number | null): Promise<CheckInHistoryRecord[]>;
   createMomentCheckIn(checkIn: InsertMomentCheckIn): Promise<MomentCheckIn>;
   getMomentCheckInsByUserId(userId: string): Promise<MomentCheckIn[]>;
   getMomentCheckInsByUserIdAndDate(userId: string, date: Date): Promise<MomentCheckIn[]>;
@@ -17,23 +263,286 @@ export interface IStorage {
   getAllIncidentReports(): Promise<IncidentReport[]>;
 }
 
-export class MemStorage implements IStorage {
+/** Algorithm-heavy computed methods shared across all storage backends. */
+export abstract class BaseStorage implements IStorage {
+  abstract getAllUsers(): Promise<User[]>;
+  abstract getUser(id: string): Promise<User | undefined>;
+  abstract getUserByUsername(username: string): Promise<User | undefined>;
+  abstract createUser(user: InsertUser): Promise<User>;
+  abstract createCheckIn(checkIn: InsertCheckIn): Promise<CheckIn>;
+  abstract getCheckInsByUserId(userId: string): Promise<CheckIn[]>;
+  abstract getCheckInsByUserIdAndDate(userId: string, date: Date): Promise<CheckIn[]>;
+  abstract getAllCheckIns(): Promise<CheckIn[]>;
+  abstract getDailyMissions(userId: string, isoDate: string): Promise<UserMission[]>;
+  abstract completeMission(mission: InsertUserMission): Promise<UserMission>;
+  abstract getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  abstract upsertUserSettings(userId: string, settingsJson: string): Promise<UserSettings>;
+  abstract createMomentCheckIn(checkIn: InsertMomentCheckIn): Promise<MomentCheckIn>;
+  abstract getMomentCheckInsByUserId(userId: string): Promise<MomentCheckIn[]>;
+  abstract getMomentCheckInsByUserIdAndDate(userId: string, date: Date): Promise<MomentCheckIn[]>;
+  abstract getAllMomentCheckIns(): Promise<MomentCheckIn[]>;
+  abstract createIncidentReport(report: InsertIncidentReport): Promise<IncidentReport>;
+  abstract getAllIncidentReports(): Promise<IncidentReport[]>;
+
+  async getTodayScoresByUserId(userId: string): Promise<TodayScoresSnapshot> {
+    const todayCheckIn = (await this.getCheckInsByUserIdAndDate(userId, new Date())).at(0);
+    if (!todayCheckIn) {
+      return {
+        domainScores: emptyDomainScores(),
+        skyState: "partly-cloudy",
+        solarHaloLevel: 0.5,
+        flags: [],
+        hasCheckedIn: false,
+      };
+    }
+
+    const domainScores = parseDomainScores(todayCheckIn.domainScores);
+    const flags = todayCheckIn.flags ?? [];
+    const skySnapshot = buildSkySnapshot(domainScores, flags);
+
+    return {
+      domainScores,
+      flags,
+      hasCheckedIn: true,
+      ...skySnapshot,
+    };
+  }
+
+  async getRhAggregate(): Promise<RHAggregateData> {
+    const collaborators = (await this.getAllUsers()).filter((user) => user.role === "collaborator");
+    const allCheckIns = await this.getAllCheckIns();
+    const now = new Date();
+    const days30Ago = new Date(now);
+    days30Ago.setDate(now.getDate() - 30);
+    const days14Ago = new Date(now);
+    days14Ago.setDate(now.getDate() - 14);
+
+    const recent30 = allCheckIns.filter((checkIn) => (checkIn.createdAt?.getTime() || 0) >= days30Ago.getTime());
+    const recent14 = allCheckIns.filter((checkIn) => (checkIn.createdAt?.getTime() || 0) >= days14Ago.getTime());
+    const activeCollaborators = new Set(recent30.map((checkIn) => checkIn.userId)).size;
+
+    const departments = Array.from(
+      collaborators.reduce((map, user) => {
+        const department = user.department ?? "Sem área";
+        const users = map.get(department) ?? [];
+        users.push(user);
+        map.set(department, users);
+        return map;
+      }, new Map<string, User[]>()),
+    )
+      .map(([department, departmentUsers]) => {
+        const userIds = new Set(departmentUsers.map((user) => user.id));
+        const departmentRecords30 = recent30.filter((checkIn) => userIds.has(checkIn.userId));
+        const departmentRecords14 = recent14.filter((checkIn) => userIds.has(checkIn.userId));
+        const participationRate = clampScore((new Set(departmentRecords30.map((checkIn) => checkIn.userId)).size / Math.max(1, departmentUsers.length)) * 100);
+
+        const domainAverages = (Object.keys(DOMAIN_LABELS) as ScoreDomainId[]).map((domain) => ({
+          domain,
+          label: DOMAIN_LABELS[domain],
+          avg: average(departmentRecords14.map((checkIn) => parseDomainScores(checkIn.domainScores)[domain])),
+        }));
+
+        const stressIndex = clampScore(100 - average(departmentRecords14.map((checkIn) => average([
+          parseDomainScores(checkIn.domainScores).recarga,
+          parseDomainScores(checkIn.domainScores)["estado-do-dia"],
+        ]))));
+        const burnoutIndex = clampScore(100 - average(departmentRecords14.map((checkIn) => average([
+          parseDomainScores(checkIn.domainScores).recarga,
+          parseDomainScores(checkIn.domainScores)["seguranca-relacional"],
+        ]))));
+        const riskLevel = getRiskLevel(stressIndex, burnoutIndex);
+
+        return {
+          department,
+          headcount: departmentUsers.length,
+          participationRate,
+          domainAverages,
+          riskLevel,
+          stressIndex,
+          burnoutIndex,
+        } satisfies DeptAggregate;
+      })
+      .toSorted((left, right) => right.burnoutIndex - left.burnoutIndex);
+
+    const averageWellbeing = average(
+      recent14.map((checkIn) => average(Object.values(parseDomainScores(checkIn.domainScores)))),
+    );
+
+    const alerts = departments
+      .filter((department) => department.riskLevel !== "low")
+      .slice(0, 3)
+      .map((department, index) => ({
+        id: `alert-${index + 1}`,
+        severity: getAlertSeverity(department.riskLevel),
+        title:
+          department.riskLevel === "high"
+            ? "Padrão de risco elevado"
+            : "Sinal de atenção em evolução",
+        description:
+          department.riskLevel === "high"
+            ? `${department.department} apresenta burnout médio de ${department.burnoutIndex}% e segurança relacional de ${department.domainAverages.find((item) => item.domain === "seguranca-relacional")?.avg ?? 0}%.`
+            : `${department.department} registra estresse médio de ${department.stressIndex}% com participação de ${department.participationRate}% nos últimos 30 dias.`,
+        department: department.department,
+        timestamp: "agora",
+      } satisfies AggregateAlert));
+
+    const actualMonths = Array.from({ length: 6 }, (_, index) => addMonths(new Date(now.getFullYear(), now.getMonth(), 1), index - 5));
+    const actualTrend = actualMonths.map((monthDate) => {
+      const monthKey = getMonthKey(monthDate);
+      const monthRecords = allCheckIns.filter((checkIn) => {
+        if (!(checkIn.createdAt instanceof Date)) {
+          return false;
+        }
+        return getMonthKey(checkIn.createdAt) === monthKey;
+      });
+
+      return {
+        month: getMonthLabel(monthDate),
+        value: monthRecords.length > 0
+          ? clampScore(100 - average(monthRecords.map((checkIn) => average([
+              parseDomainScores(checkIn.domainScores).recarga,
+              parseDomainScores(checkIn.domainScores)["seguranca-relacional"],
+            ]))))
+          : null,
+      };
+    });
+
+    const actualValues = actualTrend.map((point) => point.value).filter((value): value is number => value !== null);
+    const avgDelta = actualValues.length >= 2
+      ? arithmeticMean(actualValues.slice(1).map((value, index) => value - actualValues[index]))
+      : 3;
+    const lastActualValue = actualValues.at(-1) ?? 45;
+    const forecastTrend = Array.from({ length: 3 }, (_, index) => ({
+      month: getMonthLabel(addMonths(actualMonths.at(-1) ?? now, index + 1)),
+      forecast: clampScore(lastActualValue + avgDelta * (index + 1)),
+    }));
+
+    const trendBurnout: TrendPoint[] = [
+      ...actualTrend.map((point) => ({ month: point.month, value: point.value, forecast: null })),
+      ...forecastTrend.map((point) => ({ month: point.month, value: null, forecast: point.forecast })),
+    ];
+
+    const latestByUser = recent30.reduce((map, checkIn) => {
+      const existing = map.get(checkIn.userId);
+      const existingTime = existing?.createdAt?.getTime() ?? 0;
+      const currentTime = checkIn.createdAt?.getTime() ?? 0;
+      if (currentTime > existingTime) {
+        map.set(checkIn.userId, checkIn);
+      }
+      return map;
+    }, new Map<string, CheckIn>());
+
+    const moodCounts = Array.from(latestByUser.values()).reduce((counts, checkIn) => {
+      const category = categorizeMood(checkIn);
+      counts[category] = (counts[category] ?? 0) + 1;
+      return counts;
+    }, {} as Record<string, number>);
+    const totalMoodBase = Math.max(1, Array.from(latestByUser.values()).length);
+    const moodPalette: Record<string, string> = {
+      Bem: "#34d399",
+      Ansioso: "#f87171",
+      Calmo: "#22d3ee",
+      Tenso: "#fb923c",
+      Outros: "#94a3b8",
+    };
+    const moodDistribution = Object.entries(moodCounts)
+      .map(([name, count]) => ({
+        name,
+        value: clampScore((count / totalMoodBase) * 100),
+        color: moodPalette[name] ?? moodPalette.Outros,
+      }))
+      .toSorted((left, right) => right.value - left.value);
+
+    return {
+      departments,
+      alerts,
+      participation: clampScore((activeCollaborators / Math.max(1, collaborators.length)) * 100),
+      totalCollaborators: collaborators.length,
+      activeCollaborators,
+      averageWellbeing,
+      trendBurnout,
+      moodDistribution,
+    };
+  }
+
+  async getHistoryByUserId(userId: string, days: number | null): Promise<CheckInHistoryRecord[]> {
+    const all = await this.getCheckInsByUserId(userId); // sorted newest first
+    const cutoffTime = days === null
+      ? 0
+      : Date.now() - days * 24 * 60 * 60 * 1000;
+
+    return all
+      .filter((c) => (c.createdAt?.getTime() ?? 0) >= cutoffTime)
+      .map((c): CheckInHistoryRecord => ({
+        date: getIsoDay(c.createdAt ?? new Date()),
+        domainScores: parseDomainScores(c.domainScores),
+        flags: c.flags ?? [],
+      }))
+      .toSorted((a, b) => a.date.localeCompare(b.date)); // oldest → newest for charts
+  }
+}
+
+export class MemStorage extends BaseStorage {
   private readonly users: Map<string, User>;
   private readonly checkIns: Map<string, CheckIn>;
   private readonly momentCheckIns: Map<string, MomentCheckIn>;
   private readonly incidentReports: Map<string, IncidentReport>;
+  private readonly userMissionsMap: Map<string, UserMission>;
+  private readonly userSettingsMap: Map<string, UserSettings>;
 
   constructor() {
+    super();
     this.users = new Map();
     this.checkIns = new Map();
     this.momentCheckIns = new Map();
     this.incidentReports = new Map();
+    this.userMissionsMap = new Map();
+    this.userSettingsMap = new Map();
     this.seedData();
   }
 
   private seedData() {
     // Seed passwords are hashed at startup. Plain-text only in this comment for dev reference: "Senha@123"
     const seedHash = bcrypt.hashSync("Senha@123", 10);
+    const departmentProfiles: Record<string, DomainScores> = {
+      Vendas: { recarga: 42, "estado-do-dia": 48, "seguranca-relacional": 36 },
+      TI: { recarga: 62, "estado-do-dia": 58, "seguranca-relacional": 60 },
+      Marketing: { recarga: 75, "estado-do-dia": 72, "seguranca-relacional": 78 },
+      Financeiro: { recarga: 55, "estado-do-dia": 57, "seguranca-relacional": 52 },
+      Operações: { recarga: 47, "estado-do-dia": 50, "seguranca-relacional": 44 },
+      "Recursos Humanos": { recarga: 68, "estado-do-dia": 66, "seguranca-relacional": 74 },
+    };
+
+    const createSeedCheckIn = (userId: string, date: Date, baseScores: DomainScores) => {
+      const scores: DomainScores = {
+        recarga: clampScore(baseScores.recarga + Math.round((Math.random() - 0.5) * 24)),
+        "estado-do-dia": clampScore(baseScores["estado-do-dia"] + Math.round((Math.random() - 0.5) * 24)),
+        "seguranca-relacional": clampScore(baseScores["seguranca-relacional"] + Math.round((Math.random() - 0.5) * 22)),
+      };
+      const flags: string[] = [];
+
+      if (scores.recarga < 40) {
+        flags.push("workload");
+      }
+      if (scores["seguranca-relacional"] < 45) {
+        flags.push("climate_risk");
+      }
+      if (scores["seguranca-relacional"] < 30) {
+        flags.push("harassment_signal");
+      }
+
+      const checkIn: CheckIn = {
+        id: randomUUID(),
+        userId,
+        answers: buildSeedAnswers(scores, flags),
+        domainScores: JSON.stringify(scores),
+        flags: flags.length > 0 ? flags : null,
+        chatTriggered: flags.includes("harassment_signal"),
+        createdAt: date,
+      };
+
+      this.checkIns.set(checkIn.id, checkIn);
+    };
 
     const demoUser: User = {
       id: "user-1",
@@ -56,11 +565,6 @@ export class MemStorage implements IStorage {
     this.users.set(rhUser.id, rhUser);
 
     const departments = ["Vendas", "TI", "Marketing", "Financeiro", "Operações"];
-    const humors = ["Bem", "Ansioso", "Tenso", "Calmo", "Motivado", "Triste", "Irritado", "Confiante"];
-    const energies = ["Disposto", "Cansado", "Exausto", "Empolgado"];
-    const minds = ["Focado", "Estressado", "Distraído", "Criativo", "Alta Produção", "Baixa Produção"];
-    const sleeps = ["Sono restaurador", "Cansaço ao acordar", "Dificuldade para dormir", "Sono tranquilo", "Pesadelos", "Adormeci rápido"];
-    const tags = ["Trabalho", "Família", "Saúde", "Relacionamentos"];
 
     for (let i = 0; i < 50; i++) {
       const dept = departments[i % departments.length];
@@ -74,46 +578,34 @@ export class MemStorage implements IStorage {
       };
       this.users.set(seedUser.id, seedUser);
 
-      const daysAgo = Math.floor(Math.random() * 30);
-      const date = new Date();
-      date.setDate(date.getDate() - daysAgo);
-
-      const checkIn: CheckIn = {
-        id: `checkin-${i}`,
-        userId: seedUser.id,
-        humor: humors[Math.floor(Math.random() * humors.length)],
-        energy: energies[Math.floor(Math.random() * energies.length)],
-        mind: minds[Math.floor(Math.random() * minds.length)],
-        sleep: sleeps[Math.floor(Math.random() * sleeps.length)],
-        contextTags: [tags[Math.floor(Math.random() * tags.length)]],
-        notes: null,
-        createdAt: date,
-      };
-      this.checkIns.set(checkIn.id, checkIn);
+      for (let monthOffset = 0; monthOffset < 6; monthOffset++) {
+        const checksInMonth = 1 + (i + monthOffset) % 3;
+        for (let j = 0; j < checksInMonth; j++) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - monthOffset);
+          date.setDate(3 + ((i * 7 + j * 9) % 24));
+          createSeedCheckIn(seedUser.id, date, departmentProfiles[dept]);
+        }
+      }
     }
 
-    const userCheckIns = [
-      { humor: "Bem", energy: "Disposto", mind: "Focado", sleep: "Sono restaurador", daysAgo: 1 },
-      { humor: "Ansioso", energy: "Cansado", mind: "Estressado", sleep: "Dificuldade para dormir", daysAgo: 3 },
-      { humor: "Calmo", energy: "Empolgado", mind: "Criativo", sleep: "Sono tranquilo", daysAgo: 5 },
+    const demoOffsets = [1, 3, 6, 10, 16, 24, 36, 52, 79, 104, 128, 151];
+    const demoProfiles = [
+      { recarga: 78, "estado-do-dia": 74, "seguranca-relacional": 82 },
+      { recarga: 61, "estado-do-dia": 58, "seguranca-relacional": 66 },
+      { recarga: 48, "estado-do-dia": 52, "seguranca-relacional": 58 },
+      { recarga: 40, "estado-do-dia": 45, "seguranca-relacional": 34 },
     ];
 
-    userCheckIns.forEach((c, i) => {
+    demoOffsets.forEach((daysAgo, index) => {
       const date = new Date();
-      date.setDate(date.getDate() - c.daysAgo);
-      const checkIn: CheckIn = {
-        id: `user-checkin-${i}`,
-        userId: "user-1",
-        humor: c.humor,
-        energy: c.energy,
-        mind: c.mind,
-        sleep: c.sleep,
-        contextTags: ["Trabalho"],
-        notes: null,
-        createdAt: date,
-      };
-      this.checkIns.set(checkIn.id, checkIn);
+      date.setDate(date.getDate() - daysAgo);
+      createSeedCheckIn("user-1", date, demoProfiles[index % demoProfiles.length]);
     });
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -136,7 +628,13 @@ export class MemStorage implements IStorage {
 
   async createCheckIn(insertCheckIn: InsertCheckIn): Promise<CheckIn> {
     const id = randomUUID();
-    const checkIn: CheckIn = { ...insertCheckIn, id, createdAt: new Date(), contextTags: insertCheckIn.contextTags || null, notes: insertCheckIn.notes || null };
+    const checkIn: CheckIn = {
+      ...insertCheckIn,
+      id,
+      createdAt: new Date(),
+      flags: insertCheckIn.flags || null,
+      chatTriggered: insertCheckIn.chatTriggered ?? false,
+    };
     this.checkIns.set(id, checkIn);
     return checkIn;
   }
@@ -147,9 +645,172 @@ export class MemStorage implements IStorage {
       .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
   }
 
+  async getCheckInsByUserIdAndDate(userId: string, date: Date): Promise<CheckIn[]> {
+    return Array.from(this.checkIns.values())
+      .filter((checkIn) => checkIn.userId === userId && isSameDay(checkIn.createdAt, date))
+      .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
   async getAllCheckIns(): Promise<CheckIn[]> {
     return Array.from(this.checkIns.values())
       .sort((a, b) => (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0));
+  }
+
+  async getRhAggregate(): Promise<RHAggregateData> {
+    const collaborators = Array.from(this.users.values()).filter((user) => user.role === "collaborator");
+    const allCheckIns = await this.getAllCheckIns();
+    const now = new Date();
+    const days30Ago = new Date(now);
+    days30Ago.setDate(now.getDate() - 30);
+    const days14Ago = new Date(now);
+    days14Ago.setDate(now.getDate() - 14);
+
+    const recent30 = allCheckIns.filter((checkIn) => (checkIn.createdAt?.getTime() || 0) >= days30Ago.getTime());
+    const recent14 = allCheckIns.filter((checkIn) => (checkIn.createdAt?.getTime() || 0) >= days14Ago.getTime());
+    const activeCollaborators = new Set(recent30.map((checkIn) => checkIn.userId)).size;
+
+    const departments = Array.from(
+      collaborators.reduce((map, user) => {
+        const department = user.department ?? "Sem área";
+        const users = map.get(department) ?? [];
+        users.push(user);
+        map.set(department, users);
+        return map;
+      }, new Map<string, User[]>()),
+    )
+      .map(([department, departmentUsers]) => {
+        const userIds = new Set(departmentUsers.map((user) => user.id));
+        const departmentRecords30 = recent30.filter((checkIn) => userIds.has(checkIn.userId));
+        const departmentRecords14 = recent14.filter((checkIn) => userIds.has(checkIn.userId));
+        const participationRate = clampScore((new Set(departmentRecords30.map((checkIn) => checkIn.userId)).size / Math.max(1, departmentUsers.length)) * 100);
+
+        const domainAverages = (Object.keys(DOMAIN_LABELS) as ScoreDomainId[]).map((domain) => ({
+          domain,
+          label: DOMAIN_LABELS[domain],
+          avg: average(departmentRecords14.map((checkIn) => parseDomainScores(checkIn.domainScores)[domain])),
+        }));
+
+        const stressIndex = clampScore(100 - average(departmentRecords14.map((checkIn) => average([
+          parseDomainScores(checkIn.domainScores).recarga,
+          parseDomainScores(checkIn.domainScores)["estado-do-dia"],
+        ]))));
+        const burnoutIndex = clampScore(100 - average(departmentRecords14.map((checkIn) => average([
+          parseDomainScores(checkIn.domainScores).recarga,
+          parseDomainScores(checkIn.domainScores)["seguranca-relacional"],
+        ]))));
+        const riskLevel = getRiskLevel(stressIndex, burnoutIndex);
+
+        return {
+          department,
+          headcount: departmentUsers.length,
+          participationRate,
+          domainAverages,
+          riskLevel,
+          stressIndex,
+          burnoutIndex,
+        } satisfies DeptAggregate;
+      })
+      .toSorted((left, right) => right.burnoutIndex - left.burnoutIndex);
+
+    const averageWellbeing = average(
+      recent14.map((checkIn) => average(Object.values(parseDomainScores(checkIn.domainScores)))),
+    );
+
+    const alerts = departments
+      .filter((department) => department.riskLevel !== "low")
+      .slice(0, 3)
+      .map((department, index) => ({
+        id: `alert-${index + 1}`,
+        severity: getAlertSeverity(department.riskLevel),
+        title:
+          department.riskLevel === "high"
+            ? "Padrão de risco elevado"
+            : "Sinal de atenção em evolução",
+        description:
+          department.riskLevel === "high"
+            ? `${department.department} apresenta burnout médio de ${department.burnoutIndex}% e segurança relacional de ${department.domainAverages.find((item) => item.domain === "seguranca-relacional")?.avg ?? 0}%.`
+            : `${department.department} registra estresse médio de ${department.stressIndex}% com participação de ${department.participationRate}% nos últimos 30 dias.`,
+        department: department.department,
+        timestamp: "agora",
+      } satisfies AggregateAlert));
+
+    const actualMonths = Array.from({ length: 6 }, (_, index) => addMonths(new Date(now.getFullYear(), now.getMonth(), 1), index - 5));
+    const actualTrend = actualMonths.map((monthDate) => {
+      const monthKey = getMonthKey(monthDate);
+      const monthRecords = allCheckIns.filter((checkIn) => {
+        if (!(checkIn.createdAt instanceof Date)) {
+          return false;
+        }
+        return getMonthKey(checkIn.createdAt) === monthKey;
+      });
+
+      return {
+        month: getMonthLabel(monthDate),
+        value: monthRecords.length > 0
+          ? clampScore(100 - average(monthRecords.map((checkIn) => average([
+              parseDomainScores(checkIn.domainScores).recarga,
+              parseDomainScores(checkIn.domainScores)["seguranca-relacional"],
+            ]))))
+          : null,
+      };
+    });
+
+    const actualValues = actualTrend.map((point) => point.value).filter((value): value is number => value !== null);
+    const avgDelta = actualValues.length >= 2
+      ? arithmeticMean(actualValues.slice(1).map((value, index) => value - actualValues[index]))
+      : 3;
+    const lastActualValue = actualValues.at(-1) ?? 45;
+    const forecastTrend = Array.from({ length: 3 }, (_, index) => ({
+      month: getMonthLabel(addMonths(actualMonths.at(-1) ?? now, index + 1)),
+      forecast: clampScore(lastActualValue + avgDelta * (index + 1)),
+    }));
+
+    const trendBurnout: TrendPoint[] = [
+      ...actualTrend.map((point) => ({ month: point.month, value: point.value, forecast: null })),
+      ...forecastTrend.map((point) => ({ month: point.month, value: null, forecast: point.forecast })),
+    ];
+
+    const latestByUser = recent30.reduce((map, checkIn) => {
+      const existing = map.get(checkIn.userId);
+      const existingTime = existing?.createdAt?.getTime() ?? 0;
+      const currentTime = checkIn.createdAt?.getTime() ?? 0;
+      if (currentTime > existingTime) {
+        map.set(checkIn.userId, checkIn);
+      }
+      return map;
+    }, new Map<string, CheckIn>());
+
+    const moodCounts = Array.from(latestByUser.values()).reduce((counts, checkIn) => {
+      const category = categorizeMood(checkIn);
+      counts[category] = (counts[category] ?? 0) + 1;
+      return counts;
+    }, {} as Record<string, number>);
+    const totalMoodBase = Math.max(1, Array.from(latestByUser.values()).length);
+    const moodPalette: Record<string, string> = {
+      Bem: "#34d399",
+      Ansioso: "#f87171",
+      Calmo: "#22d3ee",
+      Tenso: "#fb923c",
+      Outros: "#94a3b8",
+    };
+    const moodDistribution = Object.entries(moodCounts)
+      .map(([name, count]) => ({
+        name,
+        value: clampScore((count / totalMoodBase) * 100),
+        color: moodPalette[name] ?? moodPalette.Outros,
+      }))
+      .toSorted((left, right) => right.value - left.value);
+
+    return {
+      departments,
+      alerts,
+      participation: clampScore((activeCollaborators / Math.max(1, collaborators.length)) * 100),
+      totalCollaborators: collaborators.length,
+      activeCollaborators,
+      averageWellbeing,
+      trendBurnout,
+      moodDistribution,
+    };
   }
 
   async createMomentCheckIn(insert: InsertMomentCheckIn): Promise<MomentCheckIn> {
@@ -207,6 +868,29 @@ export class MemStorage implements IStorage {
   async getAllIncidentReports(): Promise<IncidentReport[]> {
     return Array.from(this.incidentReports.values());
   }
+
+  async getDailyMissions(userId: string, isoDate: string): Promise<UserMission[]> {
+    return Array.from(this.userMissionsMap.values()).filter(
+      (m) => m.userId === userId && m.date === isoDate,
+    );
+  }
+
+  async completeMission(insert: InsertUserMission): Promise<UserMission> {
+    const id = randomUUID();
+    const mission: UserMission = { ...insert, id, completedAt: new Date() };
+    this.userMissionsMap.set(id, mission);
+    return mission;
+  }
+
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    return this.userSettingsMap.get(userId);
+  }
+
+  async upsertUserSettings(userId: string, settingsJson: string): Promise<UserSettings> {
+    const record: UserSettings = { userId, settings: settingsJson, updatedAt: new Date() };
+    this.userSettingsMap.set(userId, record);
+    return record;
+  }
 }
 
-export const storage = new MemStorage();
+
