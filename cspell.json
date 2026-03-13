@@ -105,6 +105,9 @@
     "dedup",
     "Contribs", "contribs",
 
+    // Design benchmark references (code comments)
+    "metaball", "Dribbble",
+
     // cSpell itself
     "streetsidesoftware"
   ],
