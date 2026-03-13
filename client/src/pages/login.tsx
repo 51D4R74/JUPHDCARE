@@ -71,7 +71,8 @@ export default function LoginPage() {
       } else {
         navigate("/dashboard");
       }
-    } catch {
+    } catch (error: unknown) {
+      console.warn("Login failed:", error);
       toast({ title: "Erro", description: "Credenciais inválidas. Verifique seu email e senha.", variant: "destructive" });
     } finally {
       setIsLoading(false);

@@ -36,7 +36,7 @@ export default function NotificationBadge({ onClick, className }: Readonly<Notif
       }}
       className={`relative p-2 rounded-lg hover:bg-black/5 transition-colors ${className ?? ""}`}
       data-testid="button-notifications"
-      aria-label={count > 0 ? "Notificações (" + String(count) + " não lidas)" : "Notificações"}
+      aria-label={count > 0 ? `Notificações (${count} não lidas)` : "Notificações"}
     >
       <Bell className="w-4 h-4 text-muted-foreground" />
       {count > 0 && (

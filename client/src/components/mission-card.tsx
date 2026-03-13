@@ -52,7 +52,7 @@ export default function MissionCard({
         {/* Icon / check circle */}
         <div className="relative flex-shrink-0">
           <motion.div
-            animate={isDone ? { scale: [1, 1.2, 1], backgroundColor: "#22c55e" } : {}}
+            animate={isDone ? { scale: [1, 1.2, 1], backgroundColor: "hsl(var(--score-good))" } : {}}
             transition={{ duration: 0.3 }}
             className={`w-10 h-10 rounded-xl flex items-center justify-center ${
               isDone ? "bg-emerald-500" : "bg-brand-navy/10"

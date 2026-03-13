@@ -13,7 +13,7 @@ const listeners = new Set<() => void>();
 
 const stored = globalThis.window === undefined ? null : localStorage.getItem("juphd_user");
 if (stored) {
-  try { currentUser = JSON.parse(stored); } catch { /* corrupt – ignore */ }
+  try { currentUser = JSON.parse(stored); } catch (e: unknown) { console.warn("Corrupt auth state:", e); }
 }
 
 function emit() {
@@ -31,7 +31,7 @@ async function logout() {
   setUser(null);
   try {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-  } catch { /* best-effort server cleanup */ }
+  } catch (e: unknown) { console.warn("Logout cleanup failed:", e); }
 }
 
 /** Validate the server session and sync client state. */
@@ -43,7 +43,7 @@ async function validateSession(): Promise<AuthUser | null> {
       setUser(user);
       return user;
     }
-  } catch { /* network error – keep stale client state */ }
+  } catch (e: unknown) { console.warn("Session validation failed:", e); }
   // Session gone → clear client state
   setUser(null);
   return null;

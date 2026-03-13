@@ -56,7 +56,8 @@ export default function ProtecaoPage() {
       setSelectedCategory("");
       setSelectedSubcategory("");
       setDescription("");
-    } catch {
+    } catch (error: unknown) {
+      console.error("Report submission failed:", error);
       toast({ title: "Erro", description: "Não foi possível enviar o relato.", variant: "destructive" });
     } finally {
       setIsSending(false);

@@ -43,7 +43,8 @@ function readStore(): NotificationStore {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { items: [], todayCount: { date: todayKey(), count: 0 } };
     return JSON.parse(raw) as NotificationStore;
-  } catch {
+  } catch (e: unknown) {
+    console.warn("Failed to read notification store:", e);
     return { items: [], todayCount: { date: todayKey(), count: 0 } };
   }
 }

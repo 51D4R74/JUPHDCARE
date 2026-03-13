@@ -424,7 +424,8 @@ export default function CheckInPage() {
           description: "Obrigada por compartilhar como você está.",
         });
         setPhase("done");
-      } catch {
+      } catch (error: unknown) {
+        console.error("Check-in save failed:", error);
         toast({
           title: "Erro",
           description: "Não foi possível salvar o check-in.",

@@ -113,13 +113,16 @@ function isSameDay(left: Date | null | undefined, right: Date): boolean {
 
 function parseDomainScores(raw: string): DomainScores {
   try {
-    const parsed = JSON.parse(raw) as Partial<DomainScores>;
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed !== "object" || parsed === null) return emptyDomainScores();
+    const obj = parsed as Record<string, unknown>;
     return {
-      recarga: clampScore(parsed.recarga ?? 0),
-      "estado-do-dia": clampScore(parsed["estado-do-dia"] ?? 0),
-      "seguranca-relacional": clampScore(parsed["seguranca-relacional"] ?? 0),
+      recarga: clampScore(typeof obj.recarga === "number" ? obj.recarga : 0),
+      "estado-do-dia": clampScore(typeof obj["estado-do-dia"] === "number" ? obj["estado-do-dia"] : 0),
+      "seguranca-relacional": clampScore(typeof obj["seguranca-relacional"] === "number" ? obj["seguranca-relacional"] : 0),
     };
-  } catch {
+  } catch (error: unknown) {
+    console.warn("Failed to parse domain scores:", error);
     return emptyDomainScores();
   }
 }

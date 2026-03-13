@@ -117,7 +117,8 @@ function readState(): TeamChallengeState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as TeamChallengeState) : null;
-  } catch {
+  } catch (e: unknown) {
+    console.warn("Failed to read challenge state:", e);
     return null;
   }
 }

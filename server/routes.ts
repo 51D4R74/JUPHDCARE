@@ -138,7 +138,8 @@ export async function registerRoutes(
     }
     try {
       JSON.parse(body.settings);
-    } catch {
+    } catch (e: unknown) {
+      console.warn("Invalid settings JSON:", e);
       return res.status(400).json({ message: "Configurações inválidas" });
     }
     const result = await storage.upsertUserSettings(id, body.settings);

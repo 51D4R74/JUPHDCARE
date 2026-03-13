@@ -59,7 +59,8 @@ export function loadSettings(): AppSettings {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return structuredClone(DEFAULT_SETTINGS);
     return { ...structuredClone(DEFAULT_SETTINGS), ...JSON.parse(raw) };
-  } catch {
+  } catch (e: unknown) {
+    console.warn("Failed to load settings:", e);
     return structuredClone(DEFAULT_SETTINGS);
   }
 }
@@ -100,9 +101,13 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!remoteSettings?.settings) return;
     try {
-      const remote = JSON.parse(remoteSettings.settings) as Partial<AppSettings>;
+      const parsed: unknown = JSON.parse(remoteSettings.settings);
+      if (typeof parsed !== "object" || parsed === null) return;
+      const remote = parsed as Partial<AppSettings>;
       setSettings((prev) => ({ ...structuredClone(DEFAULT_SETTINGS), ...prev, ...remote }));
-    } catch { /* malformed remote data — ignore */ }
+    } catch (error: unknown) {
+      console.warn("Malformed remote settings:", error);
+    }
   }, [remoteSettings]);
 
   const { mutate: rawSaveToApi } = useMutation({
@@ -114,14 +119,15 @@ export default function SettingsPage() {
 
   const apiTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Persist to localStorage immediately; debounce API sync 800 ms
+  // Persist to localStorage immediately; debounce API sync
+  const API_SYNC_DEBOUNCE_MS = 800;
   useEffect(() => {
     saveSettings(settings);
     if (!user?.id) return;
     clearTimeout(apiTimerRef.current);
     apiTimerRef.current = setTimeout(() => {
       saveToApiRef.current(JSON.stringify(settings));
-    }, 800);
+    }, API_SYNC_DEBOUNCE_MS);
     return () => { clearTimeout(apiTimerRef.current); };
   }, [settings, user?.id]);
 

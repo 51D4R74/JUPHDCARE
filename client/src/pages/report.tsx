@@ -43,9 +43,11 @@ function mean(nums: number[]): number {
   return Math.round(nums.reduce((a, b) => a + b, 0) / nums.length);
 }
 
+const TREND_THRESHOLD = 3;
+
 function TrendIcon({ delta }: Readonly<{ delta: number }>) {
-  if (delta > 3) return <TrendingUp className="w-4 h-4 text-score-good" />;
-  if (delta < -3) return <TrendingDown className="w-4 h-4 text-score-critical" />;
+  if (delta > TREND_THRESHOLD) return <TrendingUp className="w-4 h-4 text-score-good" />;
+  if (delta < -TREND_THRESHOLD) return <TrendingDown className="w-4 h-4 text-score-critical" />;
   return <Minus className="w-4 h-4 text-muted-foreground" />;
 }
 

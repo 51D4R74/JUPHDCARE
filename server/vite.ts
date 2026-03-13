@@ -50,8 +50,9 @@ export async function setupVite(server: Server, app: Express) {
       );
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
+    } catch (e: unknown) {
+      const error = e instanceof Error ? e : new Error(String(e));
+      vite.ssrFixStacktrace(error);
       next(e);
     }
   });

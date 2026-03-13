@@ -35,7 +35,7 @@ function readRespiroState(): RespiroState {
   try {
     const raw = localStorage.getItem(RESPIRO_KEY);
     if (raw) return JSON.parse(raw) as RespiroState;
-  } catch { /* corrupted — reset */ }
+  } catch (e: unknown) { console.warn("Corrupted respiro state:", e); }
   return { active: false, activatedAt: null, needSupportCount: 0, lastNeedSupportAt: null };
 }
 
@@ -122,7 +122,7 @@ function readFavorites(): Set<string> {
   try {
     const raw = localStorage.getItem(FAVORITES_KEY);
     if (raw) return new Set(JSON.parse(raw) as string[]);
-  } catch { /* ignore */ }
+  } catch (e: unknown) { console.warn("Failed to read favorites:", e); }
   return new Set();
 }
 
@@ -159,7 +159,7 @@ function readSeen(): string[] {
   try {
     const raw = localStorage.getItem(SEEN_KEY);
     if (raw) return JSON.parse(raw) as string[];
-  } catch { /* ignore */ }
+  } catch (e: unknown) { console.warn("Failed to read seen messages:", e); }
   return [];
 }
 
