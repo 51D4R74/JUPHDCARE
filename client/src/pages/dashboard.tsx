@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sun, ChevronRight, Activity, Shield, Target, Lightbulb,
-  Heart, Trophy, Settings, CheckCircle2,
+  Heart, Trophy, Settings, CheckCircle2, Smile,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import AnimatedBrandLogo from "@/components/animated-brand-logo";
@@ -14,12 +14,15 @@ import SolarPointsBadge from "@/components/solar-points-badge";
 import NotificationBadge from "@/components/notification-badge";
 import NotificationDrawer from "@/components/notification-drawer";
 import InlineCheckin from "@/components/inline-checkin";
+import OneTapMood from "@/components/one-tap-mood";
 import ConstancyDots from "@/components/constancy-dots";
 import { useAuth } from "@/lib/auth";
 import { getDomainMeta, type TodayScores } from "@/lib/score-engine";
 import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
 import { POINT_VALUES } from "@/lib/mission-engine";
 import { getCurrentChallenge, describeChallenge } from "@/lib/team-challenge-engine";
+import { getHaloMetrics } from "@/lib/solar-points";
+import { apiRequest } from "@/lib/queryClient";
 import type { UserMission, CheckInHistoryRecord } from "@shared/schema";
 
 function getDailyInsight(scores: TodayScores): string {
@@ -85,8 +88,27 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [moodOpen, setMoodOpen] = useState(false);
   // Track local completion to show celebration immediately (before server refetch)
   const [justCompleted, setJustCompleted] = useState(false);
+
+  const haloMetrics = getHaloMetrics();
+
+  const handleMoodSelect = useCallback(
+    async (moodId: string) => {
+      setMoodOpen(false);
+      try {
+        await apiRequest("POST", "/api/moment-checkins", {
+          userId,
+          mood: moodId,
+          context: "dashboard_fab",
+        });
+      } catch (e: unknown) {
+        console.error("Micro-mood save failed:", e);
+      }
+    },
+    [userId],
+  );
 
   const { data: scores = EMPTY_SCORES } = useQuery<TodayScores>({
     queryKey: ["/api/scores/user", userId, "today"],
@@ -178,6 +200,7 @@ export default function DashboardPage() {
           <SkyHeader
             skyState={scores.skyState}
             solarHaloLevel={scores.solarHaloLevel}
+            haloMetrics={haloMetrics}
             size={checkedIn ? "hero" : "compact"}
           />
           <p className="text-center text-sm text-muted-foreground mt-2">
@@ -318,16 +341,16 @@ export default function DashboardPage() {
           </motion.section>
         )}
 
-        {/* Mission CTA */}
+        {/* Atividades — missions + team challenge merged */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-4"
+          className="mt-4 glass-card rounded-2xl overflow-hidden"
         >
           <button
             onClick={() => navigate("/missions")}
-            className="w-full glass-card rounded-2xl p-4 flex items-center gap-3 hover:border-primary/15 transition-colors text-left"
+            className="w-full p-4 flex items-center gap-3 hover:bg-black/[0.02] transition-colors text-left"
             data-testid="button-missions"
           >
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -341,21 +364,13 @@ export default function DashboardPage() {
             </div>
             <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
           </button>
-        </motion.section>
-
-        {/* Team Challenge CTA — M4 */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55 }}
-          className="mt-3"
-        >
+          <div className="mx-4 border-t border-border/30" />
           {(() => {
             const tc = getCurrentChallenge();
             return (
               <button
                 onClick={() => navigate("/team")}
-                className="w-full glass-card rounded-2xl p-4 flex items-center gap-3 hover:border-brand-gold/20 transition-colors text-left"
+                className="w-full p-4 flex items-center gap-3 hover:bg-black/[0.02] transition-colors text-left"
                 data-testid="button-team-challenge"
               >
                 <div className="w-10 h-10 rounded-xl bg-brand-gold/10 flex items-center justify-center flex-shrink-0">
@@ -444,6 +459,27 @@ export default function DashboardPage() {
           </button>
         </div>
       </nav>
+
+      {/* Micro-pulse FAB — visible only after check-in, bottom-left */}
+      {checkedIn && (
+        <motion.button
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.6, type: "spring", stiffness: 300, damping: 20 }}
+          onClick={() => setMoodOpen(true)}
+          className="fixed bottom-20 left-4 z-20 w-12 h-12 rounded-full glass-card shadow-lg border border-border/40 flex items-center justify-center hover:border-primary/20 transition-colors"
+          aria-label="Registrar humor"
+        >
+          <Smile className="w-5 h-5 text-muted-foreground" />
+        </motion.button>
+      )}
+
+      <OneTapMood
+        open={moodOpen}
+        onOpenChange={setMoodOpen}
+        onSelect={handleMoodSelect}
+        onNeedSupport={() => navigate("/support")}
+      />
 
       {/* Chatbot floating button + drawer */}
       <ChatbotDrawer userId={userId} />

@@ -1,4 +1,5 @@
 import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport, type UserMission, type InsertUserMission, type UserSettings, type CheckInHistoryRecord, type SolarPoints, type InsertSolarPoints } from "@shared/schema";
+import { ANONYMITY_THRESHOLD, getWorkdayDate } from "@shared/constants";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 
@@ -294,7 +295,7 @@ export abstract class BaseStorage implements IStorage {
   abstract deleteUserData(userId: string): Promise<void>;
 
   async getTodayScoresByUserId(userId: string): Promise<TodayScoresSnapshot> {
-    const todayCheckIn = (await this.getCheckInsByUserIdAndDate(userId, new Date())).at(0);
+    const todayCheckIn = (await this.getCheckInsByUserIdAndDate(userId, getWorkdayDate(new Date()))).at(0);
     if (!todayCheckIn) {
       return {
         domainScores: emptyDomainScores(),
@@ -371,6 +372,7 @@ export abstract class BaseStorage implements IStorage {
           burnoutIndex,
         } satisfies DeptAggregate;
       })
+      .filter((dept) => dept.headcount >= ANONYMITY_THRESHOLD)
       .toSorted((left, right) => right.burnoutIndex - left.burnoutIndex);
 
     const averageWellbeing = average(
@@ -725,6 +727,7 @@ export class MemStorage extends BaseStorage {
           burnoutIndex,
         } satisfies DeptAggregate;
       })
+      .filter((dept) => dept.headcount >= ANONYMITY_THRESHOLD)
       .toSorted((left, right) => right.burnoutIndex - left.burnoutIndex);
 
     const averageWellbeing = average(

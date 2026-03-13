@@ -51,6 +51,9 @@ Two products in one: personal well-being tool (collaborator) + aggregate analyti
 | **S19 — Auth Middleware & Route Protection** ✅ | Server-side session management, auth middleware on all routes, rate limiting on auth endpoints | `express-session` with httpOnly cookies; `requireAuth`, `requireOwner`, `requireRole` middleware in `server/middleware.ts`; all 20+ routes protected; `express-rate-limit` on login/register; `POST /api/auth/logout` + `GET /api/auth/me`; client validates session on mount |
 | **S20 — Buyer-Ready Hardening** ✅ | Zero DEBT, zero `any`, zero cspell; PT-BR compliance; a11y; dedup DOMAIN_COLORS; STATUS-REPORT rewrite; benchmark document | `grep DEBT: → 0`; `grep ': any' → 0`; `npm run check → 0`; `npx cspell → 0`; not-found.tsx PT-BR; insight-card + team-progress-arc aria-labels; DOMAIN_COLORS in score-engine.ts; STATUS-REPORT reflects S13–S20; `benchmark-mental-health-apps.md` created |
 | **S21 — Deep Quality Hardening** ✅ | Zero bare catches; typed error handling everywhere; runtime-validated JSON.parse; magic numbers extracted; server layer PT-BR; design token compliance | `grep 'catch {' → 0`; all catch blocks typed `(e: unknown)` with `console.warn`; `storage.ts` validates parsed JSON shape; `TREND_THRESHOLD` + `API_SYNC_DEBOUNCE_MS` named constants; `server/static.ts` PT-BR + `node:` prefix; `mission-card` uses CSS variable `hsl(var(--score-good))`; 16 files, 50 insertions |
+| **S22 — PRD v2.0 Core** ✅ | Solar Points schema + API; IRP formula; ICE momentânea; stepped care; chatbot drawer UI; inline check-in on dashboard | Solar Points tables, 7 new endpoints, `shared/constants.ts`, chatbot drawer, inline progressive check-in |
+| **S23 — UX Backlog Sweep** ✅ | B01–B08, B10, B13 — inline check-in, score states, celebration, constancy, time-aware Q1, first-visit welcome, crisis layout, team language, panic FAB | All B-items P0/P1 closed; panic button visible on all authenticated pages |
+| **S24 — Feature Completeness** ✅ | Day boundary enforcement (04:00); k-anonymity filter on RH aggregate (n≥5); halo metrics wired to SkyHeader; OneTapMood FAB (post-check-in); confidence score on submission; B09 Solar tooltip; B11 micro-pulse; B12 merge CTA cards | `DAY_BOUNDARY_HOUR` + `ANONYMITY_THRESHOLD` active in server; `haloMetrics` prop flowing to SkyHeader; mood FAB live after check-in; `confidence` field sent on submit |
 
 ---
 
@@ -138,8 +141,8 @@ Priority tiers: **P0** = blocks engagement, **P1** = high impact, **P2** = polis
 | B06 | P1 | ~~**Time-aware first question**~~ | ✅ S23 — `getTimeAwareSteps()` reorders by hour |
 | B07 | P1 | ~~**First-visit warm welcome state**~~ | ✅ S23 — welcome card when history.length === 0 |
 | B08 | P1 | ~~**Crisis-aware layout reordering**~~ | ✅ S23 — Support CTA above missions when score < 25 |
-| B09 | P2 | **Solar Points "0" contextual tooltip** | First-time tooltip on the ☀ badge explaining what Solar Points are and how to earn them. |
+| B09 | P2 | ~~**Solar Points "0" contextual tooltip**~~ | ✅ S24 — TooltipProvider auto-shows on first visit, persistent dismiss to localStorage |
 | B10 | P2 | ~~**Team Challenge human language**~~ | ✅ S23 — `describeChallenge()` helper |
-| B11 | P2 | **Micro-pulse OneTapMood integration** | Use existing `one-tap-mood.tsx` as optional quick signal between full check-ins. Separate data layer from check-in scores. |
-| B12 | P2 | **Reduce vertical card count** | Merge Mission CTA + Team Challenge into single "Atividades" card with 2 rows. Target ≤ 4 scrollable sections post-check-in. |
+| B11 | P2 | ~~**Micro-pulse OneTapMood integration**~~ | ✅ S24 — FAB visible after check-in, posts to `/api/moment-checkins` |
+| B12 | P2 | ~~**Reduce vertical card count**~~ | ✅ S24 — Mission + Team Challenge merged into single "Atividades" glass-card |
 | B13 | P0 | ~~**Panic button — always-visible FAB**~~ | ✅ S23 — fixed bottom-right ShieldAlert, 7 categories (Sobrecarga, Assédio, Reconhecimento, Saúde Mental, Liderança, Abuso, Segurança), anonymous reporting, visible on all authenticated pages |

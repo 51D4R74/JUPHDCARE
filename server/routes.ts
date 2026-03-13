@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import type { IStorage } from "./storage";
 import { requireAuth, requireOwner, requireRole } from "./middleware";
 import { insertCheckInSchema, insertMomentCheckInSchema, insertIncidentReportSchema, insertUserMissionSchema } from "@shared/schema";
+import { getWorkday, getWorkdayDate } from "@shared/constants";
 
 /** Type-safe extraction of a single route param (Express 5 returns string | string[]). */
 function param(req: Request, name: string): string {
@@ -171,7 +172,7 @@ export async function registerRoutes(
 
   app.get("/api/checkins/user/:userId/today", requireAuth, requireOwner(), async (req, res) => {
     const userId = param(req, "userId");
-    const checkIns = await storage.getCheckInsByUserIdAndDate(userId, new Date());
+    const checkIns = await storage.getCheckInsByUserIdAndDate(userId, getWorkdayDate(new Date()));
     return res.json(checkIns);
   });
 
@@ -207,7 +208,7 @@ export async function registerRoutes(
 
   app.get("/api/missions/:userId/today", requireAuth, requireOwner(), async (req, res) => {
     const userId = param(req, "userId");
-    const isoDate = new Date().toISOString().slice(0, 10);
+    const isoDate = getWorkday(new Date());
     const missions = await storage.getDailyMissions(userId, isoDate);
     return res.json(missions);
   });
@@ -218,7 +219,7 @@ export async function registerRoutes(
       const body = insertUserMissionSchema.omit({ userId: true, date: true }).parse(req.body);
       const mission = await storage.completeMission({
         userId,
-        date: new Date().toISOString().slice(0, 10),
+        date: getWorkday(new Date()),
         ...body,
       });
       return res.json(mission);
@@ -252,7 +253,7 @@ export async function registerRoutes(
 
   app.get("/api/moment-checkins/user/:userId/today", requireAuth, requireOwner(), async (req, res) => {
     const userId = param(req, "userId");
-    const checkIns = await storage.getMomentCheckInsByUserIdAndDate(userId, new Date());
+    const checkIns = await storage.getMomentCheckInsByUserIdAndDate(userId, getWorkdayDate(new Date()));
     return res.json(checkIns);
   });
 
@@ -291,7 +292,7 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Ação e pontos são obrigatórios" });
     }
     const userId = req.userId!;
-    const date = new Date().toISOString().slice(0, 10);
+    const date = getWorkday(new Date());
     const entry = await storage.createSolarPointEntry({ userId, action, points, date });
     return res.json(entry);
   });
@@ -307,7 +308,7 @@ export async function registerRoutes(
 
   app.get("/api/sky/current/:userId", requireAuth, requireOwner(), async (req, res) => {
     const userId = param(req, "userId");
-    const todayCheckIns = await storage.getCheckInsByUserIdAndDate(userId, new Date());
+    const todayCheckIns = await storage.getCheckInsByUserIdAndDate(userId, getWorkdayDate(new Date()));
     if (todayCheckIns.length === 0) {
       return res.json({ skyState: null, message: "Nenhum check-in hoje" });
     }

@@ -157,9 +157,8 @@ export default function LoginPage() {
               transition={{ duration: 0.3 }}
               className="glass-card rounded-2xl p-8"
             >
-              <div className="flex items-center gap-2 mb-6">
-                <Sparkles className="w-4 h-4 text-brand-gold" />
-                <h2 className="text-lg font-semibold text-foreground">Que bom ter você aqui!</h2>
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-foreground">Como você está hoje?</h2>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-5">

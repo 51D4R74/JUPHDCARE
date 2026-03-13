@@ -34,6 +34,7 @@ interface PartialState {
   readonly date: string;
   readonly answers: Record<string, string | string[]>;
   readonly step: number;
+  readonly abandonedAtQuestion?: number;
 }
 
 function todayISO(): string {
@@ -391,6 +392,11 @@ export default function InlineCheckin({
   const { toast } = useToast();
   const steps = getTimeAwareSteps();
 
+  // Track timing for confidence score: faster + consistent = higher confidence
+  const startTime = useRef(Date.now());
+  const abandoned = useRef(false);
+  const latestStep = useRef(0);
+
   // Restore partial progress
   const partial = useRef(loadPartial());
   const [currentStep, setCurrentStep] = useState(partial.current?.step ?? 0);
@@ -403,16 +409,46 @@ export default function InlineCheckin({
 
   const progress = steps.length > 0 ? ((currentStep + 1) / steps.length) * 100 : 0;
 
-  // Persist partial answers on change
+  // Persist partial answers on change; also keep latestStep ref current
   useEffect(() => {
+    latestStep.current = currentStep;
     savePartial({ date: todayISO(), answers, step: currentStep });
   }, [answers, currentStep]);
+
+  // Mark as in-progress on mount; on unmount record the abandoned step if never saved
+  useEffect(() => {
+    abandoned.current = true;
+    return () => {
+      if (abandoned.current && latestStep.current > 0) {
+        const raw = localStorage.getItem(PARTIAL_KEY);
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw) as PartialState;
+            localStorage.setItem(
+              PARTIAL_KEY,
+              JSON.stringify({ ...parsed, abandonedAtQuestion: latestStep.current }),
+            );
+          } catch {
+            // ignore parse errors
+          }
+        }
+      }
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveCheckIn = useCallback(
     async (finalAnswers: Record<string, string | string[]>) => {
       setIsSaving(true);
+      abandoned.current = false;
       try {
         const result = computeCheckInResult(finalAnswers);
+        const elapsedSec = (Date.now() - startTime.current) / 1000;
+        // Confidence heuristic: full completion in 30-180s = 1.0, outside range scales down.
+        // Clamped 0.0–1.0 stored as numeric.
+        const timeFactor = elapsedSec < 15 ? 0.6 : elapsedSec > 300 ? 0.7 : 1.0;
+        const answerCount = Object.keys(finalAnswers).length;
+        const completionFactor = steps.length > 0 ? answerCount / steps.length : 1.0;
+        const confidence = Math.min(1, Math.round(timeFactor * completionFactor * 100) / 100);
 
         await apiRequest("POST", "/api/checkins", {
           userId,
@@ -420,6 +456,7 @@ export default function InlineCheckin({
           domainScores: JSON.stringify(result.domainScores),
           flags: result.flags.length > 0 ? result.flags : null,
           chatTriggered: chatTrigger !== null,
+          confidence,
         });
 
         // Invalidate all relevant queries

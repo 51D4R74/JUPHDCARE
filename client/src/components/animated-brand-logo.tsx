@@ -285,18 +285,18 @@ export default function AnimatedBrandLogo({
       </motion.svg>
 
       {showWordmark ? (
-        <div className={compact ? "space-y-0.5" : "space-y-1"}>
-          <p
-            className={(compact ? "text-sm" : "text-2xl") + " font-bold tracking-tight"}
+        <div className={compact ? "space-y-0.5" : "space-y-1.5"}>
+          <h1
+            className={(compact ? "text-base" : "text-3xl") + " font-extrabold tracking-tight"}
             style={{ color: palette.text }}
           >
             JuPhD Care
-          </p>
+          </h1>
           <p
-            className={(compact ? "text-[11px]" : "text-sm") + " uppercase tracking-[0.16em]"}
+            className={(compact ? "text-[10px]" : "text-xs") + " tracking-[0.18em] uppercase font-medium opacity-60"}
             style={{ color: palette.textSecondary }}
           >
-            Gestao de Riscos Psicossociais
+            Seu espaço de bem-estar
           </p>
         </div>
       ) : null}

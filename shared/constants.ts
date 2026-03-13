@@ -70,3 +70,31 @@ export const RESPIRO_AUTO_EXIT_DAYS = 2;
 
 /** Days between pulse surveys. */
 export const PULSE_SURVEY_INTERVAL_DAYS = 45;
+
+// ── Day-boundary helpers ──────────────────────────
+
+/**
+ * Returns the ISO date string (YYYY-MM-DD) for the logical work day of the
+ * given timestamp. Timestamps before DAY_BOUNDARY_HOUR count toward the
+ * previous calendar day (night-shift / overnight session).
+ */
+export function getWorkday(date: Date): string {
+  const adjusted = new Date(date);
+  if (adjusted.getHours() < DAY_BOUNDARY_HOUR) {
+    adjusted.setDate(adjusted.getDate() - 1);
+  }
+  return adjusted.toISOString().slice(0, 10);
+}
+
+/**
+ * Returns a Date object whose calendar date represents the logical work day.
+ * Normalized to noon (12:00) to avoid DST edge cases when used with isSameDay.
+ */
+export function getWorkdayDate(date: Date): Date {
+  const adjusted = new Date(date);
+  if (adjusted.getHours() < DAY_BOUNDARY_HOUR) {
+    adjusted.setDate(adjusted.getDate() - 1);
+  }
+  adjusted.setHours(12, 0, 0, 0);
+  return adjusted;
+}
