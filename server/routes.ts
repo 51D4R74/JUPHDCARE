@@ -283,5 +283,119 @@ export async function registerRoutes(
     return res.json(reports);
   });
 
+  // ── Solar points ─────────────────────────────────────────────────────
+
+  app.post("/api/solar/award", requireAuth, async (req, res) => {
+    const { action, points } = req.body;
+    if (!action || typeof action !== "string" || typeof points !== "number") {
+      return res.status(400).json({ message: "Ação e pontos são obrigatórios" });
+    }
+    const userId = req.userId!;
+    const date = new Date().toISOString().slice(0, 10);
+    const entry = await storage.createSolarPointEntry({ userId, action, points, date });
+    return res.json(entry);
+  });
+
+  app.get("/api/solar/status/:userId", requireAuth, requireOwner(), async (req, res) => {
+    const userId = param(req, "userId");
+    const entries = await storage.getSolarPointsByUserId(userId);
+    const totalPoints = entries.reduce((sum, e) => sum + e.points, 0);
+    return res.json({ totalPoints, entries });
+  });
+
+  // ── Sky state (convenience — client computes, server stores) ─────────
+
+  app.get("/api/sky/current/:userId", requireAuth, requireOwner(), async (req, res) => {
+    const userId = param(req, "userId");
+    const todayCheckIns = await storage.getCheckInsByUserIdAndDate(userId, new Date());
+    if (todayCheckIns.length === 0) {
+      return res.json({ skyState: null, message: "Nenhum check-in hoje" });
+    }
+    const latest = todayCheckIns.at(-1)!;
+    const domainScores = JSON.parse(latest.domainScores);
+    return res.json({ domainScores, skyState: null }); // skyState derived client-side
+  });
+
+  // ── LGPD data export / deletion (PRD v2.0 S12.3) ────────────────────
+
+  app.get("/api/my-data", requireAuth, async (req, res) => {
+    const userId = req.userId!;
+    const [user, checkIns, missions, settings] = await Promise.all([
+      storage.getUser(userId),
+      storage.getCheckInsByUserId(userId),
+      storage.getDailyMissions(userId, "all"),
+      storage.getUserSettings(userId),
+    ]);
+    if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+    const { password: _, ...safeUser } = user;
+    return res.json({ user: safeUser, checkIns, missions, settings });
+  });
+
+  app.delete("/api/my-data", requireAuth, async (req, res) => {
+    const userId = req.userId!;
+    // DEBT: Implement full cascade delete [requires storage method]
+    await storage.deleteUserData(userId);
+    req.session.destroy(() => {
+      res.clearCookie("juphd.sid");
+    });
+    return res.json({ message: "Seus dados foram removidos com sucesso" });
+  });
+
+  // ── Support escalation (PRD v2.0 S8) ────────────────────────────────
+
+  app.post("/api/support/escalate", requireAuth, async (req, res) => {
+    const { level } = req.body;
+    if (typeof level !== "number" || level < 1 || level > 3) {
+      return res.status(400).json({ message: "Nível de escalação inválido" });
+    }
+    // Level 3 = org escalation: create an anonymized incident report
+    if (level === 3) {
+      await storage.createIncidentReport({
+        userId: null, // anonymous
+        category: "escalation",
+        subcategory: "stepped_care_level_3",
+        description: "Escalação automática de cuidado progressivo — nível 3",
+        anonymous: true,
+      });
+    }
+    return res.json({ level, message: "Escalação registrada" });
+  });
+
+  // ── Chatbot proxy (PRD v2.0 — RAG endpoint) ─────────────────────────
+
+  const CHATBOT_API_URL = process.env.CHATBOT_API_URL || "";
+
+  app.post("/api/chat", requireAuth, async (req, res) => {
+    const { message } = req.body;
+    if (!message || typeof message !== "string" || message.length > 2000) {
+      return res.status(400).json({ message: "Mensagem inválida" });
+    }
+
+    // If RAG chatbot is configured, proxy the request
+    if (CHATBOT_API_URL) {
+      try {
+        const response = await fetch(CHATBOT_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, userId: req.userId }),
+        });
+        if (!response.ok) {
+          return res.status(502).json({ message: "Serviço de IA temporariamente indisponível" });
+        }
+        const data = await response.json();
+        return res.json(data);
+      } catch (e: unknown) {
+        console.error("Chatbot proxy error:", e);
+        return res.status(502).json({ message: "Serviço de IA temporariamente indisponível" });
+      }
+    }
+
+    // Fallback: no RAG configured, return a static supportive response
+    return res.json({
+      reply: "Estou aqui para ajudar. No momento, o serviço de IA está sendo configurado. Se precisar de apoio imediato, ligue para o CVV: 188.",
+      source: "fallback",
+    });
+  });
+
   return httpServer;
 }

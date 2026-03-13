@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport, type UserMission, type InsertUserMission, type UserSettings, type CheckInHistoryRecord } from "@shared/schema";
+import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport, type UserMission, type InsertUserMission, type UserSettings, type CheckInHistoryRecord, type SolarPoints, type InsertSolarPoints } from "@shared/schema";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 
@@ -177,19 +177,19 @@ function getWorkRelationAnswer(relationalScore: number): string {
     return "supported";
   }
   if (relationalScore >= 50) {
-    return "neutral";
+    return "normal";
   }
   if (relationalScore >= 25) {
     return "tense";
   }
-  return "unsafe";
+  return "pressured";
 }
 
 function buildSeedAnswers(domainScores: DomainScores, flags: string[]): string {
   return JSON.stringify({
     sleep: getSleepAnswer(domainScores.recarga),
     energy: getEnergyAnswer(domainScores.recarga),
-    work_relation: getWorkRelationAnswer(domainScores["seguranca-relacional"]),
+    safety: getWorkRelationAnswer(domainScores["seguranca-relacional"]),
     context_tags: flags,
   });
 }
@@ -264,6 +264,9 @@ export interface IStorage {
   getAllMomentCheckIns(): Promise<MomentCheckIn[]>;
   createIncidentReport(report: InsertIncidentReport): Promise<IncidentReport>;
   getAllIncidentReports(): Promise<IncidentReport[]>;
+  createSolarPointEntry(entry: InsertSolarPoints): Promise<SolarPoints>;
+  getSolarPointsByUserId(userId: string): Promise<SolarPoints[]>;
+  deleteUserData(userId: string): Promise<void>;
 }
 
 /** Algorithm-heavy computed methods shared across all storage backends. */
@@ -286,6 +289,9 @@ export abstract class BaseStorage implements IStorage {
   abstract getAllMomentCheckIns(): Promise<MomentCheckIn[]>;
   abstract createIncidentReport(report: InsertIncidentReport): Promise<IncidentReport>;
   abstract getAllIncidentReports(): Promise<IncidentReport[]>;
+  abstract createSolarPointEntry(entry: InsertSolarPoints): Promise<SolarPoints>;
+  abstract getSolarPointsByUserId(userId: string): Promise<SolarPoints[]>;
+  abstract deleteUserData(userId: string): Promise<void>;
 
   async getTodayScoresByUserId(userId: string): Promise<TodayScoresSnapshot> {
     const todayCheckIn = (await this.getCheckInsByUserIdAndDate(userId, new Date())).at(0);
@@ -492,6 +498,7 @@ export class MemStorage extends BaseStorage {
   private readonly incidentReports: Map<string, IncidentReport>;
   private readonly userMissionsMap: Map<string, UserMission>;
   private readonly userSettingsMap: Map<string, UserSettings>;
+  private readonly solarPointsMap: Map<string, SolarPoints>;
 
   constructor() {
     super();
@@ -501,6 +508,7 @@ export class MemStorage extends BaseStorage {
     this.incidentReports = new Map();
     this.userMissionsMap = new Map();
     this.userSettingsMap = new Map();
+    this.solarPointsMap = new Map();
     this.seedData();
   }
 
@@ -541,6 +549,8 @@ export class MemStorage extends BaseStorage {
         domainScores: JSON.stringify(scores),
         flags: flags.length > 0 ? flags : null,
         chatTriggered: flags.includes("harassment_signal"),
+        confidence: null,
+        abandonedAtQuestion: null,
         createdAt: date,
       };
 
@@ -637,6 +647,8 @@ export class MemStorage extends BaseStorage {
       createdAt: new Date(),
       flags: insertCheckIn.flags || null,
       chatTriggered: insertCheckIn.chatTriggered ?? false,
+      confidence: insertCheckIn.confidence ?? null,
+      abandonedAtQuestion: insertCheckIn.abandonedAtQuestion ?? null,
     };
     this.checkIns.set(id, checkIn);
     return checkIn;
@@ -893,6 +905,44 @@ export class MemStorage extends BaseStorage {
     const record: UserSettings = { userId, settings: settingsJson, updatedAt: new Date() };
     this.userSettingsMap.set(userId, record);
     return record;
+  }
+
+  async createSolarPointEntry(entry: InsertSolarPoints): Promise<SolarPoints> {
+    const id = randomUUID();
+    const record: SolarPoints = {
+      ...entry,
+      id,
+      createdAt: new Date(),
+    };
+    this.solarPointsMap.set(id, record);
+    return record;
+  }
+
+  async getSolarPointsByUserId(userId: string): Promise<SolarPoints[]> {
+    return Array.from(this.solarPointsMap.values())
+      .filter((e) => e.userId === userId)
+      .toSorted((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+  }
+
+  async deleteUserData(userId: string): Promise<void> {
+    this.users.delete(userId);
+    for (const [id, c] of this.checkIns) {
+      if (c.userId === userId) this.checkIns.delete(id);
+    }
+    for (const [id, m] of this.momentCheckIns) {
+      if (m.userId === userId) this.momentCheckIns.delete(id);
+    }
+    for (const [id, m] of this.userMissionsMap) {
+      if (m.userId === userId) this.userMissionsMap.delete(id);
+    }
+    for (const [id, s] of this.solarPointsMap) {
+      if (s.userId === userId) this.solarPointsMap.delete(id);
+    }
+    this.userSettingsMap.delete(userId);
+    // Incident reports with userId=null (anonymous) are not deleted
+    for (const [id, r] of this.incidentReports) {
+      if (r.userId === userId) this.incidentReports.delete(id);
+    }
   }
 }
 

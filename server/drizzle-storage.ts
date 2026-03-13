@@ -6,6 +6,8 @@ import {
   incidentReports,
   userMissions,
   userSettings,
+  solarPoints,
+  solarStreaks,
 } from "@shared/schema";
 import type {
   User,
@@ -19,6 +21,8 @@ import type {
   UserMission,
   InsertUserMission,
   UserSettings,
+  SolarPoints,
+  InsertSolarPoints,
 } from "@shared/schema";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
@@ -220,5 +224,34 @@ export class DrizzleStorage extends BaseStorage {
 
   async getAllIncidentReports(): Promise<IncidentReport[]> {
     return getDb().select().from(incidentReports);
+  }
+
+  async createSolarPointEntry(entry: InsertSolarPoints): Promise<SolarPoints> {
+    const rows = await getDb()
+      .insert(solarPoints)
+      .values({ id: randomUUID(), ...entry, createdAt: new Date() })
+      .returning();
+    const record = rows.at(0);
+    if (!record) throw new Error("Falha ao registrar pontos solares");
+    return record;
+  }
+
+  async getSolarPointsByUserId(userId: string): Promise<SolarPoints[]> {
+    return getDb()
+      .select()
+      .from(solarPoints)
+      .where(eq(solarPoints.userId, userId))
+      .orderBy(desc(solarPoints.createdAt));
+  }
+
+  async deleteUserData(userId: string): Promise<void> {
+    const db = getDb();
+    await db.delete(checkIns).where(eq(checkIns.userId, userId));
+    await db.delete(momentCheckIns).where(eq(momentCheckIns.userId, userId));
+    await db.delete(userMissions).where(eq(userMissions.userId, userId));
+    await db.delete(solarPoints).where(eq(solarPoints.userId, userId));
+    await db.delete(solarStreaks).where(eq(solarStreaks.userId, userId));
+    await db.delete(userSettings).where(eq(userSettings.userId, userId));
+    await db.delete(users).where(eq(users.id, userId));
   }
 }
