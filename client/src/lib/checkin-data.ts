@@ -163,7 +163,7 @@ export const MORNING_STEPS: CheckInStep[] = [
     id: "morning_anticipation",
     type: "single",
     question: "Como você se sente em relação ao dia que está começando?",
-    sublabel: "Esse sentimento é sobre ir ao trabalho hoje.",
+    sublabel: "Só sobre como você se sente em relação a hoje.",
     options: [
       { id: "excited", label: "Com vontade", icon: TbFlame, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
       { id: "ok", label: "Normal", icon: TbMoodEmpty, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
@@ -175,7 +175,7 @@ export const MORNING_STEPS: CheckInStep[] = [
     id: "morning_environment_projection",
     type: "projection",
     question: "No seu ambiente de trabalho, como você percebe que as pessoas chegam geralmente?",
-    sublabel: "Não precisa ser sobre você. Pense no ambiente como um todo.",
+    sublabel: "Pense no que vem do ambiente, não de você.",
     options: [
       { id: "env_light", label: "Com leveza e confiança", icon: TbSun, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
       { id: "env_ok", label: "Na média, focadas", icon: TbCloudRain, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
@@ -206,7 +206,7 @@ export const MIDDAY_STEPS: CheckInStep[] = [
     id: "relational_climate",
     type: "multi2",
     question: "Como está o clima ao seu redor agora?",
-    sublabel: "Não é sobre o que você sente por dentro — é sobre o que vem de fora.",
+    sublabel: "É sobre o que vem de fora, não de dentro.",
     options: [
       { id: "all_good", label: "Tranquilo por aqui", icon: TbCheck, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5", exclusive: true },
       { id: "heavy_air", label: "Clima pesado no ambiente", icon: TbTemperature, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5", flag: "climate_risk" },
@@ -216,7 +216,7 @@ export const MIDDAY_STEPS: CheckInStep[] = [
     ],
     projectionCard: {
       text: "Alguém no seu ambiente pode estar passando por algo difícil?",
-      sublabel: "Você pode responder pensando em outra pessoa.",
+      sublabel: "Pode responder pensando em outra pessoa.",
       options: [
         { id: "proj_no", label: "Não percebi nada", color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
         { id: "proj_maybe", label: "Talvez sim", color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5", flag: "peer_concern" },
@@ -233,7 +233,7 @@ export const ENDDAY_STEPS: CheckInStep[] = [
     id: "emotion_retrospective",
     type: "multi3",
     question: "Como você sai de hoje?",
-    sublabel: "Pode escolher até 3. Emoções se misturam.",
+    sublabel: "Pode escolher até 3 — emoções se misturam mesmo.",
     options: [
       { id: "relieved", label: "Com alívio", icon: TbMoodSmile, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
       { id: "satisfied", label: "Com realização", icon: TbTrophy, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
@@ -249,7 +249,7 @@ export const ENDDAY_STEPS: CheckInStep[] = [
     id: "context_tags",
     type: "tags",
     question: "O que mais pesou hoje?",
-    sublabel: "Opcional. Ajuda a entender o contexto, não a te identificar.",
+    sublabel: "Opcional. Ajuda a entender o contexto, nunca a te identificar.",
     options: [
       { id: "work_load", label: "Volume de trabalho", icon: TbBriefcase, score: 0, color: "text-foreground", bgColor: "", flag: "workload" },
       { id: "leadership", label: "Liderança / Gestão", icon: TbUserExclamation, score: 0, color: "text-foreground", bgColor: "", flag: "leadership_risk" },
@@ -456,7 +456,7 @@ export const DAILY_STEPS: CheckInStep[] = [
     id: "context_tags",
     type: "tags",
     question: "O que mais influenciou como você ficou hoje?",
-    sublabel: "Opcional. Ajuda a entender o contexto, não a te identificar.",
+    sublabel: "Opcional. Ajuda a entender o contexto, nunca a te identificar.",
     options: [
       { id: "work_load", label: "Volume de demandas", icon: TbBriefcase, score: 0, color: "text-foreground", bgColor: "", flag: "workload" },
       { id: "leadership", label: "Liderança / Gestão", icon: TbUserExclamation, score: 0, color: "text-foreground", bgColor: "", flag: "hlb_proxy" },

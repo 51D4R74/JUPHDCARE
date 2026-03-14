@@ -259,8 +259,8 @@ function InlineChatPrompt({
           {t.message}
         </p>
       </div>
-      <p className="text-[10px] text-muted-foreground mb-3 flex items-center gap-1">
-        <Lock className="w-2.5 h-2.5" /> {t.anonymousNote}
+      <p className="text-xs text-muted-foreground/80 mb-3 flex items-center gap-1.5">
+        <Lock className="w-3 h-3" /> {t.anonymousNote}
       </p>
       <div className="flex gap-2">
         <Button
@@ -444,6 +444,8 @@ export default function InlineCheckin({
 
   // Restore partial progress
   const partial = useRef(loadPartial());
+  const isResuming = partial.current !== null && (partial.current.step ?? 0) > 0;
+  const [showResumeMsg, setShowResumeMsg] = useState(isResuming);
   const [currentStep, setCurrentStep] = useState(partial.current?.step ?? 0);
   const [direction, setDirection] = useState(1);
   const [answers, setAnswers] = useState<Record<string, string | string[]>>(
@@ -459,6 +461,13 @@ export default function InlineCheckin({
     latestStep.current = currentStep;
     savePartial({ date: todayISO(), answers, step: currentStep });
   }, [answers, currentStep]);
+
+  // Auto-dismiss resume message after 3s
+  useEffect(() => {
+    if (!showResumeMsg) return;
+    const id = setTimeout(() => setShowResumeMsg(false), 3000);
+    return () => clearTimeout(id);
+  }, [showResumeMsg]);
 
   // Mark as in-progress on mount; on unmount record the abandoned step if never saved
   useEffect(() => {
@@ -514,6 +523,8 @@ export default function InlineCheckin({
           title: "Check-in salvo!",
           description: "Valeu por compartilhar como você está.",
         });
+        // Intentional pause so user feels the success before dashboard transitions
+        await new Promise((r) => setTimeout(r, 800));
         onComplete();
       } catch (error: unknown) {
         console.error("Inline check-in save failed:", error);
@@ -587,6 +598,20 @@ export default function InlineCheckin({
         </span>
       </div>
 
+      {/* Gentle return message when resuming an abandoned check-in */}
+      <AnimatePresence>
+        {showResumeMsg && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="text-xs text-warmth-coral font-medium mb-3 text-center"
+          >
+            Que bom que voltou. Continuamos de onde parou.
+          </motion.p>
+        )}
+      </AnimatePresence>
+
       {/* Question area */}
       <AnimatePresence mode="wait" custom={direction}>
         {chatTrigger ? (
@@ -623,8 +648,8 @@ export default function InlineCheckin({
 
       {/* Privacy note — show only on first question */}
       {currentStep === 0 && !chatTrigger && (
-        <p className="text-[10px] text-muted-foreground mt-3 flex items-center gap-1">
-          <Lock className="w-2.5 h-2.5 flex-shrink-0" />
+        <p className="text-xs text-muted-foreground/80 mt-3 flex items-center gap-1.5">
+          <Lock className="w-3 h-3 flex-shrink-0" />
           Respostas confidenciais — nada chega ao RH sem sua autorização.
         </p>
       )}
