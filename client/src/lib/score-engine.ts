@@ -63,6 +63,48 @@ export const DOMAIN_COLORS: Record<ScoreDomainId, string> = {
   "seguranca-relacional": "hsl(187 62% 44%)", // brand-teal
 };
 
+/** Warm display names for narrative UI elements. */
+export const DOMAIN_WARM_NAMES: Record<ScoreDomainId, string> = {
+  recarga: "Sua energia",
+  "estado-do-dia": "Seu dia",
+  "seguranca-relacional": "O clima ao redor",
+};
+
+// ── Narrative wellness tiles (IIB "Beautiful News" pattern) ────────
+
+interface NarrativeEntry {
+  readonly emoji: string;
+  readonly text: string;
+}
+
+const DOMAIN_NARRATIVES: Record<ScoreDomainId, readonly [number, NarrativeEntry][]> = {
+  recarga: [
+    [75, { emoji: "✨", text: "Bateria cheia — dia bom pra avançar" }],
+    [50, { emoji: "🔋", text: "Energia estável — mantém o ritmo" }],
+    [25, { emoji: "⚡", text: "Dia mais puxado — cuide das pausas" }],
+    [0, { emoji: "☁️", text: "Sua bateria precisa de atenção" }],
+  ],
+  "estado-do-dia": [
+    [75, { emoji: "☀️", text: "Dia luminoso — aproveite" }],
+    [50, { emoji: "🌤️", text: "Leveza no ar — bom sinal" }],
+    [25, { emoji: "🌥️", text: "Dia sensível — sem pressa" }],
+    [0, { emoji: "🌧️", text: "Momento delicado — vá no seu tempo" }],
+  ],
+  "seguranca-relacional": [
+    [75, { emoji: "💫", text: "Ambiente acolhedor — ótimo pra trocas" }],
+    [50, { emoji: "🤝", text: "Clima tranquilo — bom pra conexões" }],
+    [25, { emoji: "🏠", text: "Clima morno — prefira interações leves" }],
+    [0, { emoji: "🛡️", text: "O ambiente pede cautela — proteja seu espaço" }],
+  ],
+};
+
+/** Emoji + narrative sentence for a domain score. No raw numbers. */
+export function getDomainNarrative(domainId: ScoreDomainId, score: number): NarrativeEntry {
+  const tiers = DOMAIN_NARRATIVES[domainId];
+  const match = tiers.find(([threshold]) => score >= threshold);
+  return match?.[1] ?? tiers.at(-1)![1];
+}
+
 // ── M3 helpers ────────────────────────────────────
 
 export interface TagCount {

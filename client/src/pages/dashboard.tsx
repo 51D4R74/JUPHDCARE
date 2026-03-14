@@ -18,7 +18,7 @@ import ConstancyDots from "@/components/constancy-dots";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { fetchCurrentRelationalPulse, submitRelationalPulse } from "@/lib/pulse-client";
-import { type TodayScores, getDomainMeta, computeBaseline } from "@/lib/score-engine";
+import { type TodayScores, getDomainMeta, computeBaseline, getDomainNarrative, DOMAIN_WARM_NAMES } from "@/lib/score-engine";
 import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
 import { computeDiscoveries, DISCOVERY_MIN_RECORDS } from "@/lib/discovery-engine";
 import { POINT_VALUES } from "@/lib/mission-engine";
@@ -95,19 +95,6 @@ function CelebrationParticles() {
       })}
     </div>
   );
-}
-
-// ── Score color helpers ───────────────────────────
-
-const SCORE_TIERS = [
-  { min: 70, label: "text-score-good", bg: "bg-score-good/15" },
-  { min: 40, label: "text-score-moderate", bg: "bg-score-moderate/15" },
-  { min: 0, label: "text-score-attention", bg: "bg-score-attention/15" },
-] as const;
-
-function scoreColorClass(score: number): { text: string; bg: string } {
-  const tier = SCORE_TIERS.find((t) => score >= t.min) ?? SCORE_TIERS.at(-1)!;
-  return { text: tier.label, bg: tier.bg };
 }
 
 const EMPTY_SCORES: TodayScores = {
@@ -221,9 +208,15 @@ function DashboardHeader({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08, duration: 0.5 }}
-        className="mt-7 text-center"
+        className="relative mt-7 text-center"
       >
-        <p className="text-[34px] font-semibold leading-tight tracking-[-0.04em] text-foreground">
+        {/* Companion breathing orb */}
+        <div
+          className="companion-breathing pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-44 w-44 rounded-full blur-2xl"
+          style={{ background: "radial-gradient(circle, hsl(var(--brand-gold) / 0.1), hsl(var(--brand-teal) / 0.05), transparent)" }}
+          aria-hidden="true"
+        />
+        <p className="relative text-[34px] font-semibold leading-tight tracking-[-0.04em] text-foreground">
           {getGreeting()}, {firstName}
         </p>
         <p className="mx-auto mt-2.5 max-w-[20rem] text-base leading-relaxed text-muted-foreground/90">
@@ -486,7 +479,7 @@ export default function DashboardPage() {
       setPulseAnswers({});
       toast({
         title: "Leitura registrada",
-        description: `Obrigado por compartilhar. Você ganhou ${POINT_VALUES.pulseSurvey} pontos solares ☔️`,
+        description: `Obrigado por compartilhar. Você ganhou ${POINT_VALUES.pulseSurvey} pontos solares ☀️`,
       });
     },
     onError: (error: unknown) => {
@@ -560,7 +553,7 @@ export default function DashboardPage() {
           >
             {domains.map((d) => {
               const score = Math.round(scores.domainScores[d.id] ?? 0);
-              const colors = scoreColorClass(score);
+              const narrative = getDomainNarrative(d.id, score);
               const isOpen = expandedDomain === d.id;
               const contributors = DAILY_STEPS.filter((s) => d.questionIds.includes(s.id));
 
@@ -569,18 +562,23 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setExpandedDomain(isOpen ? null : d.id)}
-                    className={`w-full rounded-2xl border border-border/60 px-4 py-3 text-left transition-colors hover:border-primary/20 ${colors.bg}`}
+                    className="w-full rounded-2xl border border-border/40 bg-card px-4 py-3.5 text-left transition-all hover:border-primary/15 hover:shadow-sm"
                     aria-expanded={isOpen}
-                    aria-label={`${d.label}: ${score}`}
+                    aria-label={`${DOMAIN_WARM_NAMES[d.id]}: ${narrative.text}`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className={`text-sm font-semibold tracking-[-0.01em] ${colors.text}`}>
-                        {d.label}
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg flex-shrink-0" role="img" aria-hidden="true">
+                        {narrative.emoji}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xl font-bold leading-none ${colors.text}`}>{score}</span>
-                        <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`} />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                          {DOMAIN_WARM_NAMES[d.id]}
+                        </span>
+                        <p className="text-sm font-medium leading-snug text-foreground mt-0.5">
+                          {narrative.text}
+                        </p>
                       </div>
+                      <ChevronRight className={`h-4 w-4 text-muted-foreground/50 flex-shrink-0 transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`} />
                     </div>
                   </button>
 

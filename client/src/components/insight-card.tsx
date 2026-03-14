@@ -15,21 +15,24 @@ interface InsightCardProps {
   readonly className?: string;
 }
 
-const domainColors: Record<string, { text: string; bg: string; border: string }> = {
+const domainColors: Record<string, { text: string; bg: string; border: string; accent: string }> = {
   recarga: {
     text: "text-score-good",
     bg: "bg-score-good/10",
     border: "border-score-good/20",
+    accent: "hsl(142 71% 45%)",
   },
   "estado-do-dia": {
     text: "text-brand-gold-dark",
     bg: "bg-brand-gold/10",
     border: "border-brand-gold/20",
+    accent: "hsl(44 90% 51%)",
   },
   "seguranca-relacional": {
     text: "text-brand-teal",
     bg: "bg-brand-teal/10",
     border: "border-brand-teal/20",
+    accent: "hsl(187 62% 44%)",
   },
 };
 
@@ -38,10 +41,17 @@ export default function InsightCard({ discovery, className = "" }: InsightCardPr
     text: "text-foreground",
     bg: "bg-muted/30",
     border: "border-border/40",
+    accent: "hsl(var(--primary))",
   };
 
   return (
-    <div className={`glass-card rounded-2xl p-4 border ${colors.border} ${className}`}>
+    <div className={`glass-card rounded-2xl p-4 pl-5 border ${colors.border} ${className} relative overflow-hidden`}>
+      {/* Domain gradient accent */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
+        style={{ background: `linear-gradient(to bottom, ${colors.accent}, transparent)` }}
+        aria-hidden="true"
+      />
       <div className="flex items-start gap-3">
         {/* Direction indicator */}
         <div className={`w-9 h-9 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>

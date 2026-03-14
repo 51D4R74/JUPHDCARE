@@ -8,20 +8,18 @@ import {
 } from "lucide-react";
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   Tooltip,
-  CartesianGrid,
 } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import ConstancyDots from "@/components/constancy-dots";
 import InsightCard from "@/components/insight-card";
 import SupportMessageCard from "@/components/support-message-card";
-import ScoreCard, { type ScoreContributor } from "@/components/score-card";
-import { computeTagCloud, DOMAIN_COLORS, getDomainMeta, type TagCount, type TodayScores } from "@/lib/score-engine";
-import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
+import { computeTagCloud, DOMAIN_COLORS, getDomainMeta, getDomainNarrative, DOMAIN_WARM_NAMES, type TagCount, type TodayScores } from "@/lib/score-engine";
+import type { ScoreDomainId } from "@/lib/checkin-data";
 import { computeDiscoveries, daysUntilDiscovery, DISCOVERY_MIN_RECORDS } from "@/lib/discovery-engine";
 import { getFavoriteMessages, toggleFavorite, isFavorite } from "@/lib/support-engine";
 import { useAuth } from "@/lib/auth";
@@ -30,9 +28,9 @@ import type { CheckInHistoryRecord } from "@shared/schema";
 // ── Chart config ────────────────────────────────────────────
 
 const DOMAIN_LABELS: Record<ScoreDomainId, string> = {
-  recarga: "Recarga",
-  "estado-do-dia": "Estado do dia",
-  "seguranca-relacional": "Seg. relacional",
+  recarga: "Energia",
+  "estado-do-dia": "Seu dia",
+  "seguranca-relacional": "Clima",
 };
 
 // ── Custom tooltip ────────────────────────────────
@@ -68,17 +66,23 @@ function ChartTooltip({
 // ── Tag pill ──────────────────────────────────────
 
 function TagPill({ tag }: Readonly<{ tag: TagCount }>) {
-  const size = Math.min(tag.count, 5); // cap visual intensity at 5
-  const opacity = 0.4 + size * 0.12;
+  const intensity = Math.min(tag.count, 6);
+  const fontSize = 11 + intensity;
+  const px = 12 + intensity * 2;
+  const py = 6 + Math.trunc(intensity / 2);
+  const opacity = 0.3 + intensity * 0.08;
   return (
     <motion.span
       initial={{ opacity: 0, scale: 0.85 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border border-border/40"
-      style={{ backgroundColor: `rgba(var(--brand-navy-rgb, 26 54 93) / ${opacity})` }}
+      className={`inline-flex items-center rounded-full font-medium border border-border/40 ${intensity >= 4 ? "shadow-sm" : ""}`}
+      style={{
+        fontSize: `${fontSize}px`,
+        padding: `${py}px ${px}px`,
+        backgroundColor: `rgba(26, 54, 93, ${opacity})`,
+      }}
     >
       {tag.label}
-      <span className="text-muted-foreground">×{tag.count}</span>
     </motion.span>
   );
 }
@@ -94,23 +98,6 @@ const EMPTY_SCORES: TodayScores = {
   flags: [],
   hasCheckedIn: false,
 };
-
-/** Build ScoreContributor list for a domain from stored answers. */
-function buildContributors(domainId: ScoreDomainId, scores: TodayScores): ScoreContributor[] {
-  if (!scores.hasCheckedIn) return [];
-  const meta = getDomainMeta().find((d) => d.id === domainId);
-  if (!meta) return [];
-
-  return meta.questionIds.map((qId) => {
-    const step = DAILY_STEPS.find((s) => s.id === qId);
-    if (!step || step.type === "tags") return null;
-    return {
-      label: step.question.replace(/\?$/, "").slice(0, 40),
-      value: 1,
-      maxValue: 1,
-    } satisfies ScoreContributor;
-  }).filter(Boolean) as ScoreContributor[];
-}
 
 // ── Page ──────────────────────────────────────────
 
@@ -219,27 +206,36 @@ export default function MeuCuidadoPage() {
           </p>
         </motion.section>
 
-        {/* ── Score cards — today's domain scores ── */}
+        {/* ── Wellness narrative — today's story ── */}
         {scores.hasCheckedIn && (
           <motion.section
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
-            className="mb-4 space-y-3"
+            className="mb-4 space-y-2"
           >
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Seus scores de hoje
-            </p>
-            {domains.map((d) => (
-              <ScoreCard
-                key={d.id}
-                domainId={d.id}
-                title={d.label}
-                description={d.description}
-                score={scores.domainScores[d.id] ?? 0}
-                contributors={buildContributors(d.id, scores)}
-              />
-            ))}
+            {domains.map((d) => {
+              const score = scores.domainScores[d.id] ?? 0;
+              const narrative = getDomainNarrative(d.id, score);
+              return (
+                <div
+                  key={d.id}
+                  className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card px-4 py-3"
+                >
+                  <span className="text-lg flex-shrink-0" role="img" aria-hidden="true">
+                    {narrative.emoji}
+                  </span>
+                  <div className="min-w-0">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                      {DOMAIN_WARM_NAMES[d.id]}
+                    </span>
+                    <p className="text-sm font-medium leading-snug text-foreground mt-0.5">
+                      {narrative.text}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </motion.section>
         )}
 
@@ -252,7 +248,7 @@ export default function MeuCuidadoPage() {
         >
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Como seus scores têm se movido
+              Seu cuidado ao longo do tempo
             </p>
             <div className="flex rounded-xl border border-border/40 overflow-hidden text-xs">
               {([7, 30] as const).map((r) => (
@@ -296,8 +292,15 @@ export default function MeuCuidadoPage() {
                 style={{ height: 160 }}
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" />
+                  <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                    <defs>
+                      {(Object.keys(DOMAIN_COLORS) as ScoreDomainId[]).map((d) => (
+                        <linearGradient key={d} id={`fill-${d}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={DOMAIN_COLORS[d]} stopOpacity={0.25} />
+                          <stop offset="95%" stopColor={DOMAIN_COLORS[d]} stopOpacity={0.03} />
+                        </linearGradient>
+                      ))}
+                    </defs>
                     <XAxis
                       dataKey="date"
                       tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
@@ -313,17 +316,18 @@ export default function MeuCuidadoPage() {
                     />
                     <Tooltip content={<ChartTooltip />} />
                     {(Object.keys(DOMAIN_COLORS) as ScoreDomainId[]).map((d) => (
-                      <Line
+                      <Area
                         key={d}
                         type="monotone"
                         dataKey={d}
                         stroke={DOMAIN_COLORS[d]}
                         strokeWidth={2}
+                        fill={`url(#fill-${d})`}
                         dot={false}
                         activeDot={{ r: 4, strokeWidth: 0 }}
                       />
                     ))}
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </motion.div>
             ) : (

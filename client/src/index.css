@@ -256,6 +256,32 @@
   .gradient-dusk {
     background: linear-gradient(135deg, hsl(var(--primary) / 0.07) 0%, hsl(var(--chart-3) / 0.04) 56%, hsl(var(--accent) / 0.03) 100%);
   }
+
+  /* Companion breathing pulse — subtle ambient life */
+  @keyframes companion-breathe {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.08); opacity: 0.85; }
+  }
+
+  .companion-breathing {
+    animation: companion-breathe 4s ease-in-out infinite;
+  }
+
+  /* Aurora shimmer for milestone streaks */
+  @keyframes aurora-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .aurora-streak {
+    background: linear-gradient(90deg,
+      hsl(var(--brand-gold) / 0.15),
+      hsl(var(--brand-teal) / 0.12),
+      hsl(var(--brand-gold) / 0.15));
+    background-size: 200% 100%;
+    animation: aurora-shift 6s ease-in-out infinite;
+  }
 }
 
 /* ------------------------------------------------------------------ */

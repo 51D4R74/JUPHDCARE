@@ -32,9 +32,9 @@ type ReportPeriod = "week" | "month";
 const PERIOD_DAYS: Record<ReportPeriod, number> = { week: 7, month: 30 };
 
 const DOMAIN_LABELS: Record<ScoreDomainId, string> = {
-  recarga: "Recarga",
-  "estado-do-dia": "Estado do dia",
-  "seguranca-relacional": "Seg. relacional",
+  recarga: "Energia",
+  "estado-do-dia": "Seu dia",
+  "seguranca-relacional": "Clima",
 };
 
 // ── Helpers ───────────────────────────────────────
