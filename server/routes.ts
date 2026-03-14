@@ -233,7 +233,7 @@ export async function registerRoutes(
       }
 
       const definition = getPulseDefinitionByKey(data.pulseKey);
-      if (definition === null || data.pulseVersion !== definition.version) {
+      if (data.pulseVersion !== definition?.version) {
         return res.status(400).json({ message: "Pulse inválido ou desatualizado" });
       }
 

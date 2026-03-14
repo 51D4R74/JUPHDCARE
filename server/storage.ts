@@ -531,6 +531,17 @@ export class MemStorage extends BaseStorage {
     this.seedData();
   }
 
+  private removeEntriesForUser<T extends { userId: string | null }>(
+    store: Map<string, T>,
+    userId: string,
+  ): void {
+    for (const [id, entry] of store) {
+      if (entry.userId === userId) {
+        store.delete(id);
+      }
+    }
+  }
+
   private seedData() {
     // Seed passwords are hashed at startup. Plain-text only in this comment for dev reference: "Senha@123"
     const seedHash = bcrypt.hashSync("Senha@123", 10);
@@ -986,29 +997,15 @@ export class MemStorage extends BaseStorage {
 
   async deleteUserData(userId: string): Promise<void> {
     this.users.delete(userId);
-    for (const [id, c] of this.checkIns) {
-      if (c.userId === userId) this.checkIns.delete(id);
-    }
-    for (const [id, m] of this.momentCheckIns) {
-      if (m.userId === userId) this.momentCheckIns.delete(id);
-    }
-    for (const [id, m] of this.userMissionsMap) {
-      if (m.userId === userId) this.userMissionsMap.delete(id);
-    }
-    for (const [id, s] of this.solarPointsMap) {
-      if (s.userId === userId) this.solarPointsMap.delete(id);
-    }
-    for (const [id, response] of this.pulseResponsesMap) {
-      if (response.userId === userId) this.pulseResponsesMap.delete(id);
-    }
+    this.removeEntriesForUser(this.checkIns, userId);
+    this.removeEntriesForUser(this.momentCheckIns, userId);
+    this.removeEntriesForUser(this.userMissionsMap, userId);
+    this.removeEntriesForUser(this.solarPointsMap, userId);
+    this.removeEntriesForUser(this.pulseResponsesMap, userId);
     this.userSettingsMap.delete(userId);
     // Incident reports with userId=null (anonymous) are not deleted
-    for (const [id, r] of this.incidentReports) {
-      if (r.userId === userId) this.incidentReports.delete(id);
-    }
-    for (const [id, c] of this.teamContributionsMap) {
-      if (c.userId === userId) this.teamContributionsMap.delete(id);
-    }
+    this.removeEntriesForUser(this.incidentReports, userId);
+    this.removeEntriesForUser(this.teamContributionsMap, userId);
   }
 }
 

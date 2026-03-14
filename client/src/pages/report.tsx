@@ -38,9 +38,9 @@ const DOMAIN_LABELS: Record<ScoreDomainId, string> = {
 
 // ── Helpers ───────────────────────────────────────
 
-function mean(nums: number[]): number {
-  if (nums.length === 0) return 0;
-  return Math.round(nums.reduce((a, b) => a + b, 0) / nums.length);
+function mean(values: number[]): number {
+  if (values.length === 0) return 0;
+  return Math.round(values.reduce((a, b) => a + b, 0) / values.length);
 }
 
 const TREND_THRESHOLD = 3;

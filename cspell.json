@@ -91,6 +91,7 @@
     "jridgewell",
     "cartesian",
     "displayname",
+    "nums",
 
     // Tabler icon official names (unconventional but intentional)
     "Confuzed",

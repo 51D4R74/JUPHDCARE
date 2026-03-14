@@ -88,10 +88,10 @@ const CLOUD_TINTS: Record<SkyState, { back: string; mid: string; fore: string }>
  */
 const CLOUD_OPACITY: Record<SkyState, { back: number; mid: number; fore: number }> = {
   //                  back    mid    fore
-  clear:            { back: 0.00,  mid: 0.08, fore: 0.18 },
-  "partly-cloudy":  { back: 0.40,  mid: 0.58, fore: 0.72 },
-  "protective-cloud":{ back: 0.60, mid: 0.75, fore: 0.88 },
-  respiro:          { back: 0.68,  mid: 0.82, fore: 0.96 },
+  clear: { back: 0, mid: 0.08, fore: 0.18 },
+  "partly-cloudy": { back: 0.4, mid: 0.58, fore: 0.72 },
+  "protective-cloud": { back: 0.6, mid: 0.75, fore: 0.88 },
+  respiro: { back: 0.68, mid: 0.82, fore: 0.96 },
 };
 
 // ── Halo ring ─────────────────────────────────────────────────────────────
@@ -141,11 +141,23 @@ interface CloudCircle { readonly cx: number; readonly cy: number; readonly r: nu
 function CloudCircles({ circles, fill }: Readonly<{ circles: readonly CloudCircle[]; fill: string }>) {
   return (
     <>
-      {circles.map((c, i) => (
-        <circle key={i} cx={c.cx} cy={c.cy} r={c.r} fill={fill} />
+      {circles.map((c) => (
+        <circle key={`${c.cx}-${c.cy}-${c.r}`} cx={c.cx} cy={c.cy} r={c.r} fill={fill} />
       ))}
     </>
   );
+}
+
+function getContainerClass(compact: boolean, fullBleed: boolean): string {
+  if (fullBleed) {
+    return "relative h-full w-full overflow-hidden";
+  }
+
+  if (compact) {
+    return "relative h-14 w-full overflow-hidden rounded-2xl border";
+  }
+
+  return "relative h-32 w-full max-w-sm overflow-hidden rounded-[24px] border";
 }
 
 /**
@@ -210,7 +222,7 @@ export default function SkyHeader({
   className = "",
 }: SkyHeaderProps) {
   // React 18 useId — colons replaced so the value is a valid XML id
-  const uid = useId().replace(/:/g, "");
+  const uid = useId().replaceAll(":", "");
   const compact = size === "compact";
   const layout = compact ? CLOUD_LAYOUTS.compact : CLOUD_LAYOUTS.hero;
   const config = SKY_CONFIG[skyState];
@@ -222,9 +234,7 @@ export default function SkyHeader({
   const { sunCX, sunCY, sunR } = layout;
 
   // Full-bleed mode: no border, no rounding — fills parent container
-  const containerClass = fullBleed
-    ? "relative overflow-hidden w-full h-full"
-    : `relative overflow-hidden border ${compact ? "h-14 w-full rounded-2xl" : "h-32 w-full max-w-sm rounded-[24px]"}`;
+  const containerClass = getContainerClass(compact, fullBleed);
 
   const containerBorder = fullBleed ? undefined : palette.border;
 

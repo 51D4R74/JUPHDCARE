@@ -29,6 +29,8 @@ import { Button } from "@/components/ui/button";
 import type { UserMission, CheckInHistoryRecord } from "@shared/schema";
 import { PULSE_DIMENSION_LABELS, PULSE_RESPONSE_OPTIONS, type CurrentPulseState, type PulseAnswerValue } from "@shared/pulse-survey";
 
+type QuickAction = (typeof QUICK_ACTIONS)[number];
+
 function getDailyInsight(scores: TodayScores): string {
   if (!scores.hasCheckedIn) {
     return "Faça seu check-in para ativar scores, missões e sinais de cuidado.";
@@ -153,6 +155,338 @@ function getPulseCompletionCount(
   return questionIds.filter((questionId) => answers[questionId] !== undefined).length;
 }
 
+function getHeaderBadgeLabel(scores: TodayScores): string {
+  return SKY_CONFIG[scores.skyState].label;
+}
+
+function getCheckInStatusCopy(justCompleted: boolean): { title: string; description: string } {
+  if (justCompleted) {
+    return {
+      title: "Check-in registrado!",
+      description: "Seus scores foram atualizados.",
+    };
+  }
+
+  return {
+    title: "Check-in completo",
+    description: "Scores atualizados para hoje.",
+  };
+}
+
+function getPulseCardTone(isDue: boolean): { container: string; badge: string; icon: string } {
+  if (isDue) {
+    return {
+      container: "border-brand-teal/20 hover:border-brand-teal/35 hover:bg-brand-teal/5",
+      badge: "bg-brand-teal/12 text-brand-teal",
+      icon: "bg-brand-teal/12 text-brand-teal",
+    };
+  }
+
+  return {
+    container: "border-border/70",
+    badge: "bg-primary/8 text-primary",
+    icon: "bg-primary/8 text-primary",
+  };
+}
+
+function DashboardHeader({
+  firstName,
+  scores,
+  solarPoints,
+  onOpenNotifications,
+  onOpenSettings,
+}: Readonly<{
+  firstName: string;
+  scores: TodayScores;
+  solarPoints: number;
+  onOpenNotifications: () => void;
+  onOpenSettings: () => void;
+}>) {
+  return (
+    <header className="max-w-lg mx-auto px-4 pt-5">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45 }}
+        className="rounded-[28px] border border-border/70 bg-background/84 px-4 py-4 shadow-md backdrop-blur-sm"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <AnimatedBrandLogo size="compact" showWordmark={false} />
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Lumina</p>
+              <p className="truncate text-base font-semibold tracking-[-0.02em] text-foreground">{firstName}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <SolarPointsBadge points={solarPoints} />
+            <NotificationBadge onClick={onOpenNotifications} />
+            <button
+              onClick={onOpenSettings}
+              className="rounded-full border border-border/80 bg-card p-1.5 shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5"
+              aria-label="Configurações"
+            >
+              <Settings className="w-4 h-4 text-foreground/72" />
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-5 text-center">
+          <motion.p
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-[31px] font-semibold leading-none tracking-[-0.05em] text-foreground"
+          >
+            {getGreeting()}, {firstName}!
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.16 }}
+            className="mx-auto mt-2 max-w-[18rem] text-sm leading-relaxed text-muted-foreground"
+          >
+            Leitura diária do seu contexto para orientar rotina, foco e proteção.
+          </motion.p>
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mt-3 inline-flex items-center gap-1 rounded-full border border-primary/10 bg-primary/5 px-3 py-1 text-[11px] font-semibold tracking-[0.06em] text-primary/80"
+          >
+            {getHeaderBadgeLabel(scores)}
+          </motion.span>
+        </div>
+      </motion.div>
+    </header>
+  );
+}
+
+function PulseCard({
+  pulseState,
+  onOpen,
+}: Readonly<{
+  pulseState: CurrentPulseState;
+  onOpen: () => void;
+}>) {
+  const tone = getPulseCardTone(pulseState.isDue);
+  const pulseDimensionEntries = pulseState.latestResponse
+    ? Object.entries(pulseState.latestResponse.scoreSummary.dimensionScores)
+    : [];
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.43 }}
+      className="mt-4"
+    >
+      <button
+        type="button"
+        onClick={onOpen}
+        className={`w-full rounded-2xl border bg-card px-4 py-4 text-left shadow-sm transition-colors ${tone.container}`}
+      >
+        <div className="flex items-start gap-3">
+          <div className={`mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${tone.icon}`}>
+            <Activity className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                  Evidência mensal
+                </p>
+                <p className="mt-1 text-base font-semibold tracking-[-0.02em] text-foreground">
+                  {pulseState.definition.title}
+                </p>
+              </div>
+              <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${tone.badge}`}>
+                {pulseState.isDue ? "Disponível" : "Concluído"}
+              </span>
+            </div>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {getPulseLeadText(pulseState)} {pulseState.definition.questions.length} itens, cerca de {Math.round(pulseState.definition.estimatedSeconds / 60)} minuto.
+            </p>
+
+            {pulseState.latestResponse && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div className="rounded-2xl border border-border/60 bg-background px-3 py-2.5">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                    Último score geral
+                  </p>
+                  <p className="mt-1 text-xl font-semibold tracking-[-0.03em] text-foreground">
+                    {pulseState.latestResponse.scoreSummary.overallScore}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Respondido em {formatShortDate(pulseState.latestResponse.windowStart)}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-border/60 bg-background px-3 py-2.5">
+                  <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                    Pontos solares
+                  </p>
+                  <p className="mt-1 text-xl font-semibold tracking-[-0.03em] text-foreground">
+                    +{POINT_VALUES.pulseSurvey}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Ao concluir a janela atual
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {pulseDimensionEntries.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {pulseDimensionEntries.map(([dimension, score]) => (
+                  <span
+                    key={dimension}
+                    className="rounded-full border border-border/60 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+                  >
+                    {PULSE_DIMENSION_LABELS[dimension as keyof typeof PULSE_DIMENSION_LABELS]}: {score}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {pulseState.isDue && (
+              <div className="mt-3 flex items-center gap-2 text-sm font-medium text-brand-teal">
+                <span>Responder agora</span>
+                <ChevronRight className="h-4 w-4" />
+              </div>
+            )}
+          </div>
+        </div>
+      </button>
+    </motion.section>
+  );
+}
+
+function QuickAccessSection({
+  quickActions,
+  onSettings,
+  onQuickAction,
+}: Readonly<{
+  quickActions: readonly QuickAction[];
+  onSettings: () => void;
+  onQuickAction: (action: QuickAction) => void;
+}>) {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.52 }}
+      className="mt-4 rounded-3xl border border-border/70 bg-card px-4 py-4 shadow-sm"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+            Acesso rápido
+          </p>
+          <h2 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-foreground">
+            Superfícies principais da plataforma
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={onSettings}
+          className="rounded-full border border-border/70 bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/20 hover:text-foreground"
+        >
+          Ajustar
+        </button>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2.5">
+        {quickActions.map((action) => {
+          const Icon = action.icon;
+
+          return (
+            <button
+              key={action.label}
+              type="button"
+              onClick={() => onQuickAction(action)}
+              className="rounded-2xl border border-border/65 bg-background px-3 py-3 text-left transition-colors hover:border-primary/20 hover:bg-primary/5"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">
+                    {action.label}
+                  </p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                    {action.description}
+                  </p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </motion.section>
+  );
+}
+
+function DashboardBottomNav({
+  onNavigate,
+}: Readonly<{
+  onNavigate: (path: string) => void;
+}>) {
+  return (
+    <nav className="fixed bottom-0 inset-x-0 z-20 glass-card border-t border-border/30">
+      <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-around">
+        <button
+          onClick={() => onNavigate("/dashboard")}
+          className="flex flex-col items-center gap-1 text-primary"
+          data-testid="nav-home"
+        >
+          <Sun className="w-5 h-5" />
+          <span className="text-xs font-medium">Início</span>
+        </button>
+        <button
+          onClick={() => onNavigate("/checkin")}
+          className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          data-testid="nav-checkin"
+        >
+          <Activity className="w-5 h-5" />
+          <span className="text-xs">Check-in</span>
+        </button>
+        <button
+          onClick={() => onNavigate("/missions")}
+          className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          data-testid="nav-missions"
+        >
+          <Target className="w-5 h-5" />
+          <span className="text-xs">+Você</span>
+        </button>
+        <button
+          onClick={() => onNavigate("/support")}
+          className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          data-testid="nav-support"
+        >
+          <Heart className="w-5 h-5" />
+          <span className="text-xs">Apoio</span>
+        </button>
+        <button
+          onClick={() => onNavigate("/meu-cuidado")}
+          className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          data-testid="nav-jornada"
+        >
+          <BookOpen className="w-5 h-5" />
+          <span className="text-xs">Jornada</span>
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
 export default function DashboardPage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -257,13 +591,6 @@ export default function DashboardPage() {
     setPulseAnswers((current) => ({ ...current, [questionId]: value }));
   }, []);
 
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return "Bom dia";
-    if (h < 18) return "Boa tarde";
-    return "Boa noite";
-  };
-
   const firstName = user?.name?.split(" ")[0] || "Colaborador";
 
   const domains = useMemo(() => getDomainMeta(), []);
@@ -272,9 +599,7 @@ export default function DashboardPage() {
   const canSubmitPulse = pulseState?.isDue === true
     && pulseAnsweredCount === pulseQuestionIds.length
     && pulseQuestionIds.length > 0;
-  const pulseDimensionEntries = pulseState?.latestResponse
-    ? Object.entries(pulseState.latestResponse.scoreSummary.dimensionScores)
-    : [];
+  const checkInStatusCopy = getCheckInStatusCopy(justCompleted);
 
   const handleQuickAction = useCallback((action: (typeof QUICK_ACTIONS)[number]) => {
     if (action.action === "drawer") {
@@ -287,62 +612,13 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen gradient-sunrise">
-      <header className="max-w-lg mx-auto px-4 pt-5">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="rounded-[28px] border border-border/70 bg-background/84 px-4 py-4 shadow-md backdrop-blur-sm"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <AnimatedBrandLogo size="compact" showWordmark={false} />
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Lumina</p>
-                <p className="truncate text-base font-semibold tracking-[-0.02em] text-foreground">{firstName}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <SolarPointsBadge points={solarPoints} />
-              <NotificationBadge onClick={() => setDrawerOpen(true)} />
-              <button
-                onClick={() => navigate("/settings")}
-                className="rounded-full border border-border/80 bg-card p-1.5 shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5"
-                aria-label="Configurações"
-              >
-                <Settings className="w-4 h-4 text-foreground/72" />
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-5 text-center">
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="text-[31px] font-semibold leading-none tracking-[-0.05em] text-foreground"
-            >
-              {greeting()}, {firstName}!
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.16 }}
-              className="mx-auto mt-2 max-w-[18rem] text-sm leading-relaxed text-muted-foreground"
-            >
-              Leitura diária do seu contexto para orientar rotina, foco e proteção.
-            </motion.p>
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mt-3 inline-flex items-center gap-1 rounded-full border border-primary/10 bg-primary/5 px-3 py-1 text-[11px] font-semibold tracking-[0.06em] text-primary/80"
-            >
-              {SKY_CONFIG[scores.skyState].label}
-            </motion.span>
-          </div>
-        </motion.div>
-      </header>
+      <DashboardHeader
+        firstName={firstName}
+        scores={scores}
+        solarPoints={solarPoints}
+        onOpenNotifications={() => setDrawerOpen(true)}
+        onOpenSettings={() => navigate("/settings")}
+      />
 
       <AnimatePresence>
         {drawerOpen && (
@@ -432,12 +708,10 @@ export default function DashboardPage() {
               </motion.div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-semibold tracking-[-0.02em] text-foreground">
-                  {justCompleted ? "Check-in registrado!" : "Check-in completo"}
+                  {checkInStatusCopy.title}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {justCompleted
-                    ? "Seus scores foram atualizados."
-                    : "Scores atualizados para hoje."}
+                  {checkInStatusCopy.description}
                 </p>
               </div>
             </motion.div>
@@ -475,93 +749,14 @@ export default function DashboardPage() {
         )}
 
         {pulseState && (
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.43 }}
-            className="mt-4"
-          >
-            <button
-              type="button"
-              onClick={() => {
-                if (pulseState.isDue) {
-                  setPulseDialogOpen(true);
-                }
-              }}
-              className={`w-full rounded-2xl border bg-card px-4 py-4 text-left shadow-sm transition-colors ${pulseState.isDue ? "border-brand-teal/20 hover:border-brand-teal/35 hover:bg-brand-teal/5" : "border-border/70"}`}
-            >
-              <div className="flex items-start gap-3">
-                <div className={`mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${pulseState.isDue ? "bg-brand-teal/12 text-brand-teal" : "bg-primary/8 text-primary"}`}>
-                  <Activity className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                        Evidência mensal
-                      </p>
-                      <p className="mt-1 text-base font-semibold tracking-[-0.02em] text-foreground">
-                        {pulseState.definition.title}
-                      </p>
-                    </div>
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${pulseState.isDue ? "bg-brand-teal/12 text-brand-teal" : "bg-primary/8 text-primary"}`}>
-                      {pulseState.isDue ? "Disponível" : "Concluído"}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {getPulseLeadText(pulseState)} {pulseState.definition.questions.length} itens, cerca de {Math.round(pulseState.definition.estimatedSeconds / 60)} minuto.
-                  </p>
-
-                  {pulseState.latestResponse && (
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <div className="rounded-2xl border border-border/60 bg-background px-3 py-2.5">
-                        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                          Último score geral
-                        </p>
-                        <p className="mt-1 text-xl font-semibold tracking-[-0.03em] text-foreground">
-                          {pulseState.latestResponse.scoreSummary.overallScore}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Respondido em {formatShortDate(pulseState.latestResponse.windowStart)}
-                        </p>
-                      </div>
-                      <div className="rounded-2xl border border-border/60 bg-background px-3 py-2.5">
-                        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                          Pontos solares
-                        </p>
-                        <p className="mt-1 text-xl font-semibold tracking-[-0.03em] text-foreground">
-                          +{POINT_VALUES.pulseSurvey}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Ao concluir a janela atual
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {pulseDimensionEntries.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {pulseDimensionEntries.map(([dimension, score]) => (
-                        <span
-                          key={dimension}
-                          className="rounded-full border border-border/60 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
-                        >
-                          {PULSE_DIMENSION_LABELS[dimension as keyof typeof PULSE_DIMENSION_LABELS]}: {score}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {pulseState.isDue && (
-                    <div className="mt-3 flex items-center gap-2 text-sm font-medium text-brand-teal">
-                      <span>Responder agora</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </button>
-          </motion.section>
+          <PulseCard
+            pulseState={pulseState}
+            onOpen={() => {
+              if (pulseState.isDue) {
+                setPulseDialogOpen(true);
+              }
+            }}
+          />
         )}
 
         {/* Crisis-aware support CTA */}
@@ -626,59 +821,11 @@ export default function DashboardPage() {
           </button>
         </motion.section>
 
-        <motion.section
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.52 }}
-          className="mt-4 rounded-3xl border border-border/70 bg-card px-4 py-4 shadow-sm"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                Acesso rápido
-              </p>
-              <h2 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-foreground">
-                Superfícies principais da plataforma
-              </h2>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate("/settings")}
-              className="rounded-full border border-border/70 bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/20 hover:text-foreground"
-            >
-              Ajustar
-            </button>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-2.5">
-            {QUICK_ACTIONS.map((action) => {
-              const Icon = action.icon;
-
-              return (
-                <button
-                  key={action.label}
-                  type="button"
-                  onClick={() => handleQuickAction(action)}
-                  className="rounded-2xl border border-border/65 bg-background px-3 py-3 text-left transition-colors hover:border-primary/20 hover:bg-primary/5"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">
-                        {action.label}
-                      </p>
-                      <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                        {action.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </motion.section>
+        <QuickAccessSection
+          quickActions={QUICK_ACTIONS}
+          onSettings={() => navigate("/settings")}
+          onQuickAction={handleQuickAction}
+        />
 
         {/* Minha Jornada — tertiary (minimal inline link) */}
         <motion.section
@@ -784,51 +931,7 @@ export default function DashboardPage() {
         </Dialog>
       )}
 
-      {/* Bottom nav */}
-      <nav className="fixed bottom-0 inset-x-0 z-20 glass-card border-t border-border/30">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-around">
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="flex flex-col items-center gap-1 text-primary"
-            data-testid="nav-home"
-          >
-            <Sun className="w-5 h-5" />
-            <span className="text-xs font-medium">Início</span>
-          </button>
-          <button
-            onClick={() => navigate("/checkin")}
-            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-            data-testid="nav-checkin"
-          >
-            <Activity className="w-5 h-5" />
-            <span className="text-xs">Check-in</span>
-          </button>
-          <button
-            onClick={() => navigate("/missions")}
-            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-            data-testid="nav-missions"
-          >
-            <Target className="w-5 h-5" />
-            <span className="text-xs">+Você</span>
-          </button>
-          <button
-            onClick={() => navigate("/support")}
-            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-            data-testid="nav-support"
-          >
-            <Heart className="w-5 h-5" />
-            <span className="text-xs">Apoio</span>
-          </button>
-          <button
-            onClick={() => navigate("/meu-cuidado")}
-            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-            data-testid="nav-jornada"
-          >
-            <BookOpen className="w-5 h-5" />
-            <span className="text-xs">Jornada</span>
-          </button>
-        </div>
-      </nav>
+      <DashboardBottomNav onNavigate={navigate} />
 
     </div>
   );

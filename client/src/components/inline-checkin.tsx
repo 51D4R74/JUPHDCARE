@@ -489,9 +489,9 @@ export default function InlineCheckin({
         const elapsedSec = (Date.now() - startTime.current) / 1000;
         // Confidence heuristic: full completion in 30-180s = 1.0, outside range scales down.
         // Clamped 0.0–1.0 stored as numeric.
-        const timeFactor = elapsedSec < 15 ? 0.6 : elapsedSec > 300 ? 0.7 : 1.0;
+        const timeFactor = getTimeFactor(elapsedSec);
         const answerCount = Object.keys(finalAnswers).length;
-        const completionFactor = steps.length > 0 ? answerCount / steps.length : 1.0;
+        const completionFactor = getCompletionFactor(answerCount, steps.length);
         const confidence = Math.min(1, Math.round(timeFactor * completionFactor * 100) / 100);
 
         await apiRequest("POST", "/api/checkins", {
@@ -629,4 +629,24 @@ export default function InlineCheckin({
       )}
     </div>
   );
+}
+
+function getTimeFactor(elapsedSeconds: number): number {
+  if (elapsedSeconds < 15) {
+    return 0.6;
+  }
+
+  if (elapsedSeconds > 300) {
+    return 0.7;
+  }
+
+  return 1;
+}
+
+function getCompletionFactor(answerCount: number, stepCount: number): number {
+  if (stepCount === 0) {
+    return 1;
+  }
+
+  return answerCount / stepCount;
 }
