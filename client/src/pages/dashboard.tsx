@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { devNow } from "@shared/dev-clock";
 import {
-  Sun, ChevronRight, MessageCircleHeart, BookOpen, Lightbulb,
+  Sun, ChevronRight, MessageCircleHeart, BookOpen,
   Heart, Settings, CheckCircle2,
   Sparkles,
 } from "lucide-react";
@@ -14,6 +14,7 @@ import SolarPointsBadge from "@/components/solar-points-badge";
 import NotificationBadge from "@/components/notification-badge";
 import NotificationDrawer from "@/components/notification-drawer";
 import InlineCheckin from "@/components/inline-checkin";
+import LuminaCard from "@/components/lumina-card";
 import ConstancyDots from "@/components/constancy-dots";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
@@ -27,39 +28,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import type { UserMission, CheckInHistoryRecord } from "@shared/schema";
 import { PULSE_DIMENSION_LABELS, PULSE_RESPONSE_OPTIONS, type CurrentPulseState, type PulseAnswerValue } from "@shared/pulse-survey";
-
-function getDailyInsight(scores: TodayScores): string {
-  if (!scores.hasCheckedIn) {
-    return "Um minuto do seu dia me ajuda a cuidar melhor de você.";
-  }
-
-  if (scores.flags.includes("harassment_signal")) {
-    return "Algo no seu ambiente acendeu um sinal — cuide de você primeiro, o apoio está ali.";
-  }
-
-  const orderedDomains = [
-    { id: "recarga", score: scores.domainScores.recarga },
-    { id: "estado-do-dia", score: scores.domainScores["estado-do-dia"] },
-    { id: "seguranca-relacional", score: scores.domainScores["seguranca-relacional"] },
-  ].toSorted((left, right) => left.score - right.score);
-  const lowest = orderedDomains[0];
-
-  if (lowest.id === "recarga") {
-    return lowest.score < 50
-      ? "⚡ Sua bateria tá pedindo cuidado — comece leve, sem pressa."
-      : "🔋 Recarga estável — mantém as pausas pra proteger esse ritmo.";
-  }
-
-  if (lowest.id === "estado-do-dia") {
-    return lowest.score < 50
-      ? "🌡️ Dia mais sensível — o que você precisar, eu tô aqui."
-      : "✨ Dia com energia — bom momento pra avançar no que importa.";
-  }
-
-  return lowest.score < 50
-    ? "🛡️ O clima lá fora pede atenção — prefira interações previsíveis hoje."
-    : "🤝 Clima tranquilo ao redor — bom momento pra conversas importantes.";
-}
 
 // ── Celebration particles ─────────────────────────
 
@@ -704,28 +672,14 @@ export default function DashboardPage() {
           )}
         </motion.section>
 
-        {/* Insight do dia — condensed, only after check-in */}
+        {/* Lumina — contextual AI companion */}
         {checkedIn && (
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-4 rounded-2xl border border-primary/10 bg-card px-4 py-4 shadow-sm"
-          >
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-brand-gold/14">
-                <Lightbulb className="h-4 w-4 text-brand-gold-dark" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Insight do dia
-                </p>
-                <p className="mt-1 text-sm leading-relaxed text-foreground">
-                  {getDailyInsight(scores)}
-                </p>
-              </div>
-            </div>
-          </motion.section>
+          <LuminaCard
+            context={hasCrisisSignal ? "dashboard-low" : "dashboard"}
+            delay={0.4}
+            className="mt-4"
+            onTap={() => navigate("/support")}
+          />
         )}
 
         {/* Discovery card — 1 private insight from correlation engine */}

@@ -17,6 +17,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import ConstancyDots from "@/components/constancy-dots";
 import InsightCard from "@/components/insight-card";
+import LuminaCard from "@/components/lumina-card";
 import SupportMessageCard from "@/components/support-message-card";
 import { computeTagCloud, DOMAIN_COLORS, getDomainMeta, getDomainNarrative, DOMAIN_WARM_NAMES, type TagCount, type TodayScores } from "@/lib/score-engine";
 import type { ScoreDomainId } from "@/lib/checkin-data";
@@ -391,6 +392,17 @@ export default function MeuCuidadoPage() {
             </div>
           )}
         </motion.section>
+
+        {/* ── Lumina companion — pattern interpretation ── */}
+        {allHistory.length >= 3 && (
+          <LuminaCard
+            context="journey"
+            compact
+            delay={0.22}
+            className="mb-4"
+            onTap={() => navigate("/support")}
+          />
+        )}
 
         {/* ── Tag cloud ── */}
         {tagCloud.length > 0 && (

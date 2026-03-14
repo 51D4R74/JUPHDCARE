@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import SupportMessageCard from "@/components/support-message-card";
+import LuminaCard from "@/components/lumina-card";
 import SolarPointsBadge from "@/components/solar-points-badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -187,6 +188,15 @@ export default function SupportCenterPage() {
             Deixar
           </button>
         </div>
+
+        {/* Lumina companion — support suggestions */}
+        <LuminaCard
+          context="support"
+          compact
+          delay={0.15}
+          className="mt-3"
+          onTap={() => setTab("receive")}
+        />
 
         <AnimatePresence mode="wait">
           {tab === "receive" && (

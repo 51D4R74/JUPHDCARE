@@ -1,0 +1,167 @@
+/**
+ * LuminaCard — contextual AI companion card.
+ *
+ * Lumina is a RAG-based generative AI trained on psychosocial wellness
+ * research. This card surfaces her voice across every key screen as the
+ * single source of personalized guidance.
+ *
+ * DEBT: Static contextual messages replaced by real GenAI responses [AI sprint]
+ */
+
+import { motion } from "framer-motion";
+import { Sparkles, ChevronRight } from "lucide-react";
+
+// ── Context-specific static messages (replaced by GenAI later) ─────
+
+type LuminaContext =
+  | "dashboard"
+  | "dashboard-low"
+  | "support"
+  | "missions"
+  | "journey";
+
+interface ContextMessage {
+  readonly text: string;
+  readonly cta: string;
+}
+
+// DEBT: Replace static map with real-time GenAI inference [AI sprint]
+const CONTEXT_MESSAGES: Record<LuminaContext, ContextMessage> = {
+  dashboard: {
+    text: "Vi seus sinais de hoje — quer conversar sobre o que notei?",
+    cta: "Falar com Lumina",
+  },
+  "dashboard-low": {
+    text: "Percebi algo no seu dia que merece atenção. Posso te ouvir se quiser.",
+    cta: "Conversar agora",
+  },
+  support: {
+    text: "Posso sugerir algo com base no que você tem vivido?",
+    cta: "Pedir uma sugestão",
+  },
+  missions: {
+    text: "Escolhi essas missões pensando no seu momento. Quer entender por quê?",
+    cta: "Me explica",
+  },
+  journey: {
+    text: "Quer que eu interprete o padrão que estou vendo no seu histórico?",
+    cta: "Interpretar pra mim",
+  },
+};
+
+// ── Component ──────────────────────────────────────────
+
+interface LuminaCardProps {
+  readonly context: LuminaContext;
+  readonly onTap?: () => void;
+  readonly delay?: number;
+  readonly className?: string;
+  readonly compact?: boolean;
+}
+
+export default function LuminaCard({
+  context,
+  onTap,
+  delay = 0,
+  className = "",
+  compact = false,
+}: Readonly<LuminaCardProps>) {
+  const msg = CONTEXT_MESSAGES[context];
+
+  if (compact) {
+    return (
+      <motion.button
+        type="button"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay, duration: 0.35 }}
+        onClick={onTap}
+        className={
+          "flex w-full items-center gap-3 rounded-2xl border border-brand-teal/20 " +
+          "bg-gradient-to-r from-brand-teal/6 to-transparent px-4 py-3 text-left " +
+          "transition-colors hover:border-brand-teal/30 " + className
+        }
+      >
+        <LuminaAvatar size={32} />
+        <p className="flex-1 text-sm leading-snug text-foreground">
+          {msg.text}
+        </p>
+        <ChevronRight className="h-4 w-4 flex-shrink-0 text-brand-teal/60" />
+      </motion.button>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className={
+        "relative overflow-hidden rounded-2xl border border-brand-teal/20 " +
+        "bg-card shadow-sm " + className
+      }
+    >
+      {/* Subtle gradient wash — Lumina's signature */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          background: "linear-gradient(135deg, hsl(187 62% 44%), hsl(44 90% 51%) 60%, transparent 80%)",
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="relative flex items-start gap-3.5 px-4 py-4">
+        <LuminaAvatar size={40} />
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="text-xs font-semibold tracking-wide text-brand-teal">
+              Lumina
+            </span>
+            <Sparkles className="h-3 w-3 text-brand-teal/60" />
+          </div>
+
+          <p className="text-sm leading-relaxed text-foreground">
+            {msg.text}
+          </p>
+
+          <button
+            type="button"
+            onClick={onTap}
+            className={
+              "mt-3 inline-flex items-center gap-1.5 rounded-xl " +
+              "bg-brand-teal/10 px-3.5 py-2 text-sm font-medium text-brand-teal " +
+              "transition-colors hover:bg-brand-teal/16 active:bg-brand-teal/20"
+            }
+          >
+            {msg.cta}
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Avatar sub-component ───────────────────────────────
+
+function LuminaAvatar({ size }: Readonly<{ size: number }>) {
+  return (
+    <div
+      className="relative flex-shrink-0 rounded-full"
+      style={{ width: size, height: size }}
+    >
+      <img
+        src="/logoCARE.png"
+        alt="Lumina"
+        className="h-full w-full rounded-full object-cover"
+        style={{ filter: "drop-shadow(0 2px 8px rgba(42,166,166,0.18))" }}
+      />
+      {/* Breathing ring — companion presence indicator */}
+      <span
+        className="companion-breathing absolute inset-[-2px] rounded-full border border-brand-teal/25"
+        aria-hidden="true"
+      />
+    </div>
+  );
+}

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MissionCard, { type MissionDef, type MissionStatus } from "@/components/mission-card";
+import LuminaCard from "@/components/lumina-card";
 import SolarPointsBadge from "@/components/solar-points-badge";
 import ConstancyDots from "@/components/constancy-dots";
 import Microcheck from "@/components/microcheck";
@@ -199,6 +200,15 @@ export default function MissionCenterPage() {
             </p>
           )}
         </motion.section>
+
+        {/* Lumina companion — mission rationale */}
+        <LuminaCard
+          context="missions"
+          compact
+          delay={0.12}
+          className="mt-3"
+          onTap={() => navigate("/support")}
+        />
 
         {/* Mission list */}
         <section className="mt-4 space-y-3">
