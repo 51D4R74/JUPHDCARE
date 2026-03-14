@@ -5,49 +5,16 @@
  * research. This card surfaces her voice across every key screen as the
  * single source of personalized guidance.
  *
- * DEBT: Static contextual messages replaced by real GenAI responses [AI sprint]
+ * Message selection is delegated to lumina-engine.ts.
+ * AI sprint: swap the engine implementation with a live RAG call.
  */
 
 import { motion } from "framer-motion";
 import { Sparkles, ChevronRight } from "lucide-react";
-
-// ── Context-specific static messages (replaced by GenAI later) ─────
-
-type LuminaContext =
-  | "dashboard"
-  | "dashboard-low"
-  | "support"
-  | "missions"
-  | "journey";
-
-interface ContextMessage {
-  readonly text: string;
-  readonly cta: string;
-}
-
-// DEBT: Replace static map with real-time GenAI inference [AI sprint]
-const CONTEXT_MESSAGES: Record<LuminaContext, ContextMessage> = {
-  dashboard: {
-    text: "Vi seus sinais de hoje — quer conversar sobre o que notei?",
-    cta: "Falar com Lumina",
-  },
-  "dashboard-low": {
-    text: "Percebi algo no seu dia que merece atenção. Posso te ouvir se quiser.",
-    cta: "Conversar agora",
-  },
-  support: {
-    text: "Posso sugerir algo com base no que você tem vivido?",
-    cta: "Pedir uma sugestão",
-  },
-  missions: {
-    text: "Escolhi essas missões pensando no seu momento. Quer entender por quê?",
-    cta: "Me explica",
-  },
-  journey: {
-    text: "Quer que eu interprete o padrão que estou vendo no seu histórico?",
-    cta: "Interpretar pra mim",
-  },
-};
+import {
+  type LuminaContext,
+  selectLuminaMessage,
+} from "../lib/lumina-engine";
 
 // ── Component ──────────────────────────────────────────
 
@@ -66,7 +33,7 @@ export default function LuminaCard({
   className = "",
   compact = false,
 }: Readonly<LuminaCardProps>) {
-  const msg = CONTEXT_MESSAGES[context];
+  const msg = selectLuminaMessage(context);
 
   if (compact) {
     return (

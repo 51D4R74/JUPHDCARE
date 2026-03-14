@@ -20,6 +20,16 @@ interface ConstancyDotsProps {
 
 const STREAK_MILESTONES = [30, 14, 7, 3] as const;
 
+function streakRingClass(hasAurora: boolean, hasHalo: boolean): string {
+  if (hasAurora) {
+    return " aurora-streak ring-2 ring-brand-gold/40 shadow-[0_0_16px_hsl(var(--brand-gold)/0.3)]";
+  }
+  if (hasHalo) {
+    return " ring-2 ring-brand-gold/30 shadow-[0_0_12px_hsl(var(--brand-gold)/0.25)]";
+  }
+  return "";
+}
+
 function deriveConstancy(days: number, checkedInDates: ReadonlyArray<string>) {
   const dateSet = new Set(checkedInDates);
   const now = devNow();
@@ -73,8 +83,7 @@ export default function ConstancyDots({
       <div
         className={
           "flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-3 py-1.5 shadow-sm transition-shadow duration-500" +
-          (hasAurora ? " aurora-streak ring-2 ring-brand-gold/40 shadow-[0_0_16px_hsl(var(--brand-gold)/0.3)]" :
-           hasHalo ? " ring-2 ring-brand-gold/30 shadow-[0_0_12px_hsl(var(--brand-gold)/0.25)]" : "")
+          streakRingClass(hasAurora, hasHalo)
         }
       >
         {ordered.map((day, i) => (

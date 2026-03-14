@@ -113,7 +113,7 @@ function App() {
   // Clears stale client state if session expired.
   useEffect(() => {
     if (isAuthenticated) {
-      void validateSession();
+      validateSession().catch(console.error);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
