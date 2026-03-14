@@ -150,12 +150,12 @@ export const MORNING_STEPS: CheckInStep[] = [
   {
     id: "sleep",
     type: "single",
-    question: "Como foi sua noite?",
+    question: "Como foi sua noite de sono?",
     options: [
-      { id: "restorative", label: "Com boa recuperação", icon: TbSparkles, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "acceptable", label: "Aceitável", icon: TbMoonStars, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
-      { id: "agitated", label: "Com agitação", icon: TbCloudStorm, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "terrible", label: "Muito ruim", icon: TbSkull, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+      { id: "restorative", label: "Revigorante", icon: TbSparkles, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "acceptable", label: "Normal", icon: TbMoonStars, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
+      { id: "agitated", label: "Agitada", icon: TbCloudStorm, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "terrible", label: "Péssima", icon: TbSkull, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
   {
@@ -386,12 +386,12 @@ export const DAILY_STEPS: CheckInStep[] = [
   {
     id: "sleep",
     type: "single",
-    question: "Como foi sua noite?",
+    question: "Como foi sua noite de sono?",
     options: [
-      { id: "restorative", label: "Com boa recuperação", icon: TbSparkles, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
-      { id: "acceptable", label: "Aceitável", icon: TbMoonStars, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
-      { id: "agitated", label: "Com agitação", icon: TbCloudStorm, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
-      { id: "terrible", label: "Muito ruim", icon: TbSkull, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+      { id: "restorative", label: "Revigorante", icon: TbSparkles, score: 4, color: "text-score-good", bgColor: "from-score-good/20 to-score-good/5" },
+      { id: "acceptable", label: "Normal", icon: TbMoonStars, score: 3, color: "text-score-moderate", bgColor: "from-score-moderate/20 to-score-moderate/5" },
+      { id: "agitated", label: "Agitada", icon: TbCloudStorm, score: 2, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+      { id: "terrible", label: "Péssima", icon: TbSkull, score: 1, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
     ],
   },
   // Q2: Energy → Recarga

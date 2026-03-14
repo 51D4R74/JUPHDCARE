@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
-  ChevronLeft, Sun, Activity, Target, Shield, Heart,
+  ChevronLeft, Sun, Activity, Target, BookOpen, Heart,
   Share2, TrendingUp, TrendingDown, Minus, Calendar,
 } from "lucide-react";
 import {
@@ -463,7 +463,7 @@ export default function ReportPage() {
             data-testid="nav-missions-rep"
           >
             <Target className="w-5 h-5" />
-            <span className="text-xs">Missões</span>
+            <span className="text-xs">+Você</span>
           </button>
           <button
             onClick={() => navigate("/support")}
@@ -474,12 +474,12 @@ export default function ReportPage() {
             <span className="text-xs">Apoio</span>
           </button>
           <button
-            onClick={() => navigate("/protecao")}
+            onClick={() => navigate("/meu-cuidado")}
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-            data-testid="nav-protection-rep"
+            data-testid="nav-jornada-rep"
           >
-            <Shield className="w-5 h-5" />
-            <span className="text-xs">Proteção</span>
+            <BookOpen className="w-5 h-5" />
+            <span className="text-xs">Jornada</span>
           </button>
         </div>
       </nav>

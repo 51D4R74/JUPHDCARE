@@ -9,6 +9,8 @@ type SkyHeaderProps = Readonly<{
   solarHaloLevel: number;
   haloMetrics?: HaloMetrics | null;
   size?: "compact" | "hero";
+  /** When true, render as a full-bleed background with no border/rounding. */
+  fullBleed?: boolean;
   className?: string;
 }>;
 
@@ -18,7 +20,7 @@ const palette = {
   border: "hsl(var(--border-soft))",
 } as const;
 
-const SKY_CONFIG: Record<SkyState, {
+export const SKY_CONFIG: Record<SkyState, {
   bgFrom: string;
   bgMid: string;
   bgTo: string;
@@ -204,6 +206,7 @@ export default function SkyHeader({
   solarHaloLevel,
   haloMetrics,
   size = "hero",
+  fullBleed = false,
   className = "",
 }: SkyHeaderProps) {
   // React 18 useId — colons replaced so the value is a valid XML id
@@ -218,17 +221,24 @@ export default function SkyHeader({
   const tempoScale = skyState === "respiro" ? 1.8 : 1;
   const { sunCX, sunCY, sunR } = layout;
 
+  // Full-bleed mode: no border, no rounding — fills parent container
+  const containerClass = fullBleed
+    ? "relative overflow-hidden w-full h-full"
+    : `relative overflow-hidden border ${compact ? "h-14 w-full rounded-2xl" : "h-32 w-full max-w-sm rounded-[24px]"}`;
+
+  const containerBorder = fullBleed ? undefined : palette.border;
+
   return (
     <div className={`flex ${compact ? "items-center gap-3" : "flex-col items-center gap-3"} ${className}`.trim()}>
       <motion.div
         initial={{ opacity: 0, y: 12, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className={`relative overflow-hidden border ${compact ? "h-14 w-full rounded-2xl" : "h-32 w-full max-w-sm rounded-[24px]"}`}
+        className={containerClass}
         style={{
-          borderColor: palette.border,
+          borderColor: containerBorder,
           background: `linear-gradient(165deg, ${config.bgFrom} 0%, ${config.bgMid} 55%, ${config.bgTo} 100%)`,
-          boxShadow: "0 12px 32px rgba(26,39,68,0.06)",
+          boxShadow: fullBleed ? undefined : "0 12px 32px rgba(26,39,68,0.06)",
         }}
       >
         {/*

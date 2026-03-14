@@ -69,28 +69,28 @@ export default function NotificationDrawer({ open, onClose }: Readonly<Notificat
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="fixed right-0 top-0 bottom-0 z-50 w-80 max-w-[85vw] bg-white border-l border-border-soft shadow-xl flex flex-col"
+        className="fixed right-0 top-0 bottom-0 z-50 flex w-80 max-w-[85vw] flex-col border-l border-border-soft bg-card shadow-xl"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border-soft">
+        <div className="flex items-center justify-between border-b border-border-soft px-4 py-3.5">
           <div className="flex items-center gap-2">
-            <Bell className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">Notificações</h2>
+            <Bell className="h-4 w-4 text-foreground/70" />
+            <h2 className="text-sm font-semibold tracking-[-0.02em]">Notificações</h2>
           </div>
           <div className="flex items-center gap-1">
             {notifications.some((n) => !n.read) && (
               <button
                 onClick={handleMarkAllRead}
-                className="text-xs text-brand-teal hover:underline px-2 py-1"
+                className="px-2 py-1 text-xs font-medium text-primary hover:underline"
               >
                 Marcar todas como lidas
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-black/5 transition-colors"
+              className="rounded-full border border-border/80 p-1.5 transition-colors hover:border-primary/20 hover:bg-primary/5"
             >
-              <X className="w-4 h-4 text-muted-foreground" />
+              <X className="h-4 w-4 text-foreground/70" />
             </button>
           </div>
         </div>
@@ -113,8 +113,8 @@ export default function NotificationDrawer({ open, onClose }: Readonly<Notificat
                   <button
                     key={n.id}
                     type="button"
-                    className={`w-full text-left px-4 py-3 hover:bg-surface-warm/50 transition-colors cursor-pointer ${
-                      n.read ? "" : "bg-brand-teal/5"
+                    className={`w-full cursor-pointer px-4 py-3.5 text-left transition-colors hover:bg-surface-warm/70 ${
+                      n.read ? "" : "bg-primary/5"
                     }`}
                     onClick={() => handleMarkRead(n.id)}
                   >
@@ -124,17 +124,17 @@ export default function NotificationDrawer({ open, onClose }: Readonly<Notificat
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className={`text-xs ${n.read ? "font-medium" : "font-semibold"} truncate`}>
+                          <p className={`truncate text-sm tracking-[-0.01em] ${n.read ? "font-medium" : "font-semibold"}`}>
                             {n.title}
                           </p>
                           {!n.read && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-brand-teal flex-shrink-0" />
+                            <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                           {n.body}
                         </p>
-                        <p className="text-[10px] text-muted-foreground/50 mt-1">
+                        <p className="mt-1.5 text-[11px] text-muted-foreground/60">
                           {timeAgo(n.timestamp)}
                         </p>
                       </div>

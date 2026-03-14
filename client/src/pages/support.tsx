@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronLeft, Sun, Activity, Target, Shield,
+  ChevronLeft, Sun, Activity, Target, BookOpen,
   Heart, Sparkles, RefreshCw, Send, PenLine,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -384,7 +384,7 @@ export default function SupportCenterPage() {
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <Target className="w-5 h-5" />
-            <span className="text-xs">Missões</span>
+            <span className="text-xs">+Você</span>
           </button>
           <button
             onClick={() => navigate("/support")}
@@ -394,11 +394,11 @@ export default function SupportCenterPage() {
             <span className="text-xs font-medium">Apoio</span>
           </button>
           <button
-            onClick={() => navigate("/protecao")}
+            onClick={() => navigate("/meu-cuidado")}
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Shield className="w-5 h-5" />
-            <span className="text-xs">Proteção</span>
+            <BookOpen className="w-5 h-5" />
+            <span className="text-xs">Jornada</span>
           </button>
         </div>
       </nav>

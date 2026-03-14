@@ -8,6 +8,7 @@ import {
   userSettings,
   solarPoints,
   solarStreaks,
+  pulseResponses,
   teamChallengeContributions,
 } from "@shared/schema";
 import type {
@@ -24,6 +25,8 @@ import type {
   UserSettings,
   SolarPoints,
   InsertSolarPoints,
+  PulseResponse,
+  InsertPulseResponse,
   TeamChallengeContribution,
   InsertTeamChallengeContribution,
 } from "@shared/schema";
@@ -247,6 +250,38 @@ export class DrizzleStorage extends BaseStorage {
       .orderBy(desc(solarPoints.createdAt));
   }
 
+  async createPulseResponse(insert: InsertPulseResponse): Promise<PulseResponse> {
+    const rows = await getDb()
+      .insert(pulseResponses)
+      .values({ id: randomUUID(), ...insert, submittedAt: new Date() })
+      .returning();
+    const response = rows.at(0);
+    if (!response) throw new Error("Falha ao registrar pulse");
+    return response;
+  }
+
+  async getPulseResponsesByUserId(userId: string, pulseKey?: string): Promise<PulseResponse[]> {
+    const where = pulseKey
+      ? and(eq(pulseResponses.userId, userId), eq(pulseResponses.pulseKey, pulseKey))
+      : eq(pulseResponses.userId, userId);
+
+    return getDb()
+      .select()
+      .from(pulseResponses)
+      .where(where)
+      .orderBy(desc(pulseResponses.submittedAt));
+  }
+
+  async getLatestPulseResponseByUserId(userId: string, pulseKey: string): Promise<PulseResponse | undefined> {
+    const rows = await getDb()
+      .select()
+      .from(pulseResponses)
+      .where(and(eq(pulseResponses.userId, userId), eq(pulseResponses.pulseKey, pulseKey)))
+      .orderBy(desc(pulseResponses.submittedAt))
+      .limit(1);
+    return rows.at(0);
+  }
+
   async createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution> {
     const rows = await getDb()
       .insert(teamChallengeContributions)
@@ -290,6 +325,7 @@ export class DrizzleStorage extends BaseStorage {
     await db.delete(userMissions).where(eq(userMissions.userId, userId));
     await db.delete(solarPoints).where(eq(solarPoints.userId, userId));
     await db.delete(solarStreaks).where(eq(solarStreaks.userId, userId));
+    await db.delete(pulseResponses).where(eq(pulseResponses.userId, userId));
     await db.delete(userSettings).where(eq(userSettings.userId, userId));
     await db.delete(teamChallengeContributions).where(eq(teamChallengeContributions.userId, userId));
     await db.delete(users).where(eq(users.id, userId));

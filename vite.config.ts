@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
+import path from "node:path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -12,9 +12,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.png", "logoCARE.png"],
       manifest: {
-        name: "JuPhD Care",
-        short_name: "JuPhD Care",
-        description: "Plataforma corporativa de gestão de riscos psicossociais",
+        name: "Lumina",
+        short_name: "Lumina",
+        description: "Lumina — inteligência em saúde psicossocial para empresas",
         theme_color: "#0C3D4E",
         background_color: "#0C3D4E",
         display: "standalone",

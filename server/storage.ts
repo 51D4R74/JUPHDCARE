@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport, type UserMission, type InsertUserMission, type UserSettings, type CheckInHistoryRecord, type SolarPoints, type InsertSolarPoints, type TeamChallengeContribution, type InsertTeamChallengeContribution } from "@shared/schema";
+import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport, type UserMission, type InsertUserMission, type UserSettings, type CheckInHistoryRecord, type SolarPoints, type InsertSolarPoints, type TeamChallengeContribution, type InsertTeamChallengeContribution, type PulseResponse, type InsertPulseResponse } from "@shared/schema";
 import { ANONYMITY_THRESHOLD, getWorkdayDate } from "@shared/constants";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
@@ -267,6 +267,9 @@ export interface IStorage {
   getAllIncidentReports(): Promise<IncidentReport[]>;
   createSolarPointEntry(entry: InsertSolarPoints): Promise<SolarPoints>;
   getSolarPointsByUserId(userId: string): Promise<SolarPoints[]>;
+  createPulseResponse(response: InsertPulseResponse): Promise<PulseResponse>;
+  getPulseResponsesByUserId(userId: string, pulseKey?: string): Promise<PulseResponse[]>;
+  getLatestPulseResponseByUserId(userId: string, pulseKey: string): Promise<PulseResponse | undefined>;
   deleteUserData(userId: string): Promise<void>;
   // ── Team challenges ───────────────────────────────
   createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution>;
@@ -296,6 +299,9 @@ export abstract class BaseStorage implements IStorage {
   abstract getAllIncidentReports(): Promise<IncidentReport[]>;
   abstract createSolarPointEntry(entry: InsertSolarPoints): Promise<SolarPoints>;
   abstract getSolarPointsByUserId(userId: string): Promise<SolarPoints[]>;
+  abstract createPulseResponse(response: InsertPulseResponse): Promise<PulseResponse>;
+  abstract getPulseResponsesByUserId(userId: string, pulseKey?: string): Promise<PulseResponse[]>;
+  abstract getLatestPulseResponseByUserId(userId: string, pulseKey: string): Promise<PulseResponse | undefined>;
   abstract deleteUserData(userId: string): Promise<void>;
   abstract createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution>;
   abstract getTeamContributionsByChallengeAndMonth(challengeId: string, startDate: string, endDate: string): Promise<TeamChallengeContribution[]>;
@@ -394,12 +400,12 @@ export abstract class BaseStorage implements IStorage {
         severity: getAlertSeverity(department.riskLevel),
         title:
           department.riskLevel === "high"
-            ? "Padrão de risco elevado"
-            : "Sinal de atenção em evolução",
+            ? "Área com sinal agregado elevado"
+            : "Área em atenção recente",
         description:
           department.riskLevel === "high"
-            ? `${department.department} apresenta burnout médio de ${department.burnoutIndex}% e segurança relacional de ${department.domainAverages.find((item) => item.domain === "seguranca-relacional")?.avg ?? 0}%.`
-            : `${department.department} registra estresse médio de ${department.stressIndex}% com participação de ${department.participationRate}% nos últimos 30 dias.`,
+            ? `${department.department} apresenta proxy agregado de desgaste em ${department.burnoutIndex}% e segurança relacional recente de ${department.domainAverages.find((item) => item.domain === "seguranca-relacional")?.avg ?? 0}%.`
+            : `${department.department} registra proxy agregado de estresse em ${department.stressIndex}% com participação de ${department.participationRate}% nos últimos 30 dias.`,
         department: department.department,
         timestamp: "agora",
       } satisfies AggregateAlert));
@@ -508,6 +514,7 @@ export class MemStorage extends BaseStorage {
   private readonly userMissionsMap: Map<string, UserMission>;
   private readonly userSettingsMap: Map<string, UserSettings>;
   private readonly solarPointsMap: Map<string, SolarPoints>;
+  private readonly pulseResponsesMap: Map<string, PulseResponse>;
   private readonly teamContributionsMap: Map<string, TeamChallengeContribution>;
 
   constructor() {
@@ -519,6 +526,7 @@ export class MemStorage extends BaseStorage {
     this.userMissionsMap = new Map();
     this.userSettingsMap = new Map();
     this.solarPointsMap = new Map();
+    this.pulseResponsesMap = new Map();
     this.teamContributionsMap = new Map();
     this.seedData();
   }
@@ -751,12 +759,12 @@ export class MemStorage extends BaseStorage {
         severity: getAlertSeverity(department.riskLevel),
         title:
           department.riskLevel === "high"
-            ? "Padrão de risco elevado"
-            : "Sinal de atenção em evolução",
+            ? "Área com sinal agregado elevado"
+            : "Área em atenção recente",
         description:
           department.riskLevel === "high"
-            ? `${department.department} apresenta burnout médio de ${department.burnoutIndex}% e segurança relacional de ${department.domainAverages.find((item) => item.domain === "seguranca-relacional")?.avg ?? 0}%.`
-            : `${department.department} registra estresse médio de ${department.stressIndex}% com participação de ${department.participationRate}% nos últimos 30 dias.`,
+            ? `${department.department} apresenta proxy agregado de desgaste em ${department.burnoutIndex}% e segurança relacional recente de ${department.domainAverages.find((item) => item.domain === "seguranca-relacional")?.avg ?? 0}%.`
+            : `${department.department} registra proxy agregado de estresse em ${department.stressIndex}% com participação de ${department.participationRate}% nos últimos 30 dias.`,
         department: department.department,
         timestamp: "agora",
       } satisfies AggregateAlert));
@@ -936,6 +944,27 @@ export class MemStorage extends BaseStorage {
       .toSorted((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
   }
 
+  async createPulseResponse(insert: InsertPulseResponse): Promise<PulseResponse> {
+    const id = randomUUID();
+    const response: PulseResponse = {
+      ...insert,
+      id,
+      submittedAt: new Date(),
+    };
+    this.pulseResponsesMap.set(id, response);
+    return response;
+  }
+
+  async getPulseResponsesByUserId(userId: string, pulseKey?: string): Promise<PulseResponse[]> {
+    return Array.from(this.pulseResponsesMap.values())
+      .filter((response) => response.userId === userId && (pulseKey === undefined || response.pulseKey === pulseKey))
+      .toSorted((left, right) => (right.submittedAt?.getTime() ?? 0) - (left.submittedAt?.getTime() ?? 0));
+  }
+
+  async getLatestPulseResponseByUserId(userId: string, pulseKey: string): Promise<PulseResponse | undefined> {
+    return (await this.getPulseResponsesByUserId(userId, pulseKey)).at(0);
+  }
+
   async createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution> {
     const id = randomUUID();
     const record: TeamChallengeContribution = { ...data, id, amount: data.amount ?? 1, createdAt: new Date() };
@@ -968,6 +997,9 @@ export class MemStorage extends BaseStorage {
     }
     for (const [id, s] of this.solarPointsMap) {
       if (s.userId === userId) this.solarPointsMap.delete(id);
+    }
+    for (const [id, response] of this.pulseResponsesMap) {
+      if (response.userId === userId) this.pulseResponsesMap.delete(id);
     }
     this.userSettingsMap.delete(userId);
     // Incident reports with userId=null (anonymous) are not deleted

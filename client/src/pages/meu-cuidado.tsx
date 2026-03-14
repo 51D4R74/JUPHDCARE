@@ -2,7 +2,7 @@ import { useState, useMemo, useReducer } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronLeft, Sun, Activity, Target, Shield,
+  ChevronLeft, Sun, Activity, Target, BookOpen,
   Heart, Star, TrendingUp, FileText,
 } from "lucide-react";
 import {
@@ -18,11 +18,12 @@ import { useQuery } from "@tanstack/react-query";
 import ConstancyDots from "@/components/constancy-dots";
 import InsightCard from "@/components/insight-card";
 import SupportMessageCard from "@/components/support-message-card";
-import { computeTagCloud, DOMAIN_COLORS, type TagCount } from "@/lib/score-engine";
+import ScoreCard, { type ScoreContributor } from "@/components/score-card";
+import { computeTagCloud, DOMAIN_COLORS, getDomainMeta, type TagCount, type TodayScores } from "@/lib/score-engine";
+import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
 import { computeDiscoveries, daysUntilDiscovery, DISCOVERY_MIN_RECORDS } from "@/lib/discovery-engine";
 import { getFavoriteMessages, toggleFavorite, isFavorite } from "@/lib/support-engine";
 import { useAuth } from "@/lib/auth";
-import type { ScoreDomainId } from "@/lib/checkin-data";
 import type { CheckInHistoryRecord } from "@shared/schema";
 
 // ── Chart config ────────────────────────────────────────────
@@ -85,6 +86,31 @@ function plural(n: number, singular: string, pluralForm: string): string {
   return n === 1 ? singular : pluralForm;
 }
 
+const EMPTY_SCORES: TodayScores = {
+  domainScores: { recarga: 0, "estado-do-dia": 0, "seguranca-relacional": 0 },
+  skyState: "partly-cloudy",
+  solarHaloLevel: 0.5,
+  flags: [],
+  hasCheckedIn: false,
+};
+
+/** Build ScoreContributor list for a domain from stored answers. */
+function buildContributors(domainId: ScoreDomainId, scores: TodayScores): ScoreContributor[] {
+  if (!scores.hasCheckedIn) return [];
+  const meta = getDomainMeta().find((d) => d.id === domainId);
+  if (!meta) return [];
+
+  return meta.questionIds.map((qId) => {
+    const step = DAILY_STEPS.find((s) => s.id === qId);
+    if (!step || step.type === "tags") return null;
+    return {
+      label: step.question.replace(/\?$/, "").slice(0, 40),
+      value: 1,
+      maxValue: 1,
+    } satisfies ScoreContributor;
+  }).filter(Boolean) as ScoreContributor[];
+}
+
 // ── Page ──────────────────────────────────────────
 
 export default function MeuCuidadoPage() {
@@ -97,6 +123,14 @@ export default function MeuCuidadoPage() {
     queryKey: ["/api/checkins/user", user?.id ?? "", "history"],
     enabled: !!user?.id,
   });
+
+  // Today's scores for domain cards
+  const { data: scores = EMPTY_SCORES } = useQuery<TodayScores>({
+    queryKey: ["/api/scores/user", user?.id ?? "", "today"],
+    enabled: !!user?.id,
+  });
+
+  const domains = getDomainMeta();
 
   // Client-side range filter (no re-fetch needed)
   const records = useMemo(() => {
@@ -183,6 +217,30 @@ export default function MeuCuidadoPage() {
               : `${allHistory.length} check-in${plural(allHistory.length, "", "s")} no total.`}
           </p>
         </motion.section>
+
+        {/* ── Score cards — today's domain scores ── */}
+        {scores.hasCheckedIn && (
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="mb-4 space-y-3"
+          >
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Scores de hoje
+            </p>
+            {domains.map((d) => (
+              <ScoreCard
+                key={d.id}
+                domainId={d.id}
+                title={d.label}
+                description={d.description}
+                score={scores.domainScores[d.id] ?? 0}
+                contributors={buildContributors(d.id, scores)}
+              />
+            ))}
+          </motion.section>
+        )}
 
         {/* ── Score trend chart ── */}
         <motion.section
@@ -417,7 +475,7 @@ export default function MeuCuidadoPage() {
             data-testid="nav-missions-mc"
           >
             <Target className="w-5 h-5" />
-            <span className="text-xs">Missões</span>
+            <span className="text-xs">+Você</span>
           </button>
           <button
             onClick={() => navigate("/support")}
@@ -428,12 +486,12 @@ export default function MeuCuidadoPage() {
             <span className="text-xs">Apoio</span>
           </button>
           <button
-            onClick={() => navigate("/protecao")}
-            className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-            data-testid="nav-protection-mc"
+            onClick={() => navigate("/meu-cuidado")}
+            className="flex flex-col items-center gap-1 text-brand-teal"
+            data-testid="nav-jornada-mc"
           >
-            <Shield className="w-5 h-5" />
-            <span className="text-xs">Proteção</span>
+            <BookOpen className="w-5 h-5" />
+            <span className="text-xs font-medium">Jornada</span>
           </button>
         </div>
       </nav>

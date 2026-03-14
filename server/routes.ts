@@ -4,14 +4,32 @@ import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import type { IStorage } from "./storage";
 import { requireAuth, requireOwner, requireRole } from "./middleware";
-import { insertCheckInSchema, insertMomentCheckInSchema, insertIncidentReportSchema, insertUserMissionSchema } from "@shared/schema";
-import { getWorkday, getWorkdayDate } from "@shared/constants";
+import { insertCheckInSchema, insertMomentCheckInSchema, insertIncidentReportSchema, insertUserMissionSchema, submitPulseResponseSchema, type PulseResponse } from "@shared/schema";
+import { getWorkday, getWorkdayDate, POINT_VALUES } from "@shared/constants";
 import { selectMonthlyChallenge, getMonthBounds } from "@shared/challenges";
+import { buildCurrentPulseState, getPulseDefinitionByKey, hasCompletePulseAnswerSet, parsePulseScoreSummary, scorePulseAnswers, toPulseAnswerRecord, type LatestPulseSnapshot } from "@shared/pulse-survey";
 
 /** Type-safe extraction of a single route param (Express 5 returns string | string[]). */
 function param(req: Request, name: string): string {
   const v = req.params[name];
   return Array.isArray(v) ? v[0] : v;
+}
+
+function mapPulseResponse(record: PulseResponse): LatestPulseSnapshot | null {
+  const scoreSummary = parsePulseScoreSummary(record.scoreSummary);
+  if (scoreSummary === null || !(record.submittedAt instanceof Date)) {
+    return null;
+  }
+
+  return {
+    id: record.id,
+    pulseKey: record.pulseKey,
+    pulseVersion: record.pulseVersion,
+    submittedAt: record.submittedAt.toISOString(),
+    windowStart: record.windowStart,
+    windowEnd: record.windowEnd,
+    scoreSummary,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -190,6 +208,79 @@ export async function registerRoutes(
   app.get("/api/checkins", requireAuth, requireRole("rh"), async (_req, res) => {
     const checkIns = await storage.getAllCheckIns();
     return res.json(checkIns);
+  });
+
+  // ── Formal pulses (authenticated + owner) ───────────────────────────
+
+  app.get("/api/pulses/user/:userId/current", requireAuth, requireOwner(), async (req, res) => {
+    const userId = param(req, "userId");
+    const latestRecord = await storage.getLatestPulseResponseByUserId(userId, "relational-monthly");
+    const latestResponse = latestRecord ? mapPulseResponse(latestRecord) : null;
+    return res.json(buildCurrentPulseState(latestResponse));
+  });
+
+  app.get("/api/pulses/user/:userId/history", requireAuth, requireOwner(), async (req, res) => {
+    const userId = param(req, "userId");
+    const history = await storage.getPulseResponsesByUserId(userId, "relational-monthly");
+    return res.json(history.map(mapPulseResponse).filter((entry): entry is LatestPulseSnapshot => entry !== null));
+  });
+
+  app.post("/api/pulses", requireAuth, async (req, res) => {
+    try {
+      const data = submitPulseResponseSchema.parse(req.body);
+      if (data.userId !== req.userId) {
+        return res.status(403).json({ message: "Acesso não autorizado" });
+      }
+
+      const definition = getPulseDefinitionByKey(data.pulseKey);
+      if (definition === null || data.pulseVersion !== definition.version) {
+        return res.status(400).json({ message: "Pulse inválido ou desatualizado" });
+      }
+
+      if (!hasCompletePulseAnswerSet(definition, data.answers)) {
+        return res.status(400).json({ message: "Responda todos os itens do pulse antes de enviar" });
+      }
+
+      const latestRecord = await storage.getLatestPulseResponseByUserId(data.userId, data.pulseKey);
+      const latestResponse = latestRecord ? mapPulseResponse(latestRecord) : null;
+      const currentState = buildCurrentPulseState(latestResponse);
+
+      if (!currentState.isDue) {
+        return res.status(409).json({ message: "Pulse já respondido neste ciclo" });
+      }
+
+      if (data.windowStart !== currentState.window.windowStart || data.windowEnd !== currentState.window.windowEnd) {
+        return res.status(409).json({ message: "Janela do pulse desatualizada. Atualize a tela e tente novamente." });
+      }
+
+      const answerRecord = toPulseAnswerRecord(data.answers);
+      const scoreSummary = scorePulseAnswers(definition, answerRecord);
+      const response = await storage.createPulseResponse({
+        userId: data.userId,
+        pulseKey: data.pulseKey,
+        pulseVersion: data.pulseVersion,
+        windowStart: data.windowStart,
+        windowEnd: data.windowEnd,
+        answers: JSON.stringify(answerRecord),
+        scoreSummary: JSON.stringify(scoreSummary),
+      });
+
+      await storage.createSolarPointEntry({
+        userId: data.userId,
+        action: `pulse:${data.pulseKey}`,
+        points: POINT_VALUES.pulseSurvey,
+        date: getWorkday(new Date()),
+      });
+
+      return res.json({
+        id: response.id,
+        submittedAt: response.submittedAt,
+        scoreSummary,
+      });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Dados inválidos";
+      return res.status(400).json({ message });
+    }
   });
 
   // ── Scores (authenticated + owner, except RH aggregate) ─────────────

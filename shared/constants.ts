@@ -69,7 +69,10 @@ export const RESPIRO_AUTO_EXIT_DAYS = 2;
 // ── Pulse Survey ──────────────────────────────────
 
 /** Days between pulse surveys. */
-export const PULSE_SURVEY_INTERVAL_DAYS = 45;
+export const PULSE_SURVEY_INTERVAL_DAYS = 30;
+
+/** Days a pulse response window stays open once available. */
+export const PULSE_RESPONSE_WINDOW_DAYS = 7;
 
 // ── Day-boundary helpers ──────────────────────────
 

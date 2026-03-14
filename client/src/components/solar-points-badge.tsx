@@ -49,10 +49,13 @@ export default function SolarPointsBadge({
       initial={{ scale: 0.85, opacity: 0.7 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: "spring", stiffness: 400, damping: 22 }}
-      className={`inline-flex items-center gap-1.5 bg-brand-gold/15 px-3 py-1.5 rounded-full ${className}`}
+      className={`inline-flex items-center gap-2 rounded-full border border-brand-gold/20 bg-card px-3 py-1.5 shadow-sm ${className}`}
     >
-      <Sun className="w-4 h-4 text-brand-gold" />
-      <span className="text-sm font-bold text-brand-gold-dark tabular-nums">
+      <Sun className="w-3.5 h-3.5 text-brand-gold-dark" />
+      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        Solar
+      </span>
+      <span className="text-sm font-bold text-foreground tabular-nums">
         {points}
       </span>
     </motion.div>
@@ -67,8 +70,8 @@ export default function SolarPointsBadge({
           {badge}
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[220px] text-center text-xs leading-relaxed">
-          <p className="font-semibold mb-0.5">Pontos Solares ☀</p>
-          <p>Faça seu check-in diário e complete missões para acumular pontos e ver seu halo brilhar.</p>
+          <p className="mb-0.5 font-semibold">Pontos Solares</p>
+          <p>Faça seu check-in diário e complete atividades do +Você para acumular pontos e ver seu halo brilhar.</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

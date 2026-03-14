@@ -34,13 +34,13 @@ export default function NotificationBadge({ onClick, className }: Readonly<Notif
         // Re-read after opening
         setTimeout(() => setCount(getUnreadCount()), 300);
       }}
-      className={`relative p-2 rounded-lg hover:bg-black/5 transition-colors ${className ?? ""}`}
+      className={`relative rounded-full border border-border/80 bg-card p-2 shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5 ${className ?? ""}`}
       data-testid="button-notifications"
       aria-label={count > 0 ? `Notificações (${count} não lidas)` : "Notificações"}
     >
-      <Bell className="w-4 h-4 text-muted-foreground" />
+      <Bell className="w-4 h-4 text-foreground/72" />
       {count > 0 && (
-        <span className="absolute top-1 right-1 w-2 h-2 bg-score-critical rounded-full" />
+        <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-score-critical" />
       )}
     </button>
   );

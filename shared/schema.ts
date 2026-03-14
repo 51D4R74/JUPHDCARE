@@ -3,6 +3,8 @@ import { pgTable, text, varchar, timestamp, boolean, integer, real } from "drizz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
@@ -95,6 +97,18 @@ export const teamChallengeContributions = pgTable("team_challenge_contributions"
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const pulseResponses = pgTable("pulse_responses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  pulseKey: text("pulse_key").notNull(),
+  pulseVersion: integer("pulse_version").notNull(),
+  windowStart: text("window_start").notNull(),
+  windowEnd: text("window_end").notNull(),
+  answers: text("answers").notNull(),
+  scoreSummary: text("score_summary").notNull(),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+});
+
 // ── Insert schemas ────────────────────────────────
 
 export const insertUserSchema = createInsertSchema(users).pick({
@@ -158,6 +172,32 @@ export const insertTeamChallengeContributionSchema = createInsertSchema(teamChal
   date: true,
 });
 
+export const insertPulseResponseSchema = createInsertSchema(pulseResponses).pick({
+  userId: true,
+  pulseKey: true,
+  pulseVersion: true,
+  windowStart: true,
+  windowEnd: true,
+  answers: true,
+  scoreSummary: true,
+});
+
+export const pulseAnswerValueSchema = z.enum(["never", "rarely", "often", "always"]);
+
+export const pulseSubmissionAnswerSchema = z.object({
+  questionId: z.string().min(1).max(80),
+  value: pulseAnswerValueSchema,
+});
+
+export const submitPulseResponseSchema = z.object({
+  userId: z.string().min(1),
+  pulseKey: z.string().min(1).max(80),
+  pulseVersion: z.number().int().positive(),
+  windowStart: isoDateSchema,
+  windowEnd: isoDateSchema,
+  answers: z.array(pulseSubmissionAnswerSchema).min(1),
+});
+
 // ── Type exports ──────────────────────────────────
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -177,6 +217,10 @@ export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
 export type UserSettings = typeof userSettings.$inferSelect;
 export type InsertTeamChallengeContribution = z.infer<typeof insertTeamChallengeContributionSchema>;
 export type TeamChallengeContribution = typeof teamChallengeContributions.$inferSelect;
+export type InsertPulseResponse = z.infer<typeof insertPulseResponseSchema>;
+export type PulseResponse = typeof pulseResponses.$inferSelect;
+export type PulseSubmissionAnswer = z.infer<typeof pulseSubmissionAnswerSchema>;
+export type SubmitPulseResponse = z.infer<typeof submitPulseResponseSchema>;
 
 /** Canonical check-in history record returned by GET /api/checkins/user/:id/history */
 export interface CheckInHistoryRecord {

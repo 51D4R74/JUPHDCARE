@@ -34,7 +34,7 @@ const SCREENS: OnboardingScreen[] = [
   {
     id: "welcome",
     title: "Seu companheiro de autocuidado",
-    subtitle: "JuPhD Care acompanha seu bem-estar diário de forma acolhedora e privada. Tudo começa por aqui.",
+    subtitle: "Lumina acompanha seu bem-estar diário de forma acolhedora e privada. Tudo começa por aqui.",
     visual: (
       <div className="flex flex-col items-center gap-4">
         <AnimatedBrandLogo size="hero" showWordmark />
@@ -85,8 +85,8 @@ const SCREENS: OnboardingScreen[] = [
   },
   {
     id: "missions",
-    title: "Pequenas missões, grandes mudanças",
-    subtitle: "Todo dia você recebe missões adaptadas ao seu estado. Complete e ganhe Pontos Solares ☀️ — sem julgamento, sem pressão.",
+    title: "+Você — autocuidado diário",
+    subtitle: "Atividades adaptadas ao seu estado. Complete e ganhe Pontos Solares ☀️ — sem julgamento, sem pressão.",
     visual: (
       <div className="space-y-2">
         {[

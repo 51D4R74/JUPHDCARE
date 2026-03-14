@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
-  Sun, Activity, Shield, Target, ChevronLeft, Heart,
+  Sun, Activity, BookOpen, Target, ChevronLeft, Heart,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MissionCard, { type MissionDef, type MissionStatus } from "@/components/mission-card";
@@ -161,9 +161,9 @@ export default function MissionCenterPage() {
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
-          <h1 className="text-lg font-semibold">Missões do dia</h1>
+          <h1 className="text-lg font-semibold">+Você</h1>
           <p className="text-xs text-muted-foreground">
-            Complete para ganhar Pontos Solares
+            Atividades de autocuidado e Pontos Solares
           </p>
         </div>
         {/* Solar Points badge */}
@@ -282,7 +282,7 @@ export default function MissionCenterPage() {
             data-testid="nav-missions"
           >
             <Target className="w-5 h-5" />
-            <span className="text-xs font-medium">Missões</span>
+            <span className="text-xs font-medium">+Você</span>
           </button>
           <button
             onClick={() => navigate("/support")}
@@ -293,12 +293,12 @@ export default function MissionCenterPage() {
             <span className="text-xs">Apoio</span>
           </button>
           <button
-            onClick={() => navigate("/protecao")}
+            onClick={() => navigate("/meu-cuidado")}
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-            data-testid="nav-protection"
+            data-testid="nav-jornada"
           >
-            <Shield className="w-5 h-5" />
-            <span className="text-xs">Proteção</span>
+            <BookOpen className="w-5 h-5" />
+            <span className="text-xs">Jornada</span>
           </button>
         </div>
       </nav>

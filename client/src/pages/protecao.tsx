@@ -5,7 +5,7 @@ import {
   Shield, Phone, AlertTriangle, ChevronLeft, Heart,
   Users, Eye, Lock, Scale, Weight, UserX,
   Headphones, Sun, Activity, Target, ShieldAlert,
-  Ban, Siren, X
+  Ban, Siren, X, BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,10 +14,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 
 const globalRisks = [
-  { label: "Assédio Sexual", icon: Ban, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
-  { label: "Assédio Moral", icon: ShieldAlert, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
+  { label: "Assédio Sexual (Art. 216-A CP)", icon: Ban, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
+  { label: "Assédio Moral (CLT Art. 483)", icon: ShieldAlert, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
   { label: "Situação Violenta/Traumática", icon: Siren, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
-  { label: "Isolamento", icon: UserX, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
 ];
 
 const psychSafety = [
@@ -28,6 +27,7 @@ const psychSafety = [
   { label: "Sensação de injustiça", icon: Scale, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
   { label: "Sobrecarga", icon: Weight, color: "text-score-critical", bgColor: "from-score-critical/20 to-score-critical/5" },
   { label: "Relações ruins", icon: UserX, color: "text-brand-navy", bgColor: "from-brand-navy/20 to-brand-navy/5" },
+  { label: "Isolamento", icon: UserX, color: "text-score-attention", bgColor: "from-score-attention/20 to-score-attention/5" },
 ];
 
 export default function ProtecaoPage() {
@@ -90,9 +90,9 @@ export default function ProtecaoPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-navy/10 border border-brand-navy/15 mb-4">
             <Shield className="w-8 h-8 text-brand-navy" />
           </div>
-          <h1 className="text-2xl font-bold">Cuidado e Proteção</h1>
+          <h1 className="text-2xl font-bold">Denúncia</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Este é um espaço seguro e confidencial. Você tem proteção aqui.
+            Este é um espaço seguro e confidencial. Seu relato será anônimo.
           </p>
         </motion.div>
 
@@ -100,27 +100,21 @@ export default function ProtecaoPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-score-critical/20 bg-score-critical/5 p-5 mb-6"
+          className="rounded-2xl border border-score-critical/20 bg-score-critical/5 p-4 mb-6 flex items-center gap-4"
         >
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-score-critical/20 to-score-critical/10 flex items-center justify-center flex-shrink-0">
-              <Phone className="w-6 h-6 text-score-critical" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-score-critical mb-1">Intervenção de Crise</h3>
-              <p className="text-xs text-muted-foreground mb-3">
-                Se você está em perigo ou precisa de ajuda imediata, nosso conselheiro está disponível 24h.
-                Se a IA detectar risco à vida, conectamos você a um humano em menos de 60 segundos.
-              </p>
-              <Button
-                onClick={() => setShowCrisis(true)}
-                className="bg-gradient-to-r from-score-critical to-score-critical-foreground hover:from-score-critical-foreground hover:to-score-critical text-white border-0 rounded-xl h-10 text-sm"
-                data-testid="button-crisis"
-              >
-                <Headphones className="w-4 h-4 mr-2" />
-                Falar com Conselheiro Agora
-              </Button>
-            </div>
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-score-critical/20 to-score-critical/10 flex items-center justify-center flex-shrink-0">
+            <Phone className="w-6 h-6 text-score-critical" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-score-critical mb-2">Precisa de ajuda agora?</h3>
+            <Button
+              onClick={() => setShowCrisis(true)}
+              className="bg-gradient-to-r from-score-critical to-score-critical-foreground hover:from-score-critical-foreground hover:to-score-critical text-white border-0 rounded-xl h-10 text-sm"
+              data-testid="button-crisis"
+            >
+              <Headphones className="w-4 h-4 mr-2" />
+              Falar com Conselheiro
+            </Button>
           </div>
         </motion.div>
 
@@ -200,15 +194,15 @@ export default function ProtecaoPage() {
           </button>
           <button onClick={() => navigate("/missions")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-missions-2">
             <Target className="w-5 h-5" />
-            <span className="text-xs">Missões</span>
+            <span className="text-xs">+Você</span>
           </button>
           <button onClick={() => navigate("/support")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-support-2">
             <Heart className="w-5 h-5" />
             <span className="text-xs">Apoio</span>
           </button>
-          <button onClick={() => navigate("/protecao")} className="flex flex-col items-center gap-1 text-brand-navy" data-testid="nav-protection-2">
-            <Shield className="w-5 h-5" />
-            <span className="text-xs font-medium">Proteção</span>
+          <button onClick={() => navigate("/meu-cuidado")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-jornada-2">
+            <BookOpen className="w-5 h-5" />
+            <span className="text-xs">Jornada</span>
           </button>
         </div>
       </nav>

@@ -7,6 +7,8 @@
     "JUPHD",
     "JUPHDCARE",
     "juphd",
+    "Lumina",
+    "lumina",
 
     // PT-BR terms not in standard dictionary (ASCII route/code forms or specialized)
     "Protecao", "protecao",
@@ -58,6 +60,7 @@
     "LGPD",
 
     // Tech / stack terms
+    "binarizes",
     "Vite", "vite",
     "Drizzle", "drizzle",
     "wouter",
@@ -65,6 +68,7 @@
     "lucide",
     "tabler",
     "cspell",
+    "gstatic",
     "Zod", "zod",
     "Radix",
     "tsconfig",

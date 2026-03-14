@@ -74,9 +74,9 @@ function getRiskColor(level: string) {
 }
 
 function getRiskLabel(level: string) {
-  if (level === "high") return "Alto";
-  if (level === "medium") return "Médio";
-  return "Baixo";
+  if (level === "high") return "Atenção alta";
+  if (level === "medium") return "Atenção moderada";
+  return "Acompanhamento";
 }
 
 function getSeverityBorder(s: string) {
@@ -158,7 +158,7 @@ export default function RHDashboardPage() {
               <BarChart3 className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-foreground">JuPhD Care — Painel RH</h1>
+              <h1 className="text-sm font-bold text-foreground">Lumina — Painel RH</h1>
               <p className="text-xs text-muted-foreground">Visão Organizacional Agregada</p>
             </div>
           </div>
@@ -198,16 +198,16 @@ export default function RHDashboardPage() {
           />
           <RHAggregateCard
             icon={<Brain className="w-5 h-5 text-score-good" />}
-            label="Índice de Bem-estar"
+            label="Leitura Agregada Recente"
             value={`${data.averageWellbeing}%`}
-            subtitle="Média geral (3 domínios)"
+            subtitle="Média recente dos 3 domínios"
             trend={{ direction: "up", value: "+5%" }}
             trendPositive="up"
             delay={0.05}
           />
           <RHAggregateCard
             icon={<Flame className="w-5 h-5 text-score-attention" />}
-            label="Departamentos em Risco"
+            label="Áreas em Atenção"
             value={data.departments.filter((d) => d.riskLevel === "high").length}
             subtitle={`de ${data.departments.length} monitorados`}
             trend={{ direction: "down", value: "-1" }}
@@ -255,10 +255,10 @@ export default function RHDashboardPage() {
           >
             <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
               <Flame className="w-4 h-4 text-score-attention" />
-              Pressão Psicossocial por Departamento
+              Sinais Agregados por Departamento
             </h3>
             <p className="text-xs text-muted-foreground mb-6">
-              Índice de estresse e burnout — dados agregados
+              Proxies de estresse e desgaste agregado para triagem organizacional
             </p>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={deptChartData} barGap={4}>
@@ -274,8 +274,8 @@ export default function RHDashboardPage() {
                   domain={[0, 100]}
                 />
                 <Tooltip content={<ChartTooltip />} />
-                <Bar dataKey="stress" name="Estresse" fill="#f87171" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="burnout" name="Burnout" fill="#fb923c" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="stress" name="Proxy de estresse" fill="#f87171" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="burnout" name="Desgaste agregado" fill="#fb923c" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
@@ -339,10 +339,10 @@ export default function RHDashboardPage() {
           >
             <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-score-moderate" />
-              Tendência de Risco de Burnout
+              Tendência de Desgaste Agregado
             </h3>
             <p className="text-xs text-muted-foreground mb-6">
-              Risco projetado — baseado em dados agregados de carga e check-ins
+              Tendência exploratória baseada em sinais agregados recentes
             </p>
             <ResponsiveContainer width="100%" height={250}>
               <AreaChart data={data.trendBurnout}>
@@ -372,7 +372,7 @@ export default function RHDashboardPage() {
                 <Area
                   type="monotone"
                   dataKey="forecast"
-                  name="Previsão"
+                  name="Projeção exploratória"
                   stroke="#f87171"
                   fill="#f87171"
                   fillOpacity={0.05}
@@ -431,9 +431,9 @@ export default function RHDashboardPage() {
           >
             <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
               <Shield className="w-4 h-4 text-score-critical" />
-              Nível de Risco por Área
+              Nível de Atenção por Área
             </h3>
-            <p className="text-xs text-muted-foreground mb-4">Classificação baseada em indicadores agregados</p>
+            <p className="text-xs text-muted-foreground mb-4">Classificação operacional baseada em sinais agregados</p>
             <div className="space-y-3">
               {data.departments.map((dept) => (
                 <div
@@ -500,10 +500,10 @@ export default function RHDashboardPage() {
         >
           <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-score-moderate" />
-            Alertas Organizacionais
+            Alertas de Atenção Organizacional
           </h3>
           <p className="text-xs text-muted-foreground mb-4">
-            Detecção automatizada de padrões — dados sempre agregados, nunca individuais
+            Triagem automatizada de padrões agregados para aprofundamento organizacional
           </p>
           <div className="space-y-3">
             {data.alerts.map((alert) => (

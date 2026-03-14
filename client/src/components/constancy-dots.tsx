@@ -3,11 +3,12 @@
  * Sun = checked in, Cloud = missed.
  *
  * Derives constancy from `checkedInDates` (server history).
+ * Also exports `computeStreak` for use by the dashboard greeting.
  */
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Sun, Cloud } from "lucide-react";
+import { Sun, Cloud, Flame } from "lucide-react";
 
 interface ConstancyDotsProps {
   readonly days?: number;
@@ -15,6 +16,8 @@ interface ConstancyDotsProps {
   /** ISO date strings ("YYYY-MM-DD") from server history. */
   readonly checkedInDates: ReadonlyArray<string>;
 }
+
+const STREAK_MILESTONES = [30, 14, 7, 3] as const;
 
 function deriveConstancy(days: number, checkedInDates: ReadonlyArray<string>) {
   const dateSet = new Set(checkedInDates);
@@ -29,6 +32,24 @@ function deriveConstancy(days: number, checkedInDates: ReadonlyArray<string>) {
   return result;
 }
 
+/** Count consecutive check-in days ending today (or yesterday). */
+export function computeStreak(checkedInDates: ReadonlyArray<string>): number {
+  const dateSet = new Set(checkedInDates);
+  const now = new Date();
+  let streak = 0;
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    if (dateSet.has(key)) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
 export default function ConstancyDots({
   days = 10,
   className = "",
@@ -41,24 +62,39 @@ export default function ConstancyDots({
   // Reverse to show oldest → newest (left to right)
   const ordered = [...constancy].reverse();
 
+  const streak = useMemo(() => computeStreak(checkedInDates), [checkedInDates]);
+  const milestone = STREAK_MILESTONES.find((m) => streak >= m);
+
   return (
-    <div className={`flex items-center gap-1.5 ${className}`}>
-      {ordered.map((day, i) => (
+    <div className={`flex flex-col items-center gap-2 ${className}`}>
+      <div className="flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-3 py-1.5 shadow-sm">
+        {ordered.map((day, i) => (
+          <motion.div
+            key={day.date}
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.04, duration: 0.25 }}
+            title={`${day.date} — ${day.active ? "Check-in feito" : "Sem check-in"}`}
+            className="flex items-center justify-center"
+          >
+            {day.active ? (
+              <Sun className="h-3.5 w-3.5 text-brand-gold-dark" />
+            ) : (
+              <Cloud className="h-3.5 w-3.5 text-muted-foreground/45" />
+            )}
+          </motion.div>
+        ))}
+      </div>
+      {milestone ? (
         <motion.div
-          key={day.date}
-          initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: i * 0.04, duration: 0.25 }}
-          title={`${day.date} — ${day.active ? "Check-in feito" : "Sem check-in"}`}
-          className="flex items-center justify-center"
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-1 text-[11px] font-semibold text-brand-gold-dark"
         >
-          {day.active ? (
-            <Sun className="w-4 h-4 text-brand-gold" />
-          ) : (
-            <Cloud className="w-4 h-4 text-muted-foreground/40" />
-          )}
+          <Flame className="h-3.5 w-3.5" />
+          <span>{streak} dias seguidos</span>
         </motion.div>
-      ))}
+      ) : null}
     </div>
   );
 }

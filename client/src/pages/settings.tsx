@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Settings, Bell, Moon, Clock, ChevronLeft,
-  Sun, Activity, Target, Heart, Shield,
+  Sun, Activity, Target, Heart, BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -73,7 +73,7 @@ export function saveSettings(settings: AppSettings): void {
 
 const TYPE_META: Record<NotificationType, { label: string; description: string; icon: string }> = {
   care: { label: "Cuidado", description: "Lembretes de autocuidado (água, pausas)", icon: "💧" },
-  mission: { label: "Missões", description: "Novas missões e conclusões", icon: "⭐" },
+  mission: { label: "+Você", description: "Novas atividades de autocuidado", icon: "⭐" },
   microcheck: { label: "Micro check-in", description: "Verificações rápidas ao longo do dia", icon: "💬" },
   closure: { label: "Fechamento", description: "Convite para encerrar o dia", icon: "🌅" },
   support: { label: "Apoio", description: "Mensagens de suporte contextual", icon: "🤝" },
@@ -356,15 +356,15 @@ export default function SettingsPage() {
           </button>
           <button onClick={() => navigate("/missions")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
             <Target className="w-5 h-5" />
-            <span className="text-xs">Missões</span>
+            <span className="text-xs">+Você</span>
           </button>
           <button onClick={() => navigate("/support")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
             <Heart className="w-5 h-5" />
             <span className="text-xs">Apoio</span>
           </button>
-          <button onClick={() => navigate("/protecao")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-            <Shield className="w-5 h-5" />
-            <span className="text-xs">Proteção</span>
+          <button onClick={() => navigate("/meu-cuidado")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
+            <BookOpen className="w-5 h-5" />
+            <span className="text-xs">Jornada</span>
           </button>
         </div>
       </nav>

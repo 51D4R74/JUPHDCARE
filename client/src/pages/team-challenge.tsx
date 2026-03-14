@@ -10,7 +10,7 @@ import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Sun, Activity, Target, Shield, Heart,
+  Sun, Activity, Target, BookOpen, Heart,
   Droplets, PauseCircle, Wind, ClipboardCheck,
   ChevronRight, CalendarDays, Trophy, Sparkles, PartyPopper,
 } from "lucide-react";
@@ -395,7 +395,7 @@ export default function TeamChallengePage() {
             data-testid="nav-missions"
           >
             <Target className="w-5 h-5" />
-            <span className="text-xs">Missões</span>
+            <span className="text-xs">+Você</span>
           </button>
           <button
             onClick={() => navigate("/support")}
@@ -406,12 +406,12 @@ export default function TeamChallengePage() {
             <span className="text-xs">Apoio</span>
           </button>
           <button
-            onClick={() => navigate("/protecao")}
+            onClick={() => navigate("/meu-cuidado")}
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-            data-testid="nav-protecao"
+            data-testid="nav-jornada"
           >
-            <Shield className="w-5 h-5" />
-            <span className="text-xs">Proteção</span>
+            <BookOpen className="w-5 h-5" />
+            <span className="text-xs">Jornada</span>
           </button>
         </div>
       </nav>
