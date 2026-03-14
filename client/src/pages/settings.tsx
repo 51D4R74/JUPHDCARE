@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Settings, Bell, Moon, Clock, ChevronLeft,
-  Sun, Activity, Target, Heart, BookOpen,
+  Sun, MessageCircleHeart, Sparkles, Heart, BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -73,7 +73,7 @@ export function saveSettings(settings: AppSettings): void {
 
 const TYPE_META: Record<NotificationType, { label: string; description: string; icon: string }> = {
   care: { label: "Cuidado", description: "Lembretes de autocuidado (água, pausas)", icon: "💧" },
-  mission: { label: "+Você", description: "Novas atividades de autocuidado", icon: "⭐" },
+  mission: { label: "Pra Você", description: "Novas atividades de autocuidado", icon: "⭐" },
   microcheck: { label: "Micro check-in", description: "Verificações rápidas ao longo do dia", icon: "💬" },
   closure: { label: "Fechamento", description: "Convite para encerrar o dia", icon: "🌅" },
   support: { label: "Apoio", description: "Mensagens de suporte contextual", icon: "🤝" },
@@ -351,12 +351,12 @@ export default function SettingsPage() {
             <span className="text-xs">Início</span>
           </button>
           <button onClick={() => navigate("/checkin")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-            <Activity className="w-5 h-5" />
+            <MessageCircleHeart className="w-5 h-5" />
             <span className="text-xs">Check-in</span>
           </button>
           <button onClick={() => navigate("/missions")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
-            <Target className="w-5 h-5" />
-            <span className="text-xs">+Você</span>
+            <Sparkles className="w-5 h-5" />
+            <span className="text-xs">Pra Você</span>
           </button>
           <button onClick={() => navigate("/support")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
             <Heart className="w-5 h-5" />
@@ -364,7 +364,7 @@ export default function SettingsPage() {
           </button>
           <button onClick={() => navigate("/meu-cuidado")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors">
             <BookOpen className="w-5 h-5" />
-            <span className="text-xs">Jornada</span>
+            <span className="text-xs">Sua Jornada</span>
           </button>
         </div>
       </nav>

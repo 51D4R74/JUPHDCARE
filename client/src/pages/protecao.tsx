@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Phone, AlertTriangle, ChevronLeft, Heart,
   Users, Eye, Lock, Scale, Weight, UserX,
-  Headphones, Sun, Activity, Target, ShieldAlert,
+  Headphones, Sun, MessageCircleHeart, Sparkles, ShieldAlert,
   Ban, Siren, X, BookOpen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -189,12 +189,12 @@ export default function ProtecaoPage() {
             <span className="text-xs">Início</span>
           </button>
           <button onClick={() => navigate("/checkin")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-checkin-2">
-            <Activity className="w-5 h-5" />
+            <MessageCircleHeart className="w-5 h-5" />
             <span className="text-xs">Check-in</span>
           </button>
           <button onClick={() => navigate("/missions")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-missions-2">
-            <Target className="w-5 h-5" />
-            <span className="text-xs">+Você</span>
+            <Sparkles className="w-5 h-5" />
+            <span className="text-xs">Pra Você</span>
           </button>
           <button onClick={() => navigate("/support")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-support-2">
             <Heart className="w-5 h-5" />
@@ -202,7 +202,7 @@ export default function ProtecaoPage() {
           </button>
           <button onClick={() => navigate("/meu-cuidado")} className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-jornada-2">
             <BookOpen className="w-5 h-5" />
-            <span className="text-xs">Jornada</span>
+            <span className="text-xs">Sua Jornada</span>
           </button>
         </div>
       </nav>

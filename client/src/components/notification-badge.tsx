@@ -40,7 +40,9 @@ export default function NotificationBadge({ onClick, className }: Readonly<Notif
     >
       <Bell className="w-4 h-4 text-foreground/72" />
       {count > 0 && (
-        <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-score-critical" />
+        <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-score-critical px-0.5 text-[10px] font-bold leading-none text-white">
+          {count > 99 ? "99+" : count}
+        </span>
       )}
     </button>
   );

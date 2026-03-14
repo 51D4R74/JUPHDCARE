@@ -3,12 +3,9 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { devNow } from "@shared/dev-clock";
 import {
-  Sun, ChevronRight, Activity, BookOpen, Target, Lightbulb,
-  Heart, Trophy, Settings, CheckCircle2,
+  Sun, ChevronRight, MessageCircleHeart, BookOpen, Lightbulb,
+  Heart, Settings, CheckCircle2,
   Sparkles,
-  Shield,
-  FileText,
-  Bell,
 } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import AnimatedBrandLogo from "@/components/animated-brand-logo";
@@ -25,14 +22,11 @@ import { type TodayScores, getDomainMeta, computeBaseline } from "@/lib/score-en
 import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
 import { computeDiscoveries, DISCOVERY_MIN_RECORDS } from "@/lib/discovery-engine";
 import { POINT_VALUES } from "@/lib/mission-engine";
-import { fetchCurrentChallenge, buildOfflineSnapshot, describeChallenge, type TeamChallengeSnapshot } from "@/lib/team-challenge-engine";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { UserMission, CheckInHistoryRecord } from "@shared/schema";
 import { PULSE_DIMENSION_LABELS, PULSE_RESPONSE_OPTIONS, type CurrentPulseState, type PulseAnswerValue } from "@shared/pulse-survey";
-
-type QuickAction = (typeof QUICK_ACTIONS)[number];
 
 function getDailyInsight(scores: TodayScores): string {
   if (!scores.hasCheckedIn) {
@@ -124,49 +118,7 @@ const EMPTY_SCORES: TodayScores = {
   hasCheckedIn: false,
 };
 
-const QUICK_ACTIONS = [
-  {
-    label: "Check-in diário",
-    description: "Conta como foi o dia",
-    icon: Activity,
-    action: "route",
-    target: "/checkin",
-  },
-  {
-    label: "Apoio",
-    description: "Cuidado e acolhimento",
-    icon: Heart,
-    action: "route",
-    target: "/support",
-  },
-  {
-    label: "Proteção",
-    description: "Relatar algo sério",
-    icon: Shield,
-    action: "route",
-    target: "/protecao",
-  },
-  {
-    label: "Relatório",
-    description: "Sua história em números",
-    icon: FileText,
-    action: "route",
-    target: "/report",
-  },
-  {
-    label: "Notificações",
-    description: "O que há de novo",
-    icon: Bell,
-    action: "drawer",
-  },
-  {
-    label: "Configurações",
-    description: "Ajustar a experiência",
-    icon: Settings,
-    action: "route",
-    target: "/settings",
-  },
-] as const;
+
 
 function formatShortDate(date: string | null): string {
   if (date === null) {
@@ -316,7 +268,7 @@ function PulseCard({
       >
         <div className="flex items-start gap-3">
           <div className={`mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${tone.icon}`}>
-            <Activity className="h-5 w-5" />
+            <MessageCircleHeart className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
@@ -389,69 +341,6 @@ function PulseCard({
   );
 }
 
-function QuickAccessSection({
-  quickActions,
-  onSettings,
-  onQuickAction,
-}: Readonly<{
-  quickActions: readonly QuickAction[];
-  onSettings: () => void;
-  onQuickAction: (action: QuickAction) => void;
-}>) {
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.52 }}
-      className="mt-4 rounded-3xl border border-border/70 bg-card px-4 py-4 shadow-sm"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold tracking-[-0.03em] text-foreground">
-            Para você agora
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={onSettings}
-          className="rounded-full border border-border/70 bg-background px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/20 hover:text-foreground"
-        >
-          Ajustar
-        </button>
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-2.5">
-        {quickActions.map((action) => {
-          const Icon = action.icon;
-
-          return (
-            <button
-              key={action.label}
-              type="button"
-              onClick={() => onQuickAction(action)}
-              className="rounded-2xl border border-border/65 bg-background px-3 py-3 text-left transition-colors hover:border-primary/20 hover:bg-primary/5"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">
-                    {action.label}
-                  </p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                    {action.description}
-                  </p>
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </motion.section>
-  );
-}
-
 function DashboardBottomNav({
   onNavigate,
 }: Readonly<{
@@ -473,7 +362,7 @@ function DashboardBottomNav({
           className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
           data-testid="nav-checkin"
         >
-          <Activity className="w-5 h-5" />
+          <MessageCircleHeart className="w-5 h-5" />
           <span className="text-xs">Check-in</span>
         </button>
         <button
@@ -481,8 +370,8 @@ function DashboardBottomNav({
           className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
           data-testid="nav-missions"
         >
-          <Target className="w-5 h-5" />
-          <span className="text-xs">+Você</span>
+          <Sparkles className="w-5 h-5" />
+          <span className="text-xs">Pra Você</span>
         </button>
         <button
           onClick={() => onNavigate("/support")}
@@ -498,7 +387,7 @@ function DashboardBottomNav({
           data-testid="nav-jornada"
         >
           <BookOpen className="w-5 h-5" />
-          <span className="text-xs">Jornada</span>
+          <span className="text-xs">Sua Jornada</span>
         </button>
       </div>
     </nav>
@@ -549,11 +438,6 @@ export default function DashboardPage() {
       fetch(`/api/checkins/user/${userId}/history?days=30`, { credentials: "include" })
         .then((r) => r.json()) as Promise<CheckInHistoryRecord[]>,
     enabled: !!userId,
-  });
-
-  const { data: teamChallenge = buildOfflineSnapshot() } = useQuery<TeamChallengeSnapshot>({
-    queryKey: ["/api/team-challenges/current"],
-    queryFn: fetchCurrentChallenge,
   });
 
   const { data: pulseState } = useQuery<CurrentPulseState>({
@@ -638,28 +522,6 @@ export default function DashboardPage() {
     && pulseAnsweredCount === pulseQuestionIds.length
     && pulseQuestionIds.length > 0;
   const checkInStatusCopy = getCheckInStatusCopy(justCompleted);
-
-  const contextualActions = useMemo(() => {
-    const actions = [...QUICK_ACTIONS];
-    if (checkedIn) {
-      const idx = actions.findIndex((a) => "target" in a && a.target === "/checkin");
-      if (idx >= 0) actions.push(...actions.splice(idx, 1));
-    }
-    if (hasCrisisSignal) {
-      const idx = actions.findIndex((a) => "target" in a && a.target === "/support");
-      if (idx > 0) actions.unshift(...actions.splice(idx, 1));
-    }
-    return actions;
-  }, [checkedIn, hasCrisisSignal]);
-
-  const handleQuickAction = useCallback((action: (typeof QUICK_ACTIONS)[number]) => {
-    if (action.action === "drawer") {
-      setDrawerOpen(true);
-      return;
-    }
-
-    navigate(action.target);
-  }, [navigate]);
 
   return (
     <div className="min-h-screen gradient-sunrise">
@@ -961,66 +823,6 @@ export default function DashboardPage() {
             </button>
           </motion.section>
         )}
-
-        {/* Activity tiles — 2-column mosaic */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-4 grid grid-cols-2 gap-3"
-        >
-          <button
-            onClick={() => navigate("/missions")}
-            className="rounded-2xl border border-primary/10 bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/20"
-            data-testid="button-missions"
-          >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-              <Target className="w-[18px] h-[18px] text-primary" />
-            </div>
-            <p className="text-base font-semibold tracking-[-0.02em]">+Você</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              Autocuidado e Pontos Solares
-            </p>
-          </button>
-          <button
-            onClick={() => navigate("/team")}
-            className="rounded-2xl border border-brand-gold/14 bg-card p-4 text-left shadow-sm transition-colors hover:border-brand-gold/24"
-            data-testid="button-team-challenge"
-          >
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gold/10">
-              <Trophy className="w-[18px] h-[18px] text-brand-gold-dark" />
-            </div>
-            <p className="text-base font-semibold tracking-[-0.02em]">{teamChallenge.template.title}</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              {describeChallenge(teamChallenge.progressPct, teamChallenge.daysRemaining)}
-            </p>
-          </button>
-        </motion.section>
-
-        <QuickAccessSection
-          quickActions={contextualActions}
-          onSettings={() => navigate("/settings")}
-          onQuickAction={handleQuickAction}
-        />
-
-        {/* Minha Jornada — tertiary (minimal inline link) */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.55 }}
-          className="mt-3"
-        >
-          <button
-            onClick={() => navigate("/meu-cuidado")}
-            className="flex w-full items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:border-brand-teal/20 hover:bg-brand-teal/5"
-            data-testid="button-meu-cuidado"
-          >
-            <BookOpen className="w-4 h-4 text-brand-teal flex-shrink-0" />
-            <span className="text-sm font-semibold text-foreground">Minha Jornada</span>
-            <span className="text-sm text-muted-foreground">Histórico e tendências</span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto flex-shrink-0" />
-          </button>
-        </motion.section>
       </main>
 
       {pulseState && (

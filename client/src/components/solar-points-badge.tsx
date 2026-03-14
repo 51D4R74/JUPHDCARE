@@ -71,7 +71,7 @@ export default function SolarPointsBadge({
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[220px] text-center text-xs leading-relaxed">
           <p className="mb-0.5 font-semibold">Pontos Solares</p>
-          <p>Faça seu check-in diário e complete atividades do +Você para acumular pontos e ver seu halo brilhar.</p>
+          <p>Faça seu check-in diário e complete atividades do Pra Você para acumular pontos e ver seu halo brilhar.</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronLeft, Sun, Activity, Target, BookOpen,
+  ChevronLeft, Sun, MessageCircleHeart, BookOpen,
   Heart, Sparkles, RefreshCw, Send, PenLine,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -376,15 +376,15 @@ export default function SupportCenterPage() {
             onClick={() => navigate("/checkin")}
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Activity className="w-5 h-5" />
+            <MessageCircleHeart className="w-5 h-5" />
             <span className="text-xs">Check-in</span>
           </button>
           <button
             onClick={() => navigate("/missions")}
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Target className="w-5 h-5" />
-            <span className="text-xs">+Você</span>
+            <Sparkles className="w-5 h-5" />
+            <span className="text-xs">Pra Você</span>
           </button>
           <button
             onClick={() => navigate("/support")}
@@ -398,7 +398,7 @@ export default function SupportCenterPage() {
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
           >
             <BookOpen className="w-5 h-5" />
-            <span className="text-xs">Jornada</span>
+            <span className="text-xs">Sua Jornada</span>
           </button>
         </div>
       </nav>

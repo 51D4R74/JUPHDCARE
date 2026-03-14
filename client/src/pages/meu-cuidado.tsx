@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { devNow } from "@shared/dev-clock";
 import {
-  ChevronLeft, Sun, Activity, Target, BookOpen,
+  ChevronLeft, Sun, MessageCircleHeart, Sparkles, BookOpen,
   Heart, Star, TrendingUp, FileText,
 } from "lucide-react";
 import {
@@ -467,7 +467,7 @@ export default function MeuCuidadoPage() {
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             data-testid="nav-checkin-mc"
           >
-            <Activity className="w-5 h-5" />
+            <MessageCircleHeart className="w-5 h-5" />
             <span className="text-xs">Check-in</span>
           </button>
           <button
@@ -475,8 +475,8 @@ export default function MeuCuidadoPage() {
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             data-testid="nav-missions-mc"
           >
-            <Target className="w-5 h-5" />
-            <span className="text-xs">+Você</span>
+            <Sparkles className="w-5 h-5" />
+            <span className="text-xs">Pra Você</span>
           </button>
           <button
             onClick={() => navigate("/support")}
@@ -492,7 +492,7 @@ export default function MeuCuidadoPage() {
             data-testid="nav-jornada-mc"
           >
             <BookOpen className="w-5 h-5" />
-            <span className="text-xs font-medium">Jornada</span>
+            <span className="text-xs font-medium">Sua Jornada</span>
           </button>
         </div>
       </nav>

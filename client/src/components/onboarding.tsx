@@ -85,7 +85,7 @@ const SCREENS: OnboardingScreen[] = [
   },
   {
     id: "missions",
-    title: "+Você — autocuidado diário",
+    title: "Pra Você — autocuidado diário",
     subtitle: "Atividades adaptadas ao seu estado. Complete e ganhe Pontos Solares ☀️ — sem julgamento, sem pressão.",
     visual: (
       <div className="space-y-2">

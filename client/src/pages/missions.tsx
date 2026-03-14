@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { devNow } from "@shared/dev-clock";
 import {
-  Sun, Activity, BookOpen, Target, ChevronLeft, Heart,
+  Sun, MessageCircleHeart, BookOpen, Sparkles, ChevronLeft, Heart,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import MissionCard, { type MissionDef, type MissionStatus } from "@/components/mission-card";
@@ -162,7 +162,7 @@ export default function MissionCenterPage() {
           <ChevronLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
-          <h1 className="text-lg font-semibold">+Você</h1>
+          <h1 className="text-lg font-semibold">Pra Você</h1>
           <p className="text-xs text-muted-foreground">
             Atividades de autocuidado e Pontos Solares
           </p>
@@ -227,7 +227,7 @@ export default function MissionCenterPage() {
             className="mt-5 glass-card rounded-2xl p-4 flex items-center gap-3"
           >
             <div className="w-10 h-10 rounded-xl bg-brand-navy/10 flex items-center justify-center flex-shrink-0">
-              <Activity className="w-5 h-5 text-brand-navy" />
+              <MessageCircleHeart className="w-5 h-5 text-brand-navy" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">Faça seu check-in</p>
@@ -274,7 +274,7 @@ export default function MissionCenterPage() {
             className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
             data-testid="nav-checkin"
           >
-            <Activity className="w-5 h-5" />
+            <MessageCircleHeart className="w-5 h-5" />
             <span className="text-xs">Check-in</span>
           </button>
           <button
@@ -282,8 +282,8 @@ export default function MissionCenterPage() {
             className="flex flex-col items-center gap-1 text-brand-navy"
             data-testid="nav-missions"
           >
-            <Target className="w-5 h-5" />
-            <span className="text-xs font-medium">+Você</span>
+            <Sparkles className="w-5 h-5" />
+            <span className="text-xs font-medium">Pra Você</span>
           </button>
           <button
             onClick={() => navigate("/support")}
@@ -299,7 +299,7 @@ export default function MissionCenterPage() {
             data-testid="nav-jornada"
           >
             <BookOpen className="w-5 h-5" />
-            <span className="text-xs">Jornada</span>
+            <span className="text-xs">Sua Jornada</span>
           </button>
         </div>
       </nav>
