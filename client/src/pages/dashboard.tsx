@@ -21,7 +21,9 @@ import ConstancyDots from "@/components/constancy-dots";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { fetchCurrentRelationalPulse, submitRelationalPulse } from "@/lib/pulse-client";
-import { type TodayScores, getDomainMeta } from "@/lib/score-engine";
+import { type TodayScores, getDomainMeta, computeBaseline } from "@/lib/score-engine";
+import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
+import { computeDiscoveries, DISCOVERY_MIN_RECORDS } from "@/lib/discovery-engine";
 import { POINT_VALUES } from "@/lib/mission-engine";
 import { fetchCurrentChallenge, buildOfflineSnapshot, describeChallenge, type TeamChallengeSnapshot } from "@/lib/team-challenge-engine";
 import { useToast } from "@/hooks/use-toast";
@@ -241,58 +243,48 @@ function DashboardHeader({
 }>) {
   return (
     <header className="max-w-lg mx-auto px-4 pt-5">
+      {/* Slim controls bar */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 }}
-        className="rounded-[28px] border border-border/70 bg-background/84 px-4 py-4 shadow-md backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="flex items-center justify-between"
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <AnimatedBrandLogo size="compact" showWordmark={false} />
-            <div className="min-w-0">
-              <p className="truncate text-base font-semibold tracking-[-0.02em] text-foreground">{firstName}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <SolarPointsBadge points={solarPoints} />
-            <NotificationBadge onClick={onOpenNotifications} />
-            <button
-              onClick={onOpenSettings}
-              className="rounded-full border border-border/80 bg-card p-1.5 shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5"
-              aria-label="Configurações"
-            >
-              <Settings className="w-4 h-4 text-foreground/72" />
-            </button>
-          </div>
+        <AnimatedBrandLogo size="compact" showWordmark={false} />
+        <div className="flex items-center gap-2">
+          <SolarPointsBadge points={solarPoints} />
+          <NotificationBadge onClick={onOpenNotifications} />
+          <button
+            onClick={onOpenSettings}
+            className="rounded-full border border-border/80 bg-card p-1.5 shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5"
+            aria-label="Configurações"
+          >
+            <Settings className="w-4 h-4 text-foreground/72" />
+          </button>
         </div>
+      </motion.div>
 
-        <div className="mt-5 text-center">
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="text-[31px] font-semibold leading-none tracking-[-0.05em] text-foreground"
-          >
-            {getGreeting()}, {firstName}!
-          </motion.p>
-          <motion.p
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16 }}
-            className="mx-auto mt-2 max-w-[18rem] text-sm leading-relaxed text-muted-foreground"
-          >
-            Como você está hoje?
-          </motion.p>
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mt-3 inline-flex items-center gap-1 rounded-full border border-primary/10 bg-primary/5 px-3 py-1 text-[11px] font-semibold tracking-[0.06em] text-primary/80"
-          >
-            {getHeaderBadgeLabel(scores)}
-          </motion.span>
-        </div>
+      {/* Hero greeting — breathing space */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08, duration: 0.5 }}
+        className="mt-7 text-center"
+      >
+        <p className="text-[34px] font-semibold leading-tight tracking-[-0.04em] text-foreground">
+          {getGreeting()}, {firstName}
+        </p>
+        <p className="mx-auto mt-2.5 max-w-[20rem] text-base leading-relaxed text-muted-foreground/90">
+          Como você está hoje?
+        </p>
+        <motion.span
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.18 }}
+          className="mt-4 inline-flex items-center gap-1 rounded-full border border-primary/10 bg-primary/5 px-3 py-1 text-[11px] font-semibold tracking-[0.06em] text-primary/80"
+        >
+          {getHeaderBadgeLabel(scores)}
+        </motion.span>
       </motion.div>
     </header>
   );
@@ -530,6 +522,7 @@ export default function DashboardPage() {
   const [pulseAnswers, setPulseAnswers] = useState<Record<string, PulseAnswerValue>>({});
   // Track local completion to show celebration immediately (before server refetch)
   const [justCompleted, setJustCompleted] = useState(false);
+  const [expandedDomain, setExpandedDomain] = useState<ScoreDomainId | null>(null);
 
   const { data: scores = EMPTY_SCORES } = useQuery<TodayScores>({
     queryKey: ["/api/scores/user", userId, "today"],
@@ -546,6 +539,14 @@ export default function DashboardPage() {
     queryKey: ["/api/checkins/user", userId, "history"],
     queryFn: () =>
       fetch(`/api/checkins/user/${userId}/history?days=10`, { credentials: "include" })
+        .then((r) => r.json()) as Promise<CheckInHistoryRecord[]>,
+    enabled: !!userId,
+  });
+
+  const { data: discoveryHistory = [] } = useQuery<CheckInHistoryRecord[]>({
+    queryKey: ["/api/checkins/user", userId, "discovery-history"],
+    queryFn: () =>
+      fetch(`/api/checkins/user/${userId}/history?days=30`, { credentials: "include" })
         .then((r) => r.json()) as Promise<CheckInHistoryRecord[]>,
     enabled: !!userId,
   });
@@ -627,12 +628,29 @@ export default function DashboardPage() {
   const firstName = user?.name?.split(" ")[0] || "Colaborador";
 
   const domains = useMemo(() => getDomainMeta(), []);
+  const discoveries = useMemo(() => computeDiscoveries(discoveryHistory), [discoveryHistory]);
+  const baseline = useMemo(() => computeBaseline(discoveryHistory), [discoveryHistory]);
+  const featuredDiscovery = discoveries.length > 0 ? discoveries[0] : null;
+  const discoveryProgress = discoveryHistory.length;
   const pulseQuestionIds = pulseState?.definition.questions.map((question) => question.id) ?? [];
   const pulseAnsweredCount = getPulseCompletionCount(pulseAnswers, pulseQuestionIds);
   const canSubmitPulse = pulseState?.isDue === true
     && pulseAnsweredCount === pulseQuestionIds.length
     && pulseQuestionIds.length > 0;
   const checkInStatusCopy = getCheckInStatusCopy(justCompleted);
+
+  const contextualActions = useMemo(() => {
+    const actions = [...QUICK_ACTIONS];
+    if (checkedIn) {
+      const idx = actions.findIndex((a) => "target" in a && a.target === "/checkin");
+      if (idx >= 0) actions.push(...actions.splice(idx, 1));
+    }
+    if (hasCrisisSignal) {
+      const idx = actions.findIndex((a) => "target" in a && a.target === "/support");
+      if (idx > 0) actions.unshift(...actions.splice(idx, 1));
+    }
+    return actions;
+  }, [checkedIn, hasCrisisSignal]);
 
   const handleQuickAction = useCallback((action: (typeof QUICK_ACTIONS)[number]) => {
     if (action.action === "drawer") {
@@ -670,29 +688,97 @@ export default function DashboardPage() {
           <ConstancyDots checkedInDates={checkedInDates} />
         </motion.div>
 
-        {/* Mini score bar — only after check-in */}
+        {/* Score contributors — expandable Oura pattern */}
         {checkedIn && (
           <motion.section
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25 }}
-            className="mt-4 grid grid-cols-3 gap-2"
+            className="mt-4 space-y-2"
           >
             {domains.map((d) => {
               const score = Math.round(scores.domainScores[d.id] ?? 0);
               const colors = scoreColorClass(score);
+              const isOpen = expandedDomain === d.id;
+              const contributors = DAILY_STEPS.filter((s) => d.questionIds.includes(s.id));
+
               return (
-                <button
-                  key={d.id}
-                  onClick={() => navigate("/meu-cuidado")}
-                  className={`rounded-2xl border border-border/60 px-3 py-2.5 text-left transition-colors hover:border-primary/20 ${colors.bg} ${colors.text}`}
-                  aria-label={`${d.label}: ${score}`}
-                >
-                  <span className="block text-[11px] font-medium tracking-[0.03em] opacity-80">
-                    {d.label.split(" ")[0]}
-                  </span>
-                  <span className="mt-1 block text-lg font-bold leading-none">{score}</span>
-                </button>
+                <div key={d.id}>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedDomain(isOpen ? null : d.id)}
+                    className={`w-full rounded-2xl border border-border/60 px-4 py-3 text-left transition-colors hover:border-primary/20 ${colors.bg}`}
+                    aria-expanded={isOpen}
+                    aria-label={`${d.label}: ${score}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-sm font-semibold tracking-[-0.01em] ${colors.text}`}>
+                        {d.label}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xl font-bold leading-none ${colors.text}`}>{score}</span>
+                        <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`} />
+                      </div>
+                    </div>
+                  </button>
+
+                  <AnimatePresence>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="rounded-2xl border border-border/50 bg-card px-4 py-3 mt-1 space-y-2.5">
+                          <p className="text-xs leading-relaxed text-muted-foreground">
+                            {d.description}
+                          </p>
+                          {contributors.map((step) => (
+                            <div key={step.id} className="flex items-center gap-2">
+                              <div className="h-1.5 w-1.5 rounded-full bg-primary/40 flex-shrink-0" />
+                              <span className="text-sm text-foreground/80">{step.question}</span>
+                            </div>
+                          ))}
+                          {baseline?.[d.id] && (
+                            <div className="rounded-xl border border-border/40 bg-background px-3 py-2">
+                              <p className="text-[11px] font-medium text-muted-foreground tracking-wide">
+                                Sua faixa típica
+                              </p>
+                              <div className="mt-1.5 flex items-center gap-2">
+                                <div className="relative h-1.5 flex-1 rounded-full bg-primary/10 overflow-hidden">
+                                  <div
+                                    className="absolute h-full rounded-full bg-primary/30"
+                                    style={{
+                                      left: `${baseline[d.id].low}%`,
+                                      width: `${baseline[d.id].high - baseline[d.id].low}%`,
+                                    }}
+                                  />
+                                  <div
+                                    className="absolute h-3 w-0.5 -top-[3px] rounded-full bg-foreground"
+                                    style={{ left: `${score}%` }}
+                                  />
+                                </div>
+                                <span className="text-[11px] tabular-nums text-muted-foreground">
+                                  {baseline[d.id].low}–{baseline[d.id].high}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => navigate("/meu-cuidado")}
+                            className="flex items-center gap-1 text-xs font-medium text-primary pt-1"
+                          >
+                            Ver histórico completo
+                            <ChevronRight className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               );
             })}
           </motion.section>
@@ -782,6 +868,62 @@ export default function DashboardPage() {
           </motion.section>
         )}
 
+        {/* Discovery card — 1 private insight from correlation engine */}
+        {checkedIn && featuredDiscovery && (
+          <motion.section
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.42 }}
+            className="mt-4 rounded-2xl border border-brand-teal/15 bg-card px-4 py-4 shadow-sm"
+          >
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-brand-teal/12">
+                <Sparkles className="h-4 w-4 text-brand-teal" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Descoberta privada
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-foreground">
+                  {featuredDiscovery.text}
+                </p>
+                <p className="mt-1.5 text-xs text-muted-foreground/70">
+                  Baseado em {featuredDiscovery.withCount} dias · Só você vê isso
+                </p>
+              </div>
+            </div>
+          </motion.section>
+        )}
+
+        {/* Discovery progress teaser — before threshold */}
+        {checkedIn && !featuredDiscovery && discoveryProgress > 0 && discoveryProgress < DISCOVERY_MIN_RECORDS && (
+          <motion.section
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.42 }}
+            className="mt-4 rounded-2xl border border-border/60 bg-card px-4 py-3.5 shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary/8">
+                <Sparkles className="h-3.5 w-3.5 text-primary/60" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {DISCOVERY_MIN_RECORDS - discoveryProgress} check-in{DISCOVERY_MIN_RECORDS - discoveryProgress > 1 ? "s" : ""} até sua primeira descoberta privada
+                </p>
+                <div className="mt-1.5 h-1 rounded-full bg-primary/10 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.round((discoveryProgress / DISCOVERY_MIN_RECORDS) * 100)}%` }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                    className="h-full rounded-full bg-primary/40"
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.section>
+        )}
+
         {pulseState && (
           <PulseCard
             pulseState={pulseState}
@@ -856,7 +998,7 @@ export default function DashboardPage() {
         </motion.section>
 
         <QuickAccessSection
-          quickActions={QUICK_ACTIONS}
+          quickActions={contextualActions}
           onSettings={() => navigate("/settings")}
           onQuickAction={handleQuickAction}
         />

@@ -91,6 +91,43 @@ export function computeTagCloud(
     .toSorted((a, b) => b.count - a.count);
 }
 
+// ── Baseline (typical range) ──────────────────────
+
+export const BASELINE_MIN_RECORDS = 21;
+
+export interface DomainBaseline {
+  readonly domain: ScoreDomainId;
+  readonly low: number;
+  readonly high: number;
+}
+
+/**
+ * Compute "typical range" per domain from history (P25–P75).
+ * Returns null if fewer than BASELINE_MIN_RECORDS records.
+ */
+export function computeBaseline(
+  records: ReadonlyArray<{ readonly domainScores: Record<string, number> }>,
+): Record<ScoreDomainId, DomainBaseline> | null {
+  if (records.length < BASELINE_MIN_RECORDS) return null;
+
+  const result = {} as Record<ScoreDomainId, DomainBaseline>;
+
+  for (const domain of SCORE_DOMAINS) {
+    const vals = records
+      .map((r) => r.domainScores[domain.id])
+      .filter((v): v is number => v !== undefined)
+      .toSorted((a, b) => a - b);
+
+    if (vals.length < BASELINE_MIN_RECORDS) continue;
+
+    const p25 = vals[Math.floor(vals.length * 0.25)];
+    const p75 = vals[Math.floor(vals.length * 0.75)];
+    result[domain.id] = { domain: domain.id, low: Math.round(p25), high: Math.round(p75) };
+  }
+
+  return Object.keys(result).length === SCORE_DOMAINS.length ? result : null;
+}
+
 // ── IRP (Índice de Risco Psicossocial) ────────────
 
 /**
