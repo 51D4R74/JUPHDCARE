@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { X, Bell } from "lucide-react";
+import { devNow } from "@shared/dev-clock";
 import {
   getNotifications,
   markAllRead,
@@ -21,7 +22,7 @@ interface NotificationDrawerProps {
 }
 
 function timeAgo(ts: number): string {
-  const diff = Date.now() - ts;
+  const diff = devNow().getTime() - ts;
   const mins = Math.floor(diff / 60_000);
   if (mins < 1) return "agora";
   if (mins < 60) return `${mins}min atrás`;

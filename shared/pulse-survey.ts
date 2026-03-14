@@ -1,4 +1,5 @@
 import { PULSE_RESPONSE_WINDOW_DAYS, PULSE_SURVEY_INTERVAL_DAYS } from "./constants";
+import { devNow } from "./dev-clock";
 
 export type PulseAnswerValue = "never" | "rarely" | "often" | "always";
 export type PulseDimension =
@@ -275,7 +276,7 @@ export function parsePulseScoreSummary(raw: string): PulseScoreSummary | null {
 
 export function buildCurrentPulseState(
   latestResponse: LatestPulseSnapshot | null,
-  referenceDate = new Date(),
+  referenceDate = devNow(),
 ): CurrentPulseState {
   if (latestResponse === null) {
     return {

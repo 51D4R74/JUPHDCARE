@@ -1,6 +1,7 @@
 import { useState, useMemo, useReducer } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { devNow } from "@shared/dev-clock";
 import {
   ChevronLeft, Sun, Activity, Target, BookOpen,
   Heart, Star, TrendingUp, FileText,
@@ -134,7 +135,7 @@ export default function MeuCuidadoPage() {
 
   // Client-side range filter (no re-fetch needed)
   const records = useMemo(() => {
-    const cutoff = new Date();
+    const cutoff = devNow();
     cutoff.setDate(cutoff.getDate() - range);
     const cutoffDate = cutoff.toISOString().slice(0, 10);
     return allHistory.filter((r) => r.date >= cutoffDate);

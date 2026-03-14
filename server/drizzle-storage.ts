@@ -330,4 +330,15 @@ export class DrizzleStorage extends BaseStorage {
     await db.delete(teamChallengeContributions).where(eq(teamChallengeContributions.userId, userId));
     await db.delete(users).where(eq(users.id, userId));
   }
+
+  async resetUserActivity(userId: string): Promise<void> {
+    const db = getDb();
+    await db.delete(checkIns).where(eq(checkIns.userId, userId));
+    await db.delete(momentCheckIns).where(eq(momentCheckIns.userId, userId));
+    await db.delete(userMissions).where(eq(userMissions.userId, userId));
+    await db.delete(solarPoints).where(eq(solarPoints.userId, userId));
+    await db.delete(solarStreaks).where(eq(solarStreaks.userId, userId));
+    await db.delete(pulseResponses).where(eq(pulseResponses.userId, userId));
+    await db.delete(teamChallengeContributions).where(eq(teamChallengeContributions.userId, userId));
+  }
 }

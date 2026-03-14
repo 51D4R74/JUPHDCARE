@@ -1,5 +1,6 @@
 import { type User, type InsertUser, type CheckIn, type InsertCheckIn, type MomentCheckIn, type InsertMomentCheckIn, type IncidentReport, type InsertIncidentReport, type UserMission, type InsertUserMission, type UserSettings, type CheckInHistoryRecord, type SolarPoints, type InsertSolarPoints, type TeamChallengeContribution, type InsertTeamChallengeContribution, type PulseResponse, type InsertPulseResponse } from "@shared/schema";
 import { ANONYMITY_THRESHOLD, getWorkdayDate } from "@shared/constants";
+import { devNow } from "@shared/dev-clock";
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
 
@@ -271,6 +272,7 @@ export interface IStorage {
   getPulseResponsesByUserId(userId: string, pulseKey?: string): Promise<PulseResponse[]>;
   getLatestPulseResponseByUserId(userId: string, pulseKey: string): Promise<PulseResponse | undefined>;
   deleteUserData(userId: string): Promise<void>;
+  resetUserActivity(userId: string): Promise<void>;
   // ── Team challenges ───────────────────────────────
   createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution>;
   getTeamContributionsByChallengeAndMonth(challengeId: string, startDate: string, endDate: string): Promise<TeamChallengeContribution[]>;
@@ -303,12 +305,13 @@ export abstract class BaseStorage implements IStorage {
   abstract getPulseResponsesByUserId(userId: string, pulseKey?: string): Promise<PulseResponse[]>;
   abstract getLatestPulseResponseByUserId(userId: string, pulseKey: string): Promise<PulseResponse | undefined>;
   abstract deleteUserData(userId: string): Promise<void>;
+  abstract resetUserActivity(userId: string): Promise<void>;
   abstract createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution>;
   abstract getTeamContributionsByChallengeAndMonth(challengeId: string, startDate: string, endDate: string): Promise<TeamChallengeContribution[]>;
   abstract getUserTodayTeamContributions(userId: string, challengeId: string, date: string): Promise<TeamChallengeContribution[]>;
 
   async getTodayScoresByUserId(userId: string): Promise<TodayScoresSnapshot> {
-    const todayCheckIn = (await this.getCheckInsByUserIdAndDate(userId, getWorkdayDate(new Date()))).at(0);
+    const todayCheckIn = (await this.getCheckInsByUserIdAndDate(userId, getWorkdayDate(devNow()))).at(0);
     if (!todayCheckIn) {
       return {
         domainScores: emptyDomainScores(),
@@ -334,7 +337,7 @@ export abstract class BaseStorage implements IStorage {
   async getRhAggregate(): Promise<RHAggregateData> {
     const collaborators = (await this.getAllUsers()).filter((user) => user.role === "collaborator");
     const allCheckIns = await this.getAllCheckIns();
-    const now = new Date();
+    const now = devNow();
     const days30Ago = new Date(now);
     days30Ago.setDate(now.getDate() - 30);
     const days14Ago = new Date(now);
@@ -498,7 +501,7 @@ export abstract class BaseStorage implements IStorage {
     return all
       .filter((c) => (c.createdAt?.getTime() ?? 0) >= cutoffTime)
       .map((c): CheckInHistoryRecord => ({
-        date: getIsoDay(c.createdAt ?? new Date()),
+        date: getIsoDay(c.createdAt ?? devNow()),
         domainScores: parseDomainScores(c.domainScores),
         flags: c.flags ?? [],
       }))
@@ -624,7 +627,7 @@ export class MemStorage extends BaseStorage {
       for (let monthOffset = 0; monthOffset < 6; monthOffset++) {
         const checksInMonth = 1 + (i + monthOffset) % 3;
         for (let j = 0; j < checksInMonth; j++) {
-          const date = new Date();
+          const date = devNow();
           date.setMonth(date.getMonth() - monthOffset);
           date.setDate(3 + ((i * 7 + j * 9) % 24));
           createSeedCheckIn(seedUser.id, date, departmentProfiles[dept]);
@@ -641,7 +644,7 @@ export class MemStorage extends BaseStorage {
     ];
 
     demoOffsets.forEach((daysAgo, index) => {
-      const date = new Date();
+      const date = devNow();
       date.setDate(date.getDate() - daysAgo);
       createSeedCheckIn("user-1", date, demoProfiles[index % demoProfiles.length]);
     });
@@ -674,7 +677,7 @@ export class MemStorage extends BaseStorage {
     const checkIn: CheckIn = {
       ...insertCheckIn,
       id,
-      createdAt: new Date(),
+      createdAt: devNow(),
       flags: insertCheckIn.flags || null,
       chatTriggered: insertCheckIn.chatTriggered ?? false,
       confidence: insertCheckIn.confidence ?? null,
@@ -704,7 +707,7 @@ export class MemStorage extends BaseStorage {
   async getRhAggregate(): Promise<RHAggregateData> {
     const collaborators = Array.from(this.users.values()).filter((user) => user.role === "collaborator");
     const allCheckIns = await this.getAllCheckIns();
-    const now = new Date();
+    const now = devNow();
     const days30Ago = new Date(now);
     days30Ago.setDate(now.getDate() - 30);
     const days14Ago = new Date(now);
@@ -864,7 +867,7 @@ export class MemStorage extends BaseStorage {
     const checkIn: MomentCheckIn = {
       ...insert,
       id,
-      createdAt: new Date(),
+      createdAt: devNow(),
       flags: insert.flags || null,
       chatTriggered: insert.chatTriggered ?? false,
     };
@@ -902,7 +905,7 @@ export class MemStorage extends BaseStorage {
     const report: IncidentReport = {
       ...insertReport,
       id,
-      createdAt: new Date(),
+      createdAt: devNow(),
       userId: insertReport.userId || null,
       description: insertReport.description || null,
       anonymous: insertReport.anonymous ?? true,
@@ -923,7 +926,7 @@ export class MemStorage extends BaseStorage {
 
   async completeMission(insert: InsertUserMission): Promise<UserMission> {
     const id = randomUUID();
-    const mission: UserMission = { ...insert, id, completedAt: new Date() };
+    const mission: UserMission = { ...insert, id, completedAt: devNow() };
     this.userMissionsMap.set(id, mission);
     return mission;
   }
@@ -933,7 +936,7 @@ export class MemStorage extends BaseStorage {
   }
 
   async upsertUserSettings(userId: string, settingsJson: string): Promise<UserSettings> {
-    const record: UserSettings = { userId, settings: settingsJson, updatedAt: new Date() };
+    const record: UserSettings = { userId, settings: settingsJson, updatedAt: devNow() };
     this.userSettingsMap.set(userId, record);
     return record;
   }
@@ -943,7 +946,7 @@ export class MemStorage extends BaseStorage {
     const record: SolarPoints = {
       ...entry,
       id,
-      createdAt: new Date(),
+      createdAt: devNow(),
     };
     this.solarPointsMap.set(id, record);
     return record;
@@ -960,7 +963,7 @@ export class MemStorage extends BaseStorage {
     const response: PulseResponse = {
       ...insert,
       id,
-      submittedAt: new Date(),
+      submittedAt: devNow(),
     };
     this.pulseResponsesMap.set(id, response);
     return response;
@@ -978,7 +981,7 @@ export class MemStorage extends BaseStorage {
 
   async createTeamContribution(data: InsertTeamChallengeContribution): Promise<TeamChallengeContribution> {
     const id = randomUUID();
-    const record: TeamChallengeContribution = { ...data, id, amount: data.amount ?? 1, createdAt: new Date() };
+    const record: TeamChallengeContribution = { ...data, id, amount: data.amount ?? 1, createdAt: devNow() };
     this.teamContributionsMap.set(id, record);
     return record;
   }
@@ -1004,6 +1007,16 @@ export class MemStorage extends BaseStorage {
     this.removeEntriesForUser(this.pulseResponsesMap, userId);
     this.userSettingsMap.delete(userId);
     // Incident reports with userId=null (anonymous) are not deleted
+    this.removeEntriesForUser(this.incidentReports, userId);
+    this.removeEntriesForUser(this.teamContributionsMap, userId);
+  }
+
+  async resetUserActivity(userId: string): Promise<void> {
+    this.removeEntriesForUser(this.checkIns, userId);
+    this.removeEntriesForUser(this.momentCheckIns, userId);
+    this.removeEntriesForUser(this.userMissionsMap, userId);
+    this.removeEntriesForUser(this.solarPointsMap, userId);
+    this.removeEntriesForUser(this.pulseResponsesMap, userId);
     this.removeEntriesForUser(this.incidentReports, userId);
     this.removeEntriesForUser(this.teamContributionsMap, userId);
   }

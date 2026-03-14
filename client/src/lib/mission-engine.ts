@@ -17,6 +17,7 @@ import {
   Music, Footprints, Coffee, BookOpen, Smile,
 } from "lucide-react";
 import type { SkyState, ScoreDomainId } from "@/lib/checkin-data";
+import { devNow } from "@shared/dev-clock";
 
 // ── Types ─────────────────────────────────────────
 
@@ -104,8 +105,8 @@ const MISSION_POOL: MissionTemplate[] = [
   // Hydration
   {
     id: "hydration-1",
-    title: "Beba um copo de água",
-    description: "Hidratação melhora foco e energia. Beba agora.",
+    title: "Hidratação agora?",
+    description: "Um copo de água faz mais do que parece. Seu corpo agradece. 💧",
     icon: Droplets,
     category: "hydration",
     difficulty: "simple",
@@ -116,8 +117,8 @@ const MISSION_POOL: MissionTemplate[] = [
   },
   {
     id: "hydration-2",
-    title: "Mais um copo de água",
-    description: "Já bebeu água na última hora? Seu corpo agradece.",
+    title: "Mais um gole?",
+    description: "Já faz um tempo desde o último copo. Que tal agora? 💧",
     icon: Droplets,
     category: "hydration",
     difficulty: "simple",
@@ -130,7 +131,7 @@ const MISSION_POOL: MissionTemplate[] = [
   // Pause
   {
     id: "pause-2min",
-    title: "Pausa de 2 minutos",
+    title: "2 minutinhos de pausa?",
     description: "Levante, olhe pela janela, respire. Nem precisa pensar em nada.",
     icon: Timer,
     category: "pause",
@@ -142,8 +143,8 @@ const MISSION_POOL: MissionTemplate[] = [
   },
   {
     id: "pause-screen",
-    title: "5 min sem tela",
-    description: "Feche o notebook, guarde o celular. Só 5 minutinhos.",
+    title: "5 min offline?",
+    description: "Feche o notebook, guarde o celular. Seus olhos vão agradecer.",
     icon: Eye,
     category: "pause",
     difficulty: "medium",
@@ -168,8 +169,8 @@ const MISSION_POOL: MissionTemplate[] = [
   // Gratitude
   {
     id: "gratitude-note",
-    title: "Anote uma coisa boa de hoje",
-    description: "Gratidão reduz estresse percebido. Uma frase basta.",
+    title: "Uma coisa boa de hoje?",
+    description: "Pode ser pequena. Uma frase já muda a percepção do dia.",
     icon: Heart,
     category: "gratitude",
     difficulty: "simple",
@@ -180,8 +181,8 @@ const MISSION_POOL: MissionTemplate[] = [
   },
   {
     id: "gratitude-person",
-    title: "Agradeça alguém do trabalho",
-    description: "Uma mensagem rápida reconhecendo algo que alguém fez.",
+    title: "Reconhecer alguém hoje?",
+    description: "Uma mensagem rápida dizendo que notou algo que a pessoa fez.",
     icon: MessageCircleHeart,
     category: "gratitude",
     difficulty: "support",
@@ -194,7 +195,7 @@ const MISSION_POOL: MissionTemplate[] = [
   // Connection
   {
     id: "connection-check",
-    title: "Pergunte como alguém está",
+    title: "Saber como alguém está?",
     description: "Escolha um colega e pergunte como foi o dia. De verdade.",
     icon: HandHeart,
     category: "connection",
@@ -206,8 +207,8 @@ const MISSION_POOL: MissionTemplate[] = [
   },
   {
     id: "connection-smile",
-    title: "Sorria para alguém",
-    description: "Um sorriso genuíno muda o clima. Pode ser virtual também. 😊",
+    title: "Um sorriso pra alguém?",
+    description: "Genuíno, sem motivo. Muda o clima. Pode ser virtual também. 😊",
     icon: Smile,
     category: "connection",
     difficulty: "simple",
@@ -220,8 +221,8 @@ const MISSION_POOL: MissionTemplate[] = [
   // Movement
   {
     id: "movement-stretch",
-    title: "Alongamento de 2 min",
-    description: "Pescoço, ombros, punhos. Quem trabalha sentado precisa disso.",
+    title: "Alongar um pouquinho?",
+    description: "Pescoço, ombros, punhos. Seu corpo tá esperando essa.",
     icon: Flower2,
     category: "movement",
     difficulty: "simple",
@@ -232,8 +233,8 @@ const MISSION_POOL: MissionTemplate[] = [
   },
   {
     id: "movement-walk",
-    title: "Caminhada de 5 min",
-    description: "Nem precisa ser longe. Dê uma volta no andar, pelo corredor.",
+    title: "Uma voltinha de 5 min?",
+    description: "Nem precisa ser longe. Pelo corredor, pelo andar. Já vale.",
     icon: Footprints,
     category: "movement",
     difficulty: "medium",
@@ -246,7 +247,7 @@ const MISSION_POOL: MissionTemplate[] = [
   // Sensory
   {
     id: "sensory-music",
-    title: "Ouça uma música que acalma",
+    title: "Uma música pra desacelerar?",
     description: "Coloque fone, feche os olhos se puder. Uma música só.",
     icon: Music,
     category: "sensory",
@@ -258,8 +259,8 @@ const MISSION_POOL: MissionTemplate[] = [
   },
   {
     id: "sensory-sunlight",
-    title: "Busque luz natural",
-    description: "Vá até uma janela ou saída. 2 min de luz solar ajustam seu ritmo.",
+    title: "Um pouco de luz natural?",
+    description: "2 min perto de uma janela ajustam seu ritmo mais do que parece.",
     icon: SunMedium,
     category: "sensory",
     difficulty: "simple",
@@ -272,8 +273,8 @@ const MISSION_POOL: MissionTemplate[] = [
   // Focus
   {
     id: "focus-5min",
-    title: "Bloco de foco de 5 min",
-    description: "Escolha uma tarefa. Sem interrupções por 5 minutos. Só isso.",
+    title: "5 min de foco total?",
+    description: "Uma tarefa, sem interrupções. Só 5 minutos — e veja o que acontece.",
     icon: BookOpen,
     category: "focus",
     difficulty: "medium",
@@ -286,8 +287,8 @@ const MISSION_POOL: MissionTemplate[] = [
   // Boundary
   {
     id: "boundary-one",
-    title: "Defina um limite hoje",
-    description: "Diga 'agora não' a uma demanda. Um limite claro por dia.",
+    title: "Um limite gentil hoje?",
+    description: "Dizer 'agora não' é autocuidado. Um limite claro muda o dia.",
     icon: HandHeart,
     category: "boundary",
     difficulty: "medium",
@@ -300,8 +301,8 @@ const MISSION_POOL: MissionTemplate[] = [
   // Closure
   {
     id: "closure-day",
-    title: "Feche o dia em 20 segundos",
-    description: "Anote: O que fiz? O que ficou? Como me sinto saindo?",
+    title: "Fechar o dia em 20s?",
+    description: "O que fiz? O que ficou? Como me sinto saindo? Três perguntas.",
     icon: PenLine,
     category: "closure",
     difficulty: "simple",
@@ -312,8 +313,8 @@ const MISSION_POOL: MissionTemplate[] = [
   },
   {
     id: "closure-positive",
-    title: "Termine com algo positivo",
-    description: "Antes de sair: relembre uma interação boa do dia.",
+    title: "Encerrar com algo bom?",
+    description: "Antes de sair: relembre uma interação boa do dia. ✨",
     icon: SunMedium,
     category: "closure",
     difficulty: "simple",
@@ -340,7 +341,7 @@ interface SelectionContext {
 
 /** Deterministic seed from date — ensures same user gets same missions per day. */
 function dayseed(): number {
-  const dateStr = new Date().toISOString().slice(0, 10);
+  const dateStr = devNow().toISOString().slice(0, 10);
   let hash = 0;
   for (let i = 0; i < dateStr.length; i++) {
     hash = Math.trunc((hash << 5) - hash + (dateStr.codePointAt(i) ?? 0));
@@ -388,7 +389,7 @@ function computeWeight(mission: MissionTemplate, ctx: SelectionContext): number 
   }
 
   // Time window
-  const hour = new Date().getHours();
+  const hour = devNow().getHours();
   if (mission.timeWindow === "morning" && hour >= 14) weight *= 0.2;
   if (mission.timeWindow === "afternoon" && hour < 11) weight *= 0.2;
 

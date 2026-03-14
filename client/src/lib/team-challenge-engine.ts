@@ -8,6 +8,7 @@
 
 import { apiRequest } from "@/lib/queryClient";
 import { type ChallengeTemplate, selectMonthlyChallenge, getMonthBounds } from "@shared/challenges";
+import { devNow } from "@shared/dev-clock";
 
 // ── Re-exports from shared (UI layers import from here) ───────────────
 
@@ -86,7 +87,7 @@ export function describeChallenge(progressPct: number, daysRemaining: number): s
 export function buildOfflineSnapshot(): TeamChallengeSnapshot {
   const template = selectMonthlyChallenge();
   const bounds = getMonthBounds();
-  const now = new Date();
+  const now = devNow();
   const endDate = new Date(bounds.end + "T23:59:59");
   const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / 86_400_000));
 

@@ -21,7 +21,7 @@ applyTo: "server/**,client/src/**,shared/**,script/**"
 
 File: `server/index.ts`
 
-1. Port 5000 already in use? Check `Get-NetTCPConnection -LocalPort 5000`.
+1. Port 8000 already in use? Check `Get-NetTCPConnection -LocalPort 8000`.
 2. Module resolution error? Check `tsconfig.json` paths and `vite.config.ts` aliases.
 3. Dependency missing? Run `npm install`.
 4. TypeScript syntax error? Run `npm run check`.

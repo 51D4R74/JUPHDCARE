@@ -3,6 +3,7 @@
  * challenge templates, monthly selection, and date utilities.
  * Imported by both client (team-challenge-engine) and server (routes).
  */
+import { devNow } from "./dev-clock";
 
 // ── Types ─────────────────────────────────────────
 
@@ -82,7 +83,7 @@ export const CHALLENGE_POOL: readonly ChallengeTemplate[] = [
 // ── Monthly selection (deterministic seed) ────────
 
 function getMonthSeed(): number {
-  const now = new Date();
+  const now = devNow();
   return now.getFullYear() * 100 + now.getMonth();
 }
 
@@ -92,7 +93,7 @@ export function selectMonthlyChallenge(): ChallengeTemplate {
 }
 
 export function getMonthBounds(): { start: string; end: string } {
-  const now = new Date();
+  const now = devNow();
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
   const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
   return {

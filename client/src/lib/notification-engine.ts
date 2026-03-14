@@ -9,7 +9,7 @@
  *
  * BACKLOG: replace with server-push when WebSocket layer is ready [future milestone]
  */
-
+import { devNow } from "@shared/dev-clock";
 // ── Types ─────────────────────────────────────────
 
 export type NotificationType = "care" | "mission" | "microcheck" | "closure" | "support";
@@ -30,7 +30,7 @@ const MAX_PER_DAY = 3;
 const MAX_STORED = 20;
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return devNow().toISOString().slice(0, 10);
 }
 
 interface NotificationStore {
@@ -105,11 +105,11 @@ export function pushNotification(
   }
 
   const notification: AppNotification = {
-    id: `${type}-${Date.now()}`,
+    id: `${type}-${devNow().getTime()}`,
     type,
     title,
     body,
-    timestamp: Date.now(),
+    timestamp: devNow().getTime(),
     read: false,
   };
 

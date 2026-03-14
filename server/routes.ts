@@ -8,6 +8,7 @@ import { insertCheckInSchema, insertMomentCheckInSchema, insertIncidentReportSch
 import { getWorkday, getWorkdayDate, POINT_VALUES } from "@shared/constants";
 import { selectMonthlyChallenge, getMonthBounds } from "@shared/challenges";
 import { buildCurrentPulseState, getPulseDefinitionByKey, hasCompletePulseAnswerSet, parsePulseScoreSummary, scorePulseAnswers, toPulseAnswerRecord, type LatestPulseSnapshot } from "@shared/pulse-survey";
+import { devNow, devAdvanceMs, devResetClock, getDevClockSnapshot } from "@shared/dev-clock";
 
 /** Type-safe extraction of a single route param (Express 5 returns string | string[]). */
 function param(req: Request, name: string): string {
@@ -191,7 +192,7 @@ export async function registerRoutes(
 
   app.get("/api/checkins/user/:userId/today", requireAuth, requireOwner(), async (req, res) => {
     const userId = param(req, "userId");
-    const checkIns = await storage.getCheckInsByUserIdAndDate(userId, getWorkdayDate(new Date()));
+    const checkIns = await storage.getCheckInsByUserIdAndDate(userId, getWorkdayDate(devNow()));
     return res.json(checkIns);
   });
 
@@ -269,7 +270,7 @@ export async function registerRoutes(
         userId: data.userId,
         action: `pulse:${data.pulseKey}`,
         points: POINT_VALUES.pulseSurvey,
-        date: getWorkday(new Date()),
+        date: getWorkday(devNow()),
       });
 
       return res.json({
@@ -300,7 +301,7 @@ export async function registerRoutes(
 
   app.get("/api/missions/:userId/today", requireAuth, requireOwner(), async (req, res) => {
     const userId = param(req, "userId");
-    const isoDate = getWorkday(new Date());
+    const isoDate = getWorkday(devNow());
     const missions = await storage.getDailyMissions(userId, isoDate);
     return res.json(missions);
   });
@@ -311,7 +312,7 @@ export async function registerRoutes(
       const body = insertUserMissionSchema.omit({ userId: true, date: true }).parse(req.body);
       const mission = await storage.completeMission({
         userId,
-        date: getWorkday(new Date()),
+        date: getWorkday(devNow()),
         ...body,
       });
       return res.json(mission);
@@ -345,7 +346,7 @@ export async function registerRoutes(
 
   app.get("/api/moment-checkins/user/:userId/today", requireAuth, requireOwner(), async (req, res) => {
     const userId = param(req, "userId");
-    const checkIns = await storage.getMomentCheckInsByUserIdAndDate(userId, getWorkdayDate(new Date()));
+    const checkIns = await storage.getMomentCheckInsByUserIdAndDate(userId, getWorkdayDate(devNow()));
     return res.json(checkIns);
   });
 
@@ -384,7 +385,7 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Ação e pontos são obrigatórios" });
     }
     const userId = req.userId!;
-    const date = getWorkday(new Date());
+    const date = getWorkday(devNow());
     const entry = await storage.createSolarPointEntry({ userId, action, points, date });
     return res.json(entry);
   });
@@ -400,7 +401,7 @@ export async function registerRoutes(
 
   app.get("/api/sky/current/:userId", requireAuth, requireOwner(), async (req, res) => {
     const userId = param(req, "userId");
-    const todayCheckIns = await storage.getCheckInsByUserIdAndDate(userId, getWorkdayDate(new Date()));
+    const todayCheckIns = await storage.getCheckInsByUserIdAndDate(userId, getWorkdayDate(devNow()));
     if (todayCheckIns.length === 0) {
       return res.json({ skyState: null, message: "Nenhum check-in hoje" });
     }
@@ -502,11 +503,11 @@ export async function registerRoutes(
     const progress = contributions.reduce((sum, c) => sum + c.amount, 0);
 
     const userId = req.userId!;
-    const today = getWorkday(new Date());
+    const today = getWorkday(devNow());
     const todayContribs = await storage.getUserTodayTeamContributions(userId, template.id, today);
     const todayCount = todayContribs.reduce((sum, c) => sum + c.amount, 0);
 
-    const now = new Date();
+    const now = devNow();
     const endDate = new Date(bounds.end + "T23:59:59");
     const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / 86_400_000));
     const progressPct = Math.min(100, Math.round((progress / template.target) * 100));
@@ -538,7 +539,7 @@ export async function registerRoutes(
 
     const bounds = getMonthBounds();
     const userId = req.userId!;
-    const today = getWorkday(new Date());
+    const today = getWorkday(devNow());
 
     // Check daily cap
     const todayContribs = await storage.getUserTodayTeamContributions(userId, challengeId, today);
@@ -573,6 +574,39 @@ export async function registerRoutes(
     const checkInCount = history.length;
     return res.json({ baselineReady: checkInCount >= 15, checkInCount });
   });
+
+  // ── Dev-only: clock simulation + reset ────────────────────────────────
+
+  if (process.env.NODE_ENV !== "production") {
+    app.get("/api/dev/clock", (_req, res) => {
+      return res.json(getDevClockSnapshot());
+    });
+
+    app.post("/api/dev/clock", (req, res) => {
+      const { action } = req.body;
+      const HOUR = 3_600_000;
+      if (action === "advance1h") {
+        devAdvanceMs(HOUR);
+      } else if (action === "advance6h") {
+        devAdvanceMs(6 * HOUR);
+      } else if (action === "advance1d") {
+        devAdvanceMs(24 * HOUR);
+      } else {
+        return res.status(400).json({ message: "Ação inválida." });
+      }
+      return res.json(getDevClockSnapshot());
+    });
+
+    app.post("/api/dev/reset", requireAuth, async (req, res) => {
+      const userId = req.session?.userId;
+      if (!userId) {
+        return res.status(401).json({ message: "Não autenticado." });
+      }
+      devResetClock();
+      await storage.resetUserActivity(userId);
+      return res.json({ ...getDevClockSnapshot(), message: "Clock e dados resetados." });
+    });
+  }
 
   return httpServer;
 }

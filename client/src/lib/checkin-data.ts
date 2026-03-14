@@ -1,4 +1,5 @@
 import type { IconType } from "react-icons";
+import { devNow } from "@shared/dev-clock";
 import {
   TbSparkles,
   TbMoonStars,
@@ -598,7 +599,7 @@ export const CONTEXT_TAG_FLAGS: string[] = Object.keys(CONTEXT_TAG_LABELS);
  * Evening  (after 17h):  day_impact first
  */
 export function getTimeAwareSteps(hour?: number): CheckInStep[] {
-  const h = hour ?? new Date().getHours();
+  const h = hour ?? devNow().getHours();
 
   if (h < 12) return DAILY_STEPS; // default order starts with sleep
 

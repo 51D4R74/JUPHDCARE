@@ -18,6 +18,9 @@
     "previsao",
     "saude", "lideranca",
 
+    // PT-BR informal/diminutive forms used in companion tone
+    "curtinhas", "pouquinho", "voltinha",
+
     // Proper nouns (seed data)
     "Mendes",
 
@@ -91,7 +94,11 @@
     "jridgewell",
     "cartesian",
     "displayname",
+    "github",
     "nums",
+    "tanstack",
+    "trunc",
+    "unvalidated",
 
     // Tabler icon official names (unconventional but intentional)
     "Confuzed",

@@ -9,6 +9,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Sun, Cloud, Flame } from "lucide-react";
+import { devNow } from "@shared/dev-clock";
 
 interface ConstancyDotsProps {
   readonly days?: number;
@@ -21,7 +22,7 @@ const STREAK_MILESTONES = [30, 14, 7, 3] as const;
 
 function deriveConstancy(days: number, checkedInDates: ReadonlyArray<string>) {
   const dateSet = new Set(checkedInDates);
-  const now = new Date();
+  const now = devNow();
   const result: { date: string; active: boolean }[] = [];
   for (let i = 0; i < days; i++) {
     const d = new Date(now);
@@ -35,7 +36,7 @@ function deriveConstancy(days: number, checkedInDates: ReadonlyArray<string>) {
 /** Count consecutive check-in days ending today (or yesterday). */
 export function computeStreak(checkedInDates: ReadonlyArray<string>): number {
   const dateSet = new Set(checkedInDates);
-  const now = new Date();
+  const now = devNow();
   let streak = 0;
   for (let i = 0; i < 365; i++) {
     const d = new Date(now);

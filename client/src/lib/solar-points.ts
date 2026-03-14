@@ -10,6 +10,7 @@
  */
 
 import { POINT_VALUES } from "@shared/constants";
+import { devNow } from "@shared/dev-clock";
 
 // ── Types ─────────────────────────────────────────
 
@@ -82,12 +83,12 @@ function defaultState(): SolarPointsState {
 // ── Helpers ───────────────────────────────────────
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return devNow().toISOString().slice(0, 10);
 }
 
 /** Count points in a rolling 7-day window ending today. */
 function weekPointsFromLog(log: readonly DailyLogEntry[]): number {
-  const cutoff = new Date();
+  const cutoff = devNow();
   cutoff.setDate(cutoff.getDate() - 7);
   const cutoffISO = cutoff.toISOString().slice(0, 10);
   return log
@@ -227,7 +228,7 @@ export function awardPoints(
   updatedLog.push(mergedEntry);
 
   // Keep only last 90 days of log
-  const cutoff = new Date();
+  const cutoff = devNow();
   cutoff.setDate(cutoff.getDate() - 90);
   const cutoffISO = cutoff.toISOString().slice(0, 10);
   const trimmedLog = updatedLog.filter((e) => e.date >= cutoffISO);

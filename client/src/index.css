@@ -11,7 +11,7 @@
   --background: 42 22% 96%;
   --foreground: 205 36% 16%;
   --border: 205 18% 84%;
-  --card: 0 0% 100%;
+  --card: 40 20% 99%;
   --card-foreground: 205 36% 16%;
   --card-border: 205 18% 88%;
   --sidebar: 42 24% 97%;
@@ -45,14 +45,19 @@
   --chart-5: 33 36% 46%;
 
   /* Score tier semantic tokens */
-  --score-good: 161 46% 36%;
+  --score-good: 161 50% 38%;
   --score-good-foreground: 161 56% 28%;
   --score-moderate: 43 82% 52%;
   --score-moderate-foreground: 40 72% 35%;
-  --score-attention: 24 82% 52%;
+  --score-attention: 24 78% 54%;
   --score-attention-foreground: 22 74% 38%;
-  --score-critical: 0 72% 51%;
+  --score-critical: 0 68% 54%;
   --score-critical-foreground: 0 72% 41%;
+
+  /* Companion warmth tokens */
+  --warmth-coral: 12 80% 62%;
+  --warmth-peach: 20 90% 92%;
+  --warmth-bloom: 340 60% 65%;
 
   /* Brand palette */
   --brand-navy: 202 56% 21%;
@@ -62,9 +67,10 @@
   --brand-teal: 183 41% 36%;
 
   /* Surfaces */
-  --surface-warm: 42 28% 97%;
+  --surface-warm: 38 32% 96%;
   --surface-cloud-a: 205 22% 92%;
   --surface-cloud-b: 205 18% 87%;
+  --surface-glow: 40 28% 98%;
 
   /* Semantic text */
   --text-heading: 205 36% 16%;
@@ -233,6 +239,18 @@
 
   .glow-rose {
     box-shadow: 0 12px 28px hsl(var(--foreground) / 0.08);
+  }
+
+  .card-hero {
+    background: linear-gradient(160deg, hsl(var(--surface-glow)) 0%, hsl(var(--card)) 100%);
+    box-shadow: var(--shadow-md);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .card-companion {
+    background: hsl(var(--card));
+    box-shadow: var(--shadow-sm);
+    border: 1px solid hsl(var(--border) / 0.4);
   }
 
   .gradient-dusk {

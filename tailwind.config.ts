@@ -72,8 +72,14 @@ export default {
         },
         surface: {
           warm: "hsl(var(--surface-warm) / <alpha-value>)",
+          glow: "hsl(var(--surface-glow) / <alpha-value>)",
           "cloud-a": "hsl(var(--surface-cloud-a) / <alpha-value>)",
           "cloud-b": "hsl(var(--surface-cloud-b) / <alpha-value>)",
+        },
+        warmth: {
+          coral: "hsl(var(--warmth-coral) / <alpha-value>)",
+          peach: "hsl(var(--warmth-peach) / <alpha-value>)",
+          bloom: "hsl(var(--warmth-bloom) / <alpha-value>)",
         },
         "border-soft": "hsl(var(--border-soft) / <alpha-value>)",
         chart: {

@@ -19,6 +19,7 @@ import {
   collectFlags,
 } from "@/lib/checkin-data";
 import { HLB_MAX, ICE_MAX } from "@shared/constants";
+import { devNow } from "@shared/dev-clock";
 
 // ── Types ─────────────────────────────────────────
 
@@ -33,7 +34,7 @@ export interface TodayScores {
 // ── Helpers ───────────────────────────────────────
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10);
+  return devNow().toISOString().slice(0, 10);
 }
 
 // ── Public API ────────────────────────────────────

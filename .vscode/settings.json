@@ -27,5 +27,6 @@
   ],
 
   // Allow Copilot agent to kill stale processes (e.g. EADDRINUSE)
-  "github.copilot.chat.agent.terminalCommands.denyList": []
+  "github.copilot.chat.agent.terminalCommands.denyList": [],
+  "chat.agent.maxRequests": 1000
 }

@@ -12,6 +12,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Lock, MessageCircle } from "lucide-react";
+import { devNow } from "@shared/dev-clock";
 import { Button } from "@/components/ui/button";
 import {
   type CheckInStep,
@@ -38,7 +39,7 @@ interface PartialState {
 }
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return devNow().toISOString().slice(0, 10);
 }
 
 function loadPartial(): PartialState | null {

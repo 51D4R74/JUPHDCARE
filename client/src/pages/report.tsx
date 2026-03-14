@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
+import { devNow } from "@shared/dev-clock";
 import {
   ChevronLeft, Sun, Activity, Target, BookOpen, Heart,
   Share2, TrendingUp, TrendingDown, Minus, Calendar,
@@ -124,7 +125,7 @@ export default function ReportPage() {
 
   // Period records = last N days from server history
   const records = useMemo(() => {
-    const cutoff = new Date();
+    const cutoff = devNow();
     cutoff.setDate(cutoff.getDate() - days);
     const cutoffDate = cutoff.toISOString().slice(0, 10);
     return allHistory.filter((r) => r.date >= cutoffDate);
@@ -132,10 +133,10 @@ export default function ReportPage() {
 
   // Previous period records for trend arrows
   const prevRecords = useMemo(() => {
-    const cutoff = new Date();
+    const cutoff = devNow();
     cutoff.setDate(cutoff.getDate() - days);
     const cutoffDate = cutoff.toISOString().slice(0, 10);
-    const prevCutoff = new Date();
+    const prevCutoff = devNow();
     prevCutoff.setDate(prevCutoff.getDate() - days * 2);
     const prevCutoffDate = prevCutoff.toISOString().slice(0, 10);
     return allHistory.filter((r) => r.date >= prevCutoffDate && r.date < cutoffDate);
@@ -148,7 +149,7 @@ export default function ReportPage() {
   const discoveries = useMemo(() => computeDiscoveries(allHistory), [allHistory]);
 
   // Points: check-in base + mission completions (all from server truth)
-  const today = new Date().toISOString().slice(0, 10);
+  const today = devNow().toISOString().slice(0, 10);
   const hasCheckedInToday = allHistory.some((r) => r.date === today);
   const missionPointsToday = todayMissions.reduce((sum, m) => sum + m.pointsEarned, 0);
   const points = (hasCheckedInToday ? POINT_VALUES.checkin : 0) + missionPointsToday;

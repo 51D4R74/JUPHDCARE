@@ -3,7 +3,7 @@
 ## Scope
 
 - Stack: Vite + React 18 + Express 5 + Drizzle ORM + PostgreSQL.
-- Runtime: Node 22, NPM, dev server port 5000.
+- Runtime: Node 22, NPM, dev server port 8000.
 - Structure: `client/` (React SPA), `server/` (Express API), `shared/` (schema + types).
 - Phase: Early development — build features on solid foundation, don't over-engineer.
 
@@ -81,7 +81,7 @@ These rules prevent lint debt from accumulating. Apply them on every new file an
 ## Available scripts
 
 ```bash
-npm run dev         # Start dev server (tsx + Vite HMR), port 5000
+npm run dev         # Start dev server (tsx + Vite HMR), port 8000
 npm run build       # Production build (esbuild + Vite)
 npm run start       # Run production build
 npm run check       # TypeScript type check (tsc --noEmit)

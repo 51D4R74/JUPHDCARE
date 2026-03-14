@@ -13,6 +13,7 @@
  */
 
 import type { SkyState } from "@/lib/checkin-data";
+import { devNow } from "@shared/dev-clock";
 import type { TodayScores } from "@/lib/score-engine";
 import {
   SUPPORT_MESSAGES,
@@ -92,7 +93,7 @@ export function evaluateRespiro(scores: TodayScores): boolean {
   // Auto-entry: 2 consecutive days of sky rest
   if (!state.active && state.consecutiveRestDays >= RESPIRO_AUTO_ENTRY_DAYS) {
     state.active = true;
-    state.activatedAt = new Date().toISOString();
+    state.activatedAt = devNow().toISOString();
     state.escalationLevel = 1;
     enterRespiroFreeze();
     writeRespiroState(state);
@@ -104,10 +105,10 @@ export function evaluateRespiro(scores: TodayScores): boolean {
     const lastTap = state.lastNeedSupportAt
       ? new Date(state.lastNeedSupportAt).getTime()
       : 0;
-    const within24h = Date.now() - lastTap < 24 * 60 * 60 * 1000;
+    const within24h = devNow().getTime() - lastTap < 24 * 60 * 60 * 1000;
     if (within24h) {
       state.active = true;
-      state.activatedAt = new Date().toISOString();
+      state.activatedAt = devNow().toISOString();
       state.escalationLevel = 1;
       enterRespiroFreeze();
       writeRespiroState(state);
@@ -135,7 +136,7 @@ export function evaluateRespiro(scores: TodayScores): boolean {
 /** Record a "Preciso de apoio" tap for Modo Respiro entry tracking. */
 export function recordNeedSupport(): void {
   const state = readRespiroState();
-  const now = Date.now();
+  const now = devNow().getTime();
 
   // Reset counter if last tap was > 24h ago
   if (state.lastNeedSupportAt) {
@@ -146,7 +147,7 @@ export function recordNeedSupport(): void {
   }
 
   state.needSupportCount += 1;
-  state.lastNeedSupportAt = new Date().toISOString();
+  state.lastNeedSupportAt = devNow().toISOString();
   writeRespiroState(state);
 }
 

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { devNow } from "@shared/dev-clock";
 import {
   Sun, ChevronRight, Activity, BookOpen, Target, Lightbulb,
   Heart, Trophy, Settings, CheckCircle2,
@@ -33,11 +34,11 @@ type QuickAction = (typeof QUICK_ACTIONS)[number];
 
 function getDailyInsight(scores: TodayScores): string {
   if (!scores.hasCheckedIn) {
-    return "Faça seu check-in para ativar scores, missões e sinais de cuidado.";
+    return "Seu check-in de hoje ativa scores, missões e sinais — leva menos de 1 minuto.";
   }
 
   if (scores.flags.includes("harassment_signal")) {
-    return "Sinal de proteção relacional detectado — priorize segurança e use a trilha de apoio.";
+    return "Sinal de proteção relacional detectado — cuide de você primeiro, a trilha de apoio está ali.";
   }
 
   const orderedDomains = [
@@ -49,19 +50,55 @@ function getDailyInsight(scores: TodayScores): string {
 
   if (lowest.id === "recarga") {
     return lowest.score < 50
-      ? "⚡ Recarga pedindo pausa — missões curtas valem mais hoje."
-      : "🔋 Recarga estável — mantenha pausas para proteger o nível.";
+      ? "⚡ Sua bateria tá pedindo um respiro — missões curtinhas valem ouro hoje."
+      : "🔋 Recarga estável — mantenha pausas pra proteger esse ritmo.";
   }
 
   if (lowest.id === "estado-do-dia") {
     return lowest.score < 50
-      ? "🌡️ Estado do dia sensível — comece por uma missão simples."
-      : "✨ Estado do dia responsivo — aproveite para avançar no que exige foco.";
+      ? "🌡️ Dia mais sensível — comece por algo leve, sem pressa."
+      : "✨ Dia com energia — bom momento pra avançar no que importa.";
   }
 
   return lowest.score < 50
-    ? "🛡️ Segurança relacional sensível — prefira interações previsíveis hoje."
-    : "🤝 Contexto relacional estável — bom momento para conversas objetivas.";
+    ? "🛡️ Contexto relacional pede cuidado — prefira interações previsíveis hoje."
+    : "🤝 Contexto relacional tranquilo — bom momento pra conversas importantes.";
+}
+
+// ── Celebration particles ─────────────────────────
+
+const CELEBRATION_PARTICLES = [
+  { angle: 0, distance: 44, delay: 0 },
+  { angle: 45, distance: 38, delay: 0.05 },
+  { angle: 90, distance: 46, delay: 0.02 },
+  { angle: 135, distance: 40, delay: 0.08 },
+  { angle: 180, distance: 44, delay: 0.03 },
+  { angle: 225, distance: 36, delay: 0.07 },
+  { angle: 270, distance: 42, delay: 0.01 },
+  { angle: 315, distance: 39, delay: 0.04 },
+] as const;
+
+function CelebrationParticles() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-visible">
+      {CELEBRATION_PARTICLES.map((p, i) => {
+        const rad = (p.angle * Math.PI) / 180;
+        const x = Math.cos(rad) * p.distance;
+        const y = Math.sin(rad) * p.distance;
+        return (
+          <motion.div
+            key={p.angle}
+            initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+            animate={{ opacity: 0, scale: 0.2, x, y }}
+            transition={{ duration: 0.75, delay: p.delay, ease: "easeOut" }}
+            className={`absolute left-1/2 top-1/2 rounded-full ${
+              i % 2 === 0 ? "h-1.5 w-1.5 bg-brand-gold" : "h-1 w-1 bg-warmth-coral"
+            }`}
+          />
+        );
+      })}
+    </div>
+  );
 }
 
 // ── Score color helpers ───────────────────────────
@@ -88,41 +125,41 @@ const EMPTY_SCORES: TodayScores = {
 const QUICK_ACTIONS = [
   {
     label: "Check-in diário",
-    description: "Atualizar estado do dia",
+    description: "Conta como foi o dia",
     icon: Activity,
     action: "route",
     target: "/checkin",
   },
   {
     label: "Apoio",
-    description: "Mensagens e recursos",
+    description: "Cuidado e acolhimento",
     icon: Heart,
     action: "route",
     target: "/support",
   },
   {
     label: "Proteção",
-    description: "Canais e orientação",
+    description: "Relatar algo sério",
     icon: Shield,
     action: "route",
     target: "/protecao",
   },
   {
     label: "Relatório",
-    description: "Leitura semanal pessoal",
+    description: "Sua história em números",
     icon: FileText,
     action: "route",
     target: "/report",
   },
   {
     label: "Notificações",
-    description: "Alertas e lembretes",
+    description: "O que há de novo",
     icon: Bell,
     action: "drawer",
   },
   {
     label: "Configurações",
-    description: "Preferências e horários",
+    description: "Ajustar a experiência",
     icon: Settings,
     action: "route",
     target: "/settings",
@@ -162,14 +199,14 @@ function getHeaderBadgeLabel(scores: TodayScores): string {
 function getCheckInStatusCopy(justCompleted: boolean): { title: string; description: string } {
   if (justCompleted) {
     return {
-      title: "Check-in registrado!",
-      description: "Seus scores foram atualizados.",
+      title: "Registrado! Seus sinais estão atualizados.",
+      description: "Tudo certo por hoje.",
     };
   }
 
   return {
-    title: "Check-in completo",
-    description: "Scores atualizados para hoje.",
+      title: "Tudo certo por hoje",
+      description: "Seus scores estão atualizados.",
   };
 }
 
@@ -214,7 +251,6 @@ function DashboardHeader({
           <div className="flex items-center gap-3 min-w-0">
             <AnimatedBrandLogo size="compact" showWordmark={false} />
             <div className="min-w-0">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Lumina</p>
               <p className="truncate text-base font-semibold tracking-[-0.02em] text-foreground">{firstName}</p>
             </div>
           </div>
@@ -246,7 +282,7 @@ function DashboardHeader({
             transition={{ delay: 0.16 }}
             className="mx-auto mt-2 max-w-[18rem] text-sm leading-relaxed text-muted-foreground"
           >
-            Leitura diária do seu contexto para orientar rotina, foco e proteção.
+            Como você está hoje?
           </motion.p>
           <motion.span
             initial={{ opacity: 0 }}
@@ -293,8 +329,8 @@ function PulseCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                  Evidência mensal
+                <p className="text-sm font-medium text-muted-foreground">
+                  Leitura mensal
                 </p>
                 <p className="mt-1 text-base font-semibold tracking-[-0.02em] text-foreground">
                   {pulseState.definition.title}
@@ -311,8 +347,8 @@ function PulseCard({
             {pulseState.latestResponse && (
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <div className="rounded-2xl border border-border/60 bg-background px-3 py-2.5">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                    Último score geral
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Seu último score
                   </p>
                   <p className="mt-1 text-xl font-semibold tracking-[-0.03em] text-foreground">
                     {pulseState.latestResponse.scoreSummary.overallScore}
@@ -322,14 +358,14 @@ function PulseCard({
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border/60 bg-background px-3 py-2.5">
-                  <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                  <p className="text-xs font-medium text-muted-foreground">
                     Pontos solares
                   </p>
                   <p className="mt-1 text-xl font-semibold tracking-[-0.03em] text-foreground">
                     +{POINT_VALUES.pulseSurvey}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Ao concluir a janela atual
+                    Ao responder
                   </p>
                 </div>
               </div>
@@ -379,11 +415,8 @@ function QuickAccessSection({
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            Acesso rápido
-          </p>
-          <h2 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-foreground">
-            Superfícies principais da plataforma
+          <h2 className="text-lg font-semibold tracking-[-0.03em] text-foreground">
+            Para você agora
           </h2>
         </div>
         <button
@@ -481,7 +514,7 @@ function DashboardBottomNav({
 }
 
 function getGreeting(): string {
-  const hour = new Date().getHours();
+  const hour = devNow().getHours();
   if (hour < 12) return "Bom dia";
   if (hour < 18) return "Boa tarde";
   return "Boa noite";
@@ -675,7 +708,7 @@ export default function DashboardPage() {
           >
             <p className="text-xl font-semibold tracking-[-0.03em]">Boas-vindas à Lumina</p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Aqui, cuidar de si é simples. Comece seu primeiro check-in — leva menos de 1 minuto.
+              Seu primeiro check-in leva menos de 1 minuto. Vamos?
             </p>
           </motion.section>
         )}
@@ -692,8 +725,9 @@ export default function DashboardPage() {
               initial={justCompleted ? { scale: 0.92, opacity: 0 } : false}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className="flex items-center gap-3 rounded-2xl border border-score-good/20 bg-card p-4 shadow-sm"
+              className="relative flex items-center gap-3 rounded-2xl border border-score-good/20 bg-card p-4 shadow-sm"
             >
+              {justCompleted && <CelebrationParticles />}
               <motion.div
                 initial={justCompleted ? { rotate: -90, scale: 0 } : false}
                 animate={{ rotate: 0, scale: 1 }}
@@ -737,7 +771,7 @@ export default function DashboardPage() {
                 <Lightbulb className="h-4 w-4 text-brand-gold-dark" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                <p className="text-sm font-medium text-muted-foreground">
                   Insight do dia
                 </p>
                 <p className="mt-1 text-sm leading-relaxed text-foreground">
@@ -776,9 +810,9 @@ export default function DashboardPage() {
                 <Heart className="w-5 h-5 text-score-attention" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold tracking-[-0.02em]">Precisa de apoio?</p>
+                <p className="text-base font-semibold tracking-[-0.02em]">Tô aqui se precisar.</p>
                 <p className="text-sm text-muted-foreground">
-                  Recursos de cuidado para dias mais difíceis
+                  Apoio e acolhimento quando quiser
                 </p>
               </div>
               <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -880,7 +914,7 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+                        <p className="text-sm font-medium text-muted-foreground">
                           {PULSE_DIMENSION_LABELS[question.dimension]}
                         </p>
                         <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">

@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
+import { devNow } from "@shared/dev-clock";
 import {
   Sun, Activity, BookOpen, Target, ChevronLeft, Heart,
 } from "lucide-react";
@@ -40,7 +41,7 @@ export default function MissionCenterPage() {
     enabled: !!userId,
   });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = devNow().toISOString().slice(0, 10);
 
   const { data: completedMissions = [] } = useQuery<UserMission[]>({
     queryKey: ["/api/missions", userId, "today"],
@@ -79,7 +80,7 @@ export default function MissionCenterPage() {
         missionId,
         date: today,
         pointsEarned,
-        completedAt: new Date(),
+        completedAt: devNow(),
       };
       qc.setQueryData<UserMission[]>(
         ["/api/missions", userId, "today"],
