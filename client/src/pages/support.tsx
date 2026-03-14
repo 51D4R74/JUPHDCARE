@@ -116,7 +116,7 @@ export default function SupportCenterPage() {
         <div className="flex-1">
           <h1 className="text-lg font-semibold">Apoio</h1>
           <p className="text-xs text-muted-foreground">
-            Mensagens de cuidado para você
+            Um espaço só pra você
           </p>
         </div>
         <SolarPointsBadge points={solarPoints} />
@@ -137,7 +137,7 @@ export default function SupportCenterPage() {
                   Modo Respiro ativo
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  O app está mais leve pra você. Menos missões, mais cuidado.
+                  O app está mais leve pra você. Menos estímulos, mais acolhimento.
                 </p>
                 {scores.skyState !== "respiro" && (
                   <button
@@ -265,10 +265,10 @@ export default function SupportCenterPage() {
                   <div className="text-center py-12">
                     <Heart className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">
-                      Nenhuma mensagem favorita ainda.
+                      Suas mensagens favoritas aparecerão aqui.
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Toque no coração para salvar mensagens que tocaram você.
+                      Toque no coração pra guardar as que fazem sentido pra você.
                     </p>
                   </div>
                 ) : (
@@ -296,9 +296,9 @@ export default function SupportCenterPage() {
                 {authorSubmitted ? (
                   <div className="text-center py-12">
                     <Sparkles className="w-8 h-8 text-brand-teal mx-auto mb-3" />
-                    <p className="text-sm font-medium">Gratidão por cuidar de alguém.</p>
+                    <p className="text-sm font-medium">Obrigado por cuidar de alguém.</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Sua mensagem será revisada antes de ser compartilhada.
+                      Sua mensagem será revisada antes de chegar a outra pessoa.
                     </p>
                     <button
                       onClick={() => { setAuthorSubmitted(false); setAuthorText(""); }}
@@ -311,10 +311,10 @@ export default function SupportCenterPage() {
                   <div className="space-y-4">
                     <div className="glass-card rounded-2xl p-4">
                       <p className="text-sm font-medium mb-1">
-                        Deixe uma mensagem de apoio
+                        Deixe uma mensagem pra alguém
                       </p>
                       <p className="text-xs text-muted-foreground mb-3">
-                        Escreva algo que ajude alguém tendo um dia difícil. Máximo 280 caracteres.
+                        Escreva algo que possa ajudar alguém tendo um dia difícil. Até 280 caracteres.
                       </p>
                       <Textarea
                         placeholder="Ex: Você não está só nessa..."
@@ -330,7 +330,7 @@ export default function SupportCenterPage() {
                           onClick={() => {
                             if (authorText.trim().length < 10) {
                               toast({
-                                title: "Mensagem muito curta",
+                                title: "Precisa de mais",
                                 description: "Escreva pelo menos 10 caracteres.",
                                 variant: "destructive",
                               });
@@ -340,7 +340,7 @@ export default function SupportCenterPage() {
                             setAuthorSubmitted(true);
                             toast({
                               title: "Mensagem enviada",
-                              description: "Gratidão por cuidar de alguém. ❤️",
+                              description: "Obrigado por cuidar de alguém. ❤️",
                             });
                           }}
                           disabled={authorText.trim().length < 10}
@@ -352,7 +352,7 @@ export default function SupportCenterPage() {
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground text-center px-4">
-                      Mensagens são revisadas antes de serem compartilhadas. Nenhuma mensagem é publicada sem moderação.
+                      Todas as mensagens são revisadas antes de chegar a outra pessoa.
                     </p>
                   </div>
                 )}

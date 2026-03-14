@@ -25,10 +25,10 @@ const SCORE_TIERS = [
   { min: 75, color: "bg-score-good", textColor: "text-score-good", label: "Bom" },
   { min: 50, color: "bg-score-moderate", textColor: "text-score-moderate", label: "Moderado" },
   { min: 25, color: "bg-score-attention", textColor: "text-score-attention", label: "Atenção" },
-  { min: 0, color: "bg-score-critical", textColor: "text-score-critical", label: "Cuidado" },
+  { min: 0, color: "bg-score-critical", textColor: "text-score-critical", label: "Precisa de cuidado" },
 ] as const;
 
-const FALLBACK_TIER = { min: 0, color: "bg-score-critical", textColor: "text-score-critical", label: "Cuidado" } as const;
+const FALLBACK_TIER = { min: 0, color: "bg-score-critical", textColor: "text-score-critical", label: "Precisa de cuidado" } as const;
 
 function getTier(score: number) {
   return SCORE_TIERS.find((t) => score >= t.min) ?? FALLBACK_TIER;
@@ -59,7 +59,7 @@ export default function ScoreCard({
                 —
               </span>
               <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/50">
-                Pendente
+                Aguardando check-in
               </span>
             </div>
           </div>
@@ -67,7 +67,7 @@ export default function ScoreCard({
         <CardContent className="pt-0">
           <div className="h-2 w-full overflow-hidden rounded-full bg-muted" />
           <p className="mt-3 text-xs text-muted-foreground">
-            Complete o check-in para ver
+            Faça seu check-in pra ver
           </p>
         </CardContent>
       </Card>
@@ -112,7 +112,7 @@ export default function ScoreCard({
               onClick={() => setExpanded(!expanded)}
               className="flex w-full items-center justify-between text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              <span>Detalhes</span>
+              <span>Ver mais</span>
               <motion.span
                 animate={{ rotate: expanded ? 180 : 0 }}
                 transition={{ duration: 0.2 }}

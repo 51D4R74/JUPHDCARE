@@ -65,7 +65,7 @@ export default function LoginPage() {
       const res = await apiRequest("POST", "/api/auth/login", { username: email, password });
       const user = await res.json();
       setUser(user);
-      toast({ title: "Boas-vindas!", description: "Login realizado com sucesso." });
+      toast({ title: "Boas-vindas!", description: "Que bom ter você por aqui." });
       if (user.role === "rh") {
         navigate("/rh");
       } else {
@@ -73,7 +73,7 @@ export default function LoginPage() {
       }
     } catch (error: unknown) {
       console.warn("Login failed:", error);
-      toast({ title: "Erro", description: "Credenciais inválidas. Verifique seu email e senha.", variant: "destructive" });
+      toast({ title: "Algo deu errado", description: "Verifique seu email e senha.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -103,8 +103,8 @@ export default function LoginPage() {
       navigate("/dashboard");
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "";
-      const msg = errMsg.includes("409") ? "Este email já está cadastrado." : "Não foi possível criar a conta. Tente novamente.";
-      toast({ title: "Erro", description: msg, variant: "destructive" });
+      const msg = errMsg.includes("409") ? "Esse email já está cadastrado." : "Não conseguimos criar a conta. Tente de novo.";
+      toast({ title: "Algo deu errado", description: msg, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

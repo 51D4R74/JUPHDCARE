@@ -197,7 +197,7 @@ export default function MeuCuidadoPage() {
         >
           <h1 className="text-2xl font-bold">Meu Cuidado</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Sua jornada ao longo do tempo.
+            Como você tem se cuidado ao longo do tempo.
           </p>
         </motion.div>
 
@@ -209,12 +209,12 @@ export default function MeuCuidadoPage() {
           className="glass-card rounded-2xl p-4 mb-4"
         >
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Constância — últimos 10 dias
+            Constância — seus últimos 10 dias
           </p>
           <ConstancyDots days={10} checkedInDates={allHistory.map((r) => r.date)} />
           <p className="text-xs text-muted-foreground mt-2">
             {allHistory.length === 0
-              ? "Faça seu primeiro check-in para começar."
+              ? "Faça seu primeiro check-in pra começar."
               : `${allHistory.length} check-in${plural(allHistory.length, "", "s")} no total.`}
           </p>
         </motion.section>
@@ -228,7 +228,7 @@ export default function MeuCuidadoPage() {
             className="mb-4 space-y-3"
           >
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Scores de hoje
+              Seus scores de hoje
             </p>
             {domains.map((d) => (
               <ScoreCard
@@ -252,7 +252,7 @@ export default function MeuCuidadoPage() {
         >
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-              Tendência de scores
+              Como seus scores têm se movido
             </p>
             <div className="flex rounded-xl border border-border/40 overflow-hidden text-xs">
               {([7, 30] as const).map((r) => (
@@ -333,7 +333,7 @@ export default function MeuCuidadoPage() {
                 animate={{ opacity: 1 }}
                 className="flex items-center justify-center h-[100px] text-muted-foreground text-sm"
               >
-                Sem dados para este período.
+                Sem dados pra esse período ainda.
               </motion.div>
             )}
           </AnimatePresence>
@@ -348,7 +348,7 @@ export default function MeuCuidadoPage() {
         >
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-4 h-4 text-brand-teal" />
-            <h2 className="text-sm font-semibold">Descobertas pessoais</h2>
+            <h2 className="text-sm font-semibold">Suas descobertas</h2>
           </div>
 
           {hasEnoughData && discoveries.length > 0 ? (
@@ -367,10 +367,10 @@ export default function MeuCuidadoPage() {
                   <p className="text-sm font-medium">
                     {daysLeft > 0
                       ? `${daysLeft} dia${plural(daysLeft, "", "s")} para sua primeira descoberta`
-                      : "Continue fazendo check-ins para descobertas."}
+                      : "Continue fazendo check-ins pra novas descobertas."}
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Precisamos de {DISCOVERY_MIN_RECORDS} dias com tags para detectar padrões.
+                    Precisamos de {DISCOVERY_MIN_RECORDS} dias com contextos pra detectar padrões.
                   </p>
                 </div>
               </div>
@@ -397,7 +397,7 @@ export default function MeuCuidadoPage() {
             className="mb-4"
           >
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              Contextos mais frequentes — últimos 30 dias
+              O que mais aparece — últimos 30 dias
             </p>
             <div className="flex flex-wrap gap-2">
               {tagCloud.map((tag) => (
@@ -420,7 +420,7 @@ export default function MeuCuidadoPage() {
             <FileText className="w-5 h-5 text-brand-navy" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold">Ver Relatório Pessoal</p>
+            <p className="text-sm font-semibold">Ver Seu Relatório</p>
             <p className="text-xs text-muted-foreground">Resumo semanal e mensal do seu cuidado</p>
           </div>
           <ChevronLeft className="w-4 h-4 text-muted-foreground rotate-180" />

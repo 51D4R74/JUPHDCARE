@@ -101,9 +101,9 @@ export default function NotificationDrawer({ open, onClose }: Readonly<Notificat
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center px-6">
               <Bell className="w-8 h-8 text-muted-foreground/30 mb-3" />
-              <p className="text-sm text-muted-foreground">Nenhuma notificação</p>
+              <p className="text-sm text-muted-foreground">Tudo tranquilo por aqui</p>
               <p className="text-xs text-muted-foreground/60 mt-1">
-                Novas notificações aparecerão aqui
+                Novas notificações vão aparecer aqui
               </p>
             </div>
           ) : (

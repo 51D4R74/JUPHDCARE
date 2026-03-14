@@ -223,7 +223,7 @@ export default function ReportPage() {
           className="flex items-start justify-between mb-6"
         >
           <div>
-            <h1 className="text-2xl font-bold">Relatório Pessoal</h1>
+            <h1 className="text-2xl font-bold">Seu Relatório</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {records.length} check-in{records.length === 1 ? "" : "s"} na {periodLabel}.
             </p>
@@ -253,7 +253,7 @@ export default function ReportPage() {
           className="glass-card rounded-2xl p-4 mb-4"
         >
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-            Médias do período
+            Suas médias no período
           </p>
           {records.length > 0 ? (
             <div className="flex gap-4">
@@ -269,7 +269,7 @@ export default function ReportPage() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Sem check-ins neste período.
+              Nenhum check-in nesse período ainda.
             </p>
           )}
         </motion.section>
@@ -356,7 +356,7 @@ export default function ReportPage() {
           className="glass-card rounded-2xl p-4 mb-4"
         >
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-            Constância — últimos 10 dias
+            Constância — seus últimos 10 dias
           </p>
           <ConstancyDots days={10} checkedInDates={allHistory.map((r) => r.date)} />
         </motion.section>
@@ -370,7 +370,7 @@ export default function ReportPage() {
             className="glass-card rounded-2xl p-4 mb-4"
           >
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              Principais contextos
+              O que mais apareceu
             </p>
             <div className="space-y-2">
               {tagCloud.slice(0, 5).map((tag, i) => (
@@ -430,9 +430,9 @@ export default function ReportPage() {
               <Share2 className="w-5 h-5 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm font-semibold">Compartilhar com profissional</p>
+              <p className="text-sm font-semibold">Compartilhar com um profissional</p>
               <p className="text-xs text-muted-foreground">
-                Em breve — compartilhe com seu(sua) terapeuta ou médico(a).
+                Em breve — envie pro seu terapeuta ou médico(a).
               </p>
             </div>
           </button>

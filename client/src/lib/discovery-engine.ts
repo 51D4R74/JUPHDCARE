@@ -63,9 +63,9 @@ function buildText(
 ): string {
   const dir =
     direction === "up"
-      ? "costuma ser melhor"
-      : "costuma ser mais baixo";
-  return `Nos dias com "${tagLabel}", seu ${domainLabel} ${dir}.`;
+      ? "tende a ficar melhor"
+      : "tende a cair";
+  return `Nos dias com "${tagLabel}", sua ${domainLabel} ${dir}.`;
 }
 
 // ── Public API ────────────────────────────────────

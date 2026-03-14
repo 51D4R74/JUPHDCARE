@@ -30,11 +30,11 @@ import { PULSE_DIMENSION_LABELS, PULSE_RESPONSE_OPTIONS, type CurrentPulseState,
 
 function getDailyInsight(scores: TodayScores): string {
   if (!scores.hasCheckedIn) {
-    return "Seu check-in de hoje ativa scores, missões e sinais — leva menos de 1 minuto.";
+    return "Um minuto do seu dia me ajuda a cuidar melhor de você.";
   }
 
   if (scores.flags.includes("harassment_signal")) {
-    return "Sinal de proteção relacional detectado — cuide de você primeiro, a trilha de apoio está ali.";
+    return "Algo no seu ambiente acendeu um sinal — cuide de você primeiro, o apoio está ali.";
   }
 
   const orderedDomains = [
@@ -46,19 +46,19 @@ function getDailyInsight(scores: TodayScores): string {
 
   if (lowest.id === "recarga") {
     return lowest.score < 50
-      ? "⚡ Sua bateria tá pedindo um respiro — missões curtinhas valem ouro hoje."
-      : "🔋 Recarga estável — mantenha pausas pra proteger esse ritmo.";
+      ? "⚡ Sua bateria tá pedindo cuidado — comece leve, sem pressa."
+      : "🔋 Recarga estável — mantém as pausas pra proteger esse ritmo.";
   }
 
   if (lowest.id === "estado-do-dia") {
     return lowest.score < 50
-      ? "🌡️ Dia mais sensível — comece por algo leve, sem pressa."
+      ? "🌡️ Dia mais sensível — o que você precisar, eu tô aqui."
       : "✨ Dia com energia — bom momento pra avançar no que importa.";
   }
 
   return lowest.score < 50
-    ? "🛡️ Contexto relacional pede cuidado — prefira interações previsíveis hoje."
-    : "🤝 Contexto relacional tranquilo — bom momento pra conversas importantes.";
+    ? "🛡️ O clima lá fora pede atenção — prefira interações previsíveis hoje."
+    : "🤝 Clima tranquilo ao redor — bom momento pra conversas importantes.";
 }
 
 // ── Celebration particles ─────────────────────────
@@ -153,14 +153,14 @@ function getHeaderBadgeLabel(scores: TodayScores): string {
 function getCheckInStatusCopy(justCompleted: boolean): { title: string; description: string } {
   if (justCompleted) {
     return {
-      title: "Registrado! Seus sinais estão atualizados.",
-      description: "Tudo certo por hoje.",
+      title: "Pronto! Seu dia está registrado.",
+      description: "Tudo certo por hoje — obrigado por se cuidar.",
     };
   }
 
   return {
       title: "Tudo certo por hoje",
-      description: "Seus scores estão atualizados.",
+      description: "Seus sinais estão atualizados.",
   };
 }
 
@@ -485,16 +485,16 @@ export default function DashboardPage() {
       setPulseDialogOpen(false);
       setPulseAnswers({});
       toast({
-        title: "Pulse registrado",
-        description: `Leitura mensal concluída. Você ganhou ${POINT_VALUES.pulseSurvey} pontos solares.`,
+        title: "Leitura registrada",
+        description: `Obrigado por compartilhar. Você ganhou ${POINT_VALUES.pulseSurvey} pontos solares ☔️`,
       });
     },
     onError: (error: unknown) => {
       const description = error instanceof Error
         ? error.message.replace(/^\d+:\s*/, "")
-        : "Não foi possível registrar o pulse agora.";
+        : "Não conseguimos registrar agora. Tente de novo em instantes.";
       toast({
-        title: "Erro ao enviar pulse",
+        title: "Algo deu errado",
         description,
         variant: "destructive",
       });

@@ -72,11 +72,11 @@ export function saveSettings(settings: AppSettings): void {
 // ── Notification type labels ──────────────────────
 
 const TYPE_META: Record<NotificationType, { label: string; description: string; icon: string }> = {
-  care: { label: "Cuidado", description: "Lembretes de autocuidado (água, pausas)", icon: "💧" },
+  care: { label: "Cuidado", description: "Lembretes leves pra você (água, pausas)", icon: "💧" },
   mission: { label: "Pra Você", description: "Novas atividades de autocuidado", icon: "⭐" },
-  microcheck: { label: "Micro check-in", description: "Verificações rápidas ao longo do dia", icon: "💬" },
-  closure: { label: "Fechamento", description: "Convite para encerrar o dia", icon: "🌅" },
-  support: { label: "Apoio", description: "Mensagens de suporte contextual", icon: "🤝" },
+  microcheck: { label: "Micro check-in", description: "Leituras rápidas ao longo do dia", icon: "💬" },
+  closure: { label: "Fechamento", description: "Convite pra encerrar o dia", icon: "🌅" },
+  support: { label: "Apoio", description: "Mensagens de suporte quando fizer sentido", icon: "🤝" },
 };
 
 // ── Component ─────────────────────────────────────
@@ -255,7 +255,7 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Moon className="w-4 h-4 text-muted-foreground" />
-                <h2 className="text-xs font-semibold text-muted-foreground">Horário silencioso</h2>
+                <h2 className="text-xs font-semibold text-muted-foreground">Sem interrupções</h2>
               </div>
               <Switch
                 checked={settings.notifications.quietHoursEnabled}
@@ -304,7 +304,7 @@ export default function SettingsPage() {
           >
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-xs font-semibold text-muted-foreground">Limite diário</h2>
+              <h2 className="text-xs font-semibold text-muted-foreground">No máximo por dia</h2>
             </div>
             <div className="flex items-center gap-3">
               {[1, 2, 3, 5].map((n) => (
@@ -322,7 +322,7 @@ export default function SettingsPage() {
               ))}
             </div>
             <p className="text-[10px] text-muted-foreground mt-2">
-              Máximo de {settings.notifications.maxPerDay} notificação{settings.notifications.maxPerDay > 1 ? "ões" : ""} por dia
+              Até {settings.notifications.maxPerDay} notificação{settings.notifications.maxPerDay > 1 ? "ões" : ""} por dia
             </p>
           </motion.section>
         )}

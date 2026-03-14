@@ -51,14 +51,14 @@ export default function ProtecaoPage() {
         description: description || null,
         anonymous: true,
       });
-      toast({ title: "Relato enviado", description: "Seu relato foi registrado de forma anônima e segura." });
+      toast({ title: "Relato enviado", description: "Registrado de forma anônima e segura." });
       setShowReport(false);
       setSelectedCategory("");
       setSelectedSubcategory("");
       setDescription("");
     } catch (error: unknown) {
       console.error("Report submission failed:", error);
-      toast({ title: "Erro", description: "Não foi possível enviar o relato.", variant: "destructive" });
+      toast({ title: "Algo deu errado", description: "Não conseguimos enviar o relato.", variant: "destructive" });
     } finally {
       setIsSending(false);
     }
@@ -90,9 +90,9 @@ export default function ProtecaoPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-navy/10 border border-brand-navy/15 mb-4">
             <Shield className="w-8 h-8 text-brand-navy" />
           </div>
-          <h1 className="text-2xl font-bold">Denúncia</h1>
+          <h1 className="text-2xl font-bold">Proteção</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            Este é um espaço seguro e confidencial. Seu relato será anônimo.
+            Um espaço seguro e confidencial. Seu relato será anônimo.
           </p>
         </motion.div>
 
@@ -106,7 +106,7 @@ export default function ProtecaoPage() {
             <Phone className="w-6 h-6 text-score-critical" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-score-critical mb-2">Precisa de ajuda agora?</h3>
+            <h3 className="font-semibold text-score-critical mb-2">Precisa falar com alguém agora?</h3>
             <Button
               onClick={() => setShowCrisis(true)}
               className="bg-gradient-to-r from-score-critical to-score-critical-foreground hover:from-score-critical-foreground hover:to-score-critical text-white border-0 rounded-xl h-10 text-sm"
@@ -272,9 +272,9 @@ export default function ProtecaoPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-score-critical/10 border border-score-critical/20 mb-4">
                 <Headphones className="w-8 h-8 text-score-critical" />
               </div>
-              <h3 className="text-lg font-bold mb-2">Conectando ao Atendimento</h3>
+              <h3 className="text-lg font-bold mb-2">Conectando você</h3>
               <p className="text-sm text-muted-foreground mb-6">
-                Estamos conectando você a um profissional qualificado. Tempo estimado: menos de 60 segundos.
+                Estamos te conectando a um profissional. Tempo estimado: menos de 60 segundos.
               </p>
               <div className="flex items-center justify-center gap-2 mb-6">
                 <motion.div

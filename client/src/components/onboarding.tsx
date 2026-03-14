@@ -34,7 +34,7 @@ const SCREENS: OnboardingScreen[] = [
   {
     id: "welcome",
     title: "Seu companheiro de autocuidado",
-    subtitle: "Lumina acompanha seu bem-estar diário de forma acolhedora e privada. Tudo começa por aqui.",
+    subtitle: "A JuPhD acompanha seu bem-estar todos os dias, de um jeito acolhedor e privado. Tudo começa por aqui.",
     visual: (
       <div className="flex flex-col items-center gap-4">
         <AnimatedBrandLogo size="hero" showWordmark />
@@ -44,8 +44,8 @@ const SCREENS: OnboardingScreen[] = [
   },
   {
     id: "sky-halo",
-    title: "O céu mostra como você está",
-    subtitle: "Céu aberto = dia leve. Nuvens = momento de cuidado. O halo dourado mostra que você se cuida com constância.",
+    title: "Seu céu mostra como você está",
+    subtitle: "Céu aberto = dia leve. Nuvens = momento de cuidado. O halo dourado aparece quando você se cuida com constância.",
     visual: (
       <div className="flex gap-4">
         <div className="flex-1 space-y-2">
@@ -62,7 +62,7 @@ const SCREENS: OnboardingScreen[] = [
   {
     id: "scores",
     title: "Três dimensões do seu dia",
-    subtitle: "Recarga (energia e sono), Estado do dia (humor e foco) e Segurança relacional (clima com as pessoas). Todos de 0 a 100.",
+    subtitle: "Recarga (energia e sono), Estado do dia (humor e foco) e Segurança relacional (clima com as pessoas). De 0 a 100, sem julgamento.",
     visual: (
       <div className="space-y-2">
         {[
@@ -86,7 +86,7 @@ const SCREENS: OnboardingScreen[] = [
   {
     id: "missions",
     title: "Pra Você — autocuidado diário",
-    subtitle: "Atividades adaptadas ao seu estado. Complete e ganhe Pontos Solares ☀️ — sem julgamento, sem pressão.",
+    subtitle: "Atividades escolhidas pro seu momento. Complete e ganhe Pontos Solares ☀️ — sem pressão, no seu ritmo.",
     visual: (
       <div className="space-y-2">
         {[
@@ -112,7 +112,7 @@ const SCREENS: OnboardingScreen[] = [
   },
   {
     id: "lets-go",
-    title: "Tudo certo para começar?",
+    title: "Pronto pra começar?",
     subtitle: "Seu primeiro check-in leva menos de 1 minuto. Depois disso, o céu é seu.",
     visual: (
       <div className="flex flex-col items-center gap-4">
@@ -123,7 +123,7 @@ const SCREENS: OnboardingScreen[] = [
           <Sun className="w-16 h-16 text-brand-gold" />
         </motion.div>
         <p className="text-sm text-muted-foreground text-center">
-          ☀️ Cada dia de cuidado clareia o seu céu
+          ☀️ Cada dia de cuidado clareia o céu
         </p>
       </div>
     ),

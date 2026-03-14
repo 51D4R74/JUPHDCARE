@@ -135,22 +135,22 @@ export function clearNotifications(): void {
 export const NOTIFICATION_TEMPLATES: Record<NotificationType, { icon: string; examples: string[] }> = {
   care: {
     icon: "💧",
-    examples: ["Hora de um gole d'água?", "Uma pausa pode renovar sua energia"],
+    examples: ["Que tal um gole d'água?", "Uma pausa pode renovar sua energia"],
   },
   mission: {
     icon: "⭐",
-    examples: ["Nova missão disponível", "Que tal completar uma missão rápida?"],
+    examples: ["Tem algo novo pra você", "Que tal uma atividade rápida?"],
   },
   microcheck: {
     icon: "💬",
-    examples: ["Como você está agora?", "Um micro check-in leva 10 segundos"],
+    examples: ["Como você tá agora?", "10 segundos pra sentir como está"],
   },
   closure: {
     icon: "🌅",
-    examples: ["Fechar seu dia leva menos de 20 segundos", "Hora de encerrar o dia com gratidão"],
+    examples: ["Encerrar o dia leva menos de 20 segundos", "Hora de fechar o dia com calma"],
   },
   support: {
     icon: "🤝",
-    examples: ["Hoje talvez valha desacelerar", "Uma mensagem de apoio está esperando por você"],
+    examples: ["Talvez hoje valha desacelerar", "Uma mensagem de apoio está esperando por você"],
   },
 };

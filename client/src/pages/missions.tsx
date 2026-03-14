@@ -164,7 +164,7 @@ export default function MissionCenterPage() {
         <div className="flex-1">
           <h1 className="text-lg font-semibold">Pra Você</h1>
           <p className="text-xs text-muted-foreground">
-            Atividades de autocuidado e Pontos Solares
+            Pequenas ações de cuidado escolhidas pra você
           </p>
         </div>
         {/* Solar Points badge */}
@@ -195,7 +195,7 @@ export default function MissionCenterPage() {
           </div>
           {completedCount === totalMissions && totalMissions > 0 && (
             <p className="text-xs text-emerald-600 font-medium mt-2 text-center">
-              🎉 Todas as missões concluídas! Parabéns!
+              🎉 Você completou tudo! Parabéns!
             </p>
           )}
         </motion.section>
@@ -252,7 +252,7 @@ export default function MissionCenterPage() {
           className="mt-5 glass-card rounded-2xl p-4"
         >
           <p className="text-xs font-semibold text-muted-foreground mb-2">
-            Constância — últimos 10 dias
+            Constância — seus últimos 10 dias
           </p>
           <ConstancyDots days={10} checkedInDates={checkedInDates} />
         </motion.section>

@@ -42,7 +42,7 @@ const authLimiter = rateLimit({
   limit: 20, // max 20 attempts per window
   standardHeaders: "draft-7",
   legacyHeaders: false,
-  message: { message: "Muitas tentativas. Tente novamente em alguns minutos." },
+  message: { message: "Muitas tentativas. Espere alguns minutos e tente de novo." },
 });
 
 // ---------------------------------------------------------------------------
@@ -59,7 +59,7 @@ export async function registerRoutes(
   app.post("/api/auth/login", authLimiter, async (req, res) => {
     const { username, password } = req.body;
     if (!username || typeof username !== "string" || !password || typeof password !== "string") {
-      return res.status(400).json({ message: "Email e senha são obrigatórios" });
+      return res.status(400).json({ message: "Preencha email e senha" });
     }
     if (username.length > 254 || password.length > 128) {
       return res.status(400).json({ message: "Credenciais inválidas" });
@@ -84,7 +84,7 @@ export async function registerRoutes(
   app.post("/api/auth/register", authLimiter, async (req, res) => {
     const { username, password, name, department } = req.body;
     if (!username || typeof username !== "string" || !password || typeof password !== "string" || !name || typeof name !== "string") {
-      return res.status(400).json({ message: "Nome, email e senha são obrigatórios" });
+      return res.status(400).json({ message: "Preencha nome, email e senha" });
     }
     if (username.length > 254 || password.length > 128 || name.length > 100) {
       return res.status(400).json({ message: "Dados inválidos" });
@@ -94,11 +94,11 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Email inválido" });
     }
     if (password.length < 8) {
-      return res.status(400).json({ message: "A senha deve ter pelo menos 8 caracteres" });
+      return res.status(400).json({ message: "A senha precisa ter pelo menos 8 caracteres" });
     }
     const existing = await storage.getUserByUsername(username);
     if (existing) {
-      return res.status(409).json({ message: "Este email já está cadastrado" });
+      return res.status(409).json({ message: "Esse email já está cadastrado" });
     }
     const user = await storage.createUser({
       username,
@@ -117,13 +117,13 @@ export async function registerRoutes(
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy(() => {
       res.clearCookie("juphd.sid");
-      return res.json({ message: "Sessão encerrada" });
+      return res.json({ message: "Sessão encerrada. Até logo!" });
     });
   });
 
   app.get("/api/auth/me", async (req, res) => {
     if (!req.session?.userId) {
-      return res.status(401).json({ message: "Autenticação necessária" });
+      return res.status(401).json({ message: "Você precisa estar logado" });
     }
     const user = await storage.getUser(req.session.userId);
     if (!user) {
@@ -239,7 +239,7 @@ export async function registerRoutes(
       }
 
       if (!hasCompletePulseAnswerSet(definition, data.answers)) {
-        return res.status(400).json({ message: "Responda todos os itens do pulse antes de enviar" });
+        return res.status(400).json({ message: "Responda todos os itens antes de enviar" });
       }
 
       const latestRecord = await storage.getLatestPulseResponseByUserId(data.userId, data.pulseKey);
@@ -247,11 +247,11 @@ export async function registerRoutes(
       const currentState = buildCurrentPulseState(latestResponse);
 
       if (!currentState.isDue) {
-        return res.status(409).json({ message: "Pulse já respondido neste ciclo" });
+        return res.status(409).json({ message: "Você já respondeu esse pulse neste ciclo" });
       }
 
       if (data.windowStart !== currentState.window.windowStart || data.windowEnd !== currentState.window.windowEnd) {
-        return res.status(409).json({ message: "Janela do pulse desatualizada. Atualize a tela e tente novamente." });
+        return res.status(409).json({ message: "A janela do pulse mudou. Atualize a tela e tente de novo." });
       }
 
       const answerRecord = toPulseAnswerRecord(data.answers);
@@ -382,7 +382,7 @@ export async function registerRoutes(
   app.post("/api/solar/award", requireAuth, async (req, res) => {
     const { action, points } = req.body;
     if (!action || typeof action !== "string" || typeof points !== "number") {
-      return res.status(400).json({ message: "Ação e pontos são obrigatórios" });
+      return res.status(400).json({ message: "Ação e pontos são necessários" });
     }
     const userId = req.userId!;
     const date = getWorkday(devNow());

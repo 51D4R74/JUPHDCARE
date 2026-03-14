@@ -70,7 +70,7 @@ export default function InsightCard({ discovery, className = "" }: InsightCardPr
 
       {/* Disclaimer */}
       <p className="text-[10px] text-muted-foreground/60 mt-2 pt-2 border-t border-border/20">
-        Observação baseada no seu histórico pessoal — não é diagnóstico.
+        Uma observação do seu histórico pessoal — não é diagnóstico.
       </p>
     </div>
   );
