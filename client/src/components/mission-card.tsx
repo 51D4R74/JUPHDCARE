@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +21,48 @@ type MissionCardProps = Readonly<{
   onComplete: (missionId: string) => void;
   className?: string;
 }>;
+
+/** Tiny sparkles that burst outward on mission completion. */
+function CompletionSparkles() {
+  const particles = Array.from({ length: 6 }, (_, i) => {
+    const angle = (i / 6) * 360;
+    const rad = (angle * Math.PI) / 180;
+    const dist = 28 + Math.random() * 16;
+    return { id: i, x: Math.cos(rad) * dist, y: Math.sin(rad) * dist };
+  });
+
+  return (
+    <AnimatePresence>
+      {particles.map((p) => (
+        <motion.span
+          key={p.id}
+          initial={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+          animate={{ opacity: 0, scale: 0.3, x: p.x, y: p.y }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.55, ease: "easeOut" }}
+          className="pointer-events-none absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full"
+          style={{ backgroundColor: p.id % 2 === 0 ? "hsl(var(--brand-gold))" : "hsl(var(--warmth-coral))" }}
+        />
+      ))}
+    </AnimatePresence>
+  );
+}
+const ENCOURAGEMENTS = [
+  "Bom pra você! ☀️",
+  "Pequeno gesto, grande cuidado.",
+  "Isso conta mais do que parece.",
+  "Você merece esse momento.",
+  "Um passo de cada vez.",
+  "Cuidar de si é coragem.",
+] as const;
+
+function pickEncouragement(missionId: string): string {
+  let hash = 0;
+  for (let i = 0; i < missionId.length; i++) {
+    hash = Math.trunc((hash << 5) - hash + (missionId.codePointAt(i) ?? 0));
+  }
+  return ENCOURAGEMENTS[Math.abs(hash) % ENCOURAGEMENTS.length];
+}
 
 export default function MissionCard({
   mission,
@@ -51,6 +93,7 @@ export default function MissionCard({
       <CardContent className="flex items-center gap-3 p-4">
         {/* Icon / check circle */}
         <div className="relative flex-shrink-0">
+          {animating && <CompletionSparkles />}
           <motion.div
             animate={isDone ? { scale: [1, 1.2, 1], backgroundColor: "hsl(var(--score-good))" } : {}}
             transition={{ duration: 0.3 }}
@@ -95,6 +138,19 @@ export default function MissionCard({
           +{mission.points} ☀️
         </motion.div>
       </CardContent>
+      <AnimatePresence>
+        {animating && (
+          <motion.p
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="px-4 pb-3 text-xs text-warmth-coral font-medium text-center"
+          >
+            {pickEncouragement(mission.id)}
+          </motion.p>
+        )}
+      </AnimatePresence>
     </Card>
   );
 }

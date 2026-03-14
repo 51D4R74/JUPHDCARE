@@ -65,10 +65,16 @@ export default function ConstancyDots({
 
   const streak = useMemo(() => computeStreak(checkedInDates), [checkedInDates]);
   const milestone = STREAK_MILESTONES.find((m) => streak >= m);
+  const hasHalo = streak >= 7;
 
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
-      <div className="flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-3 py-1.5 shadow-sm">
+      <div
+        className={
+          "flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-3 py-1.5 shadow-sm transition-shadow duration-500" +
+          (hasHalo ? " ring-2 ring-brand-gold/30 shadow-[0_0_12px_hsl(var(--brand-gold)/0.25)]" : "")
+        }
+      >
         {ordered.map((day, i) => (
           <motion.div
             key={day.date}
