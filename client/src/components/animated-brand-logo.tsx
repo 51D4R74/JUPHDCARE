@@ -40,7 +40,7 @@ export default function AnimatedBrandLogo({
     >
       <motion.img
         src="/logoCARE.png"
-        alt="Lumina"
+        alt="JuPHD"
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
@@ -54,7 +54,7 @@ export default function AnimatedBrandLogo({
             className={(compact ? "text-base" : "text-3xl") + " font-bold tracking-[-0.04em]"}
             style={{ color: palette.text }}
           >
-            Lumina
+            JuPHD
           </h1>
           <p
             className={(compact ? "text-[10px]" : "text-xs") + " font-medium tracking-[0.08em] uppercase opacity-70"}

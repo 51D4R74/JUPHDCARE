@@ -20,7 +20,7 @@ export default function ChatbotDrawer({ userId }: ChatbotDrawerProps) {
       id: "welcome",
       role: "assistant",
       content:
-        "Olá! Sou a assistente da Lumina. Posso tirar dúvidas sobre saúde mental no trabalho, riscos psicossociais ou ajudar você a entender seus sentimentos. Como posso ajudar?",
+        "Olá! Sou a assistente da JuPHD. Posso tirar dúvidas sobre saúde mental no trabalho, riscos psicossociais ou ajudar você a entender seus sentimentos. Como posso ajudar?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -110,7 +110,7 @@ export default function ChatbotDrawer({ userId }: ChatbotDrawerProps) {
             <div className="flex items-center justify-between border-b px-4 py-3">
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-brand-teal" />
-                  <span className="text-sm font-medium">Assistente Lumina</span>
+                  <span className="text-sm font-medium">Assistente JuPHD</span>
               </div>
               <Button
                 type="button"

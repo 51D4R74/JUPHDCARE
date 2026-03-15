@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, Phone, AlertTriangle, ChevronLeft, Heart,
   Users, Eye, Lock, Scale, Weight, UserX,
   Headphones, Sun, MessageCircleHeart, Sparkles, ShieldAlert,
-  Ban, Siren, X, BookOpen, FileText, BadgeAlert
+  Ban, Siren, X, BookOpen, FileText, BadgeAlert, Paperclip
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,6 @@ const severityOptions: ReadonlyArray<{
   readonly colorClass: string;
   readonly bgClass: string;
 }> = [
-  { value: "low", label: "Baixo", colorClass: "bg-brand-teal", bgClass: "from-brand-teal/18 to-brand-teal/5" },
   { value: "moderate", label: "Moderado", colorClass: "bg-score-moderate", bgClass: "from-score-moderate/18 to-score-moderate/5" },
   { value: "high", label: "Alto", colorClass: "bg-score-attention", bgClass: "from-score-attention/18 to-score-attention/5" },
   { value: "emergency", label: "Emergência", colorClass: "bg-score-critical", bgClass: "from-score-critical/18 to-score-critical/5" },
@@ -72,6 +71,9 @@ export default function DenunciaPage() {
   const [severity, setSeverity] = useState<SeverityLevel | "">("");
   const [occurrenceWindow, setOccurrenceWindow] = useState<OccurrenceWindow | "">("");
   const [location, setLocation] = useState("");
+  const [aggressorName, setAggressorName] = useState("");
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [followUpRequested, setFollowUpRequested] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showCrisis, setShowCrisis] = useState(false);
@@ -86,6 +88,8 @@ export default function DenunciaPage() {
     setSeverity("");
     setOccurrenceWindow("");
     setLocation("");
+    setAggressorName("");
+    setAttachments([]);
     setFollowUpRequested(true);
   }
 
@@ -155,7 +159,8 @@ export default function DenunciaPage() {
         severity: isAnonymous ? severity : null,
         occurrenceWindow: isFormal ? occurrenceWindow : null,
         location: isFormal ? location.trim() || null : null,
-        peopleInvolved: null,
+        peopleInvolved: isFormal ? aggressorName.trim() || null : null,
+        attachmentCount: isFormal ? attachments.length : 0,
         followUpRequested: isFormal ? followUpRequested : false,
       });
       toast({
@@ -474,6 +479,58 @@ export default function DenunciaPage() {
                       className="rounded-xl border-border/40 bg-background/40"
                       data-testid="input-report-location"
                     />
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-sm font-medium">Nome do agressor <span className="text-muted-foreground font-normal">opcional</span></p>
+                    <Input
+                      value={aggressorName}
+                      onChange={(e) => setAggressorName(e.target.value)}
+                      placeholder="Se souber e quiser informar"
+                      className="rounded-xl border-border/40 bg-background/40"
+                      data-testid="input-report-aggressor"
+                    />
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-sm font-medium">Anexar arquivo <span className="text-muted-foreground font-normal">opcional</span></p>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx,.txt"
+                      className="hidden"
+                      data-testid="input-report-file"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (files) setAttachments((prev) => [...prev, ...Array.from(files)]);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-2 rounded-xl border border-dashed border-border/50 bg-background/40 px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:border-brand-navy/30 transition-colors w-full"
+                    >
+                      <Paperclip className="w-4 h-4" />
+                      Adicionar foto, print ou documento
+                    </button>
+                    {attachments.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {attachments.map((file, i) => (
+                          <div key={file.name + String(i)} className="flex items-center justify-between rounded-lg bg-background/40 px-3 py-2 text-xs">
+                            <span className="truncate flex-1">{file.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
+                              className="ml-2 text-muted-foreground hover:text-score-critical"
+                              aria-label="Remover arquivo"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : null}

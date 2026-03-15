@@ -9,6 +9,7 @@
 import { motion } from "framer-motion";
 import { Settings } from "lucide-react";
 import AnimatedBrandLogo from "@/components/animated-brand-logo";
+import ConstancyDots from "@/components/constancy-dots";
 import SolarPointsBadge from "@/components/solar-points-badge";
 import NotificationBadge from "@/components/notification-badge";
 import { type TodayScores, getDomainNarrative, getDomainMeta, DOMAIN_WARM_NAMES } from "@/lib/score-engine";
@@ -23,6 +24,7 @@ type SkyHeroProps = Readonly<{
   firstName: string;
   scores: TodayScores;
   solarPoints: number;
+  checkedInDates: ReadonlyArray<string>;
   onOpenNotifications: () => void;
   onOpenSettings: () => void;
   onTapLumina: () => void;
@@ -77,6 +79,7 @@ export default function SkyHero({
   firstName,
   scores,
   solarPoints,
+  checkedInDates,
   onOpenNotifications,
   onOpenSettings,
   onTapLumina,
@@ -95,7 +98,7 @@ export default function SkyHero({
     : "Como você está hoje?";
 
   return (
-    <section className="relative w-full" style={{ minHeight: "56vh" }}>
+    <section className="relative w-full min-h-[34svh] sm:min-h-[42vh]">
       {/* Sky photo background */}
       <motion.img
         key={hero.src}
@@ -142,7 +145,7 @@ export default function SkyHero({
       </div>
 
       {/* Hero content — bottom-anchored */}
-      <div className="relative z-10 flex h-full flex-col items-center justify-end px-4 pb-6" style={{ minHeight: "calc(56vh - 60px)" }}>
+      <div className="relative z-10 flex h-full flex-col items-center justify-end px-4 pb-6 pt-10 sm:pb-8" style={{ minHeight: "calc(34svh - 60px)" }}>
         {/* Domain pills */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -170,11 +173,20 @@ export default function SkyHero({
           {headline}
         </motion.h1>
 
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.34, duration: 0.45 }}
+          className="mt-3"
+        >
+          <ConstancyDots checkedInDates={checkedInDates} days={7} variant="hero" />
+        </motion.div>
+
         {/* Lumina narrative line */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
+          transition={{ delay: 0.42, duration: 0.5 }}
           className="mt-2 max-w-xs text-center text-base leading-relaxed text-white/80"
           style={{ textShadow: "0 1px 4px rgba(0,0,0,0.25)" }}
         >
@@ -188,7 +200,7 @@ export default function SkyHero({
             onClick={onTapLumina}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.55, duration: 0.4, type: "spring", stiffness: 300, damping: 22 }}
+            transition={{ delay: 0.58, duration: 0.4, type: "spring", stiffness: 300, damping: 22 }}
             className="glass-sky-cta mt-4 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-transform active:scale-95"
           >
             ✦ {luminaMessage.cta}

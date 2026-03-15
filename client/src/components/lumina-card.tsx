@@ -82,7 +82,7 @@ export default function LuminaCard({
       <div
         className={
           featured
-            ? "relative flex min-h-[280px] flex-col items-center px-6 py-7 text-center sm:min-h-[320px] sm:px-8 sm:py-8"
+            ? "relative flex min-h-[54svh] flex-col items-center justify-center px-6 py-8 text-center sm:min-h-[420px] sm:px-8 sm:py-10"
             : "relative flex items-start gap-3.5 px-4 py-4"
         }
       >
@@ -92,12 +92,12 @@ export default function LuminaCard({
 
             <div className="mt-4 flex items-center gap-2">
               <span className="text-sm font-semibold tracking-[0.22em] text-brand-teal">
-                LUMINA
+                JUPHD
               </span>
               <Sparkles className="h-4 w-4 text-brand-teal/60" />
             </div>
 
-            <p className="mt-4 max-w-xl text-[1.05rem] leading-7 text-foreground sm:text-lg">
+            <p className="mt-5 max-w-xl text-[1.08rem] leading-8 text-foreground sm:text-lg">
               {msg.text}
             </p>
 
@@ -105,7 +105,7 @@ export default function LuminaCard({
               type="button"
               onClick={onTap}
               className={
-                "mt-6 inline-flex min-h-12 items-center gap-2 rounded-2xl " +
+                "mt-8 inline-flex min-h-12 items-center gap-2 rounded-2xl " +
                 "bg-brand-teal/10 px-5 py-3 text-base font-medium text-brand-teal " +
                 "transition-colors hover:bg-brand-teal/16 active:bg-brand-teal/20"
               }
@@ -121,7 +121,7 @@ export default function LuminaCard({
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex items-center gap-1.5">
                 <span className="text-xs font-semibold tracking-wide text-brand-teal">
-                  Lumina
+                  JuPHD
                 </span>
                 <Sparkles className="h-3 w-3 text-brand-teal/60" />
               </div>
@@ -160,7 +160,7 @@ function LuminaAvatar({ size }: Readonly<{ size: number }>) {
     >
       <img
         src="/logoCARE.png"
-        alt="Lumina"
+        alt="JuPHD"
         className="h-full w-full rounded-full object-cover"
         style={{ filter: "drop-shadow(0 2px 8px rgba(42,166,166,0.18))" }}
       />

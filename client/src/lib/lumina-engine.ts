@@ -24,11 +24,11 @@ const MESSAGES: Record<LuminaContext, readonly LuminaMessage[]> = {
   dashboard: [
     {
       text: "Vi seus sinais de hoje — quer conversar sobre o que notei?",
-      cta: "Falar com Lumina",
+      cta: "Falar com JuPHD",
     },
     {
       text: "Como foi até agora? Quero entender melhor o seu momento.",
-      cta: "Contar pra Lumina",
+      cta: "Contar pra JuPHD",
     },
     {
       text: "Algo chamou minha atenção hoje. Posso compartilhar?",

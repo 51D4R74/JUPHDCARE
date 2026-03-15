@@ -11,7 +11,6 @@ import SkyHero from "@/components/sky-hero";
 import NotificationDrawer from "@/components/notification-drawer";
 import InlineCheckin from "@/components/inline-checkin";
 import LuminaCard from "@/components/lumina-card";
-import ConstancyDots from "@/components/constancy-dots";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { fetchCurrentRelationalPulse, submitRelationalPulse } from "@/lib/pulse-client";
@@ -430,7 +429,7 @@ function ReminderActivationCard({ onEnable }: Readonly<{ onEnable: () => void }>
               Ative o lembrete do check-in
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Quando o check-in do dia abrir, a Lumina pode te avisar sem você precisar caçar a tela.
+              Quando o check-in do dia abrir, a JuPHD pode te avisar sem você precisar caçar a tela.
             </p>
             <Button type="button" onClick={onEnable} className="mt-3 rounded-xl bg-brand-teal hover:bg-brand-teal/90">
               Ativar lembretes
@@ -457,7 +456,7 @@ function InstallAppCard({ onInstall }: Readonly<{ onInstall: () => void }>) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">
-              Instale a Lumina como app
+              Instale a JuPHD como app
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               Assim ela abre direto no celular, em tela cheia, com menos atrito no seu dia a dia.
@@ -701,7 +700,7 @@ function useCheckinReminderNotification(
     }
 
     const reminder = new Notification("Seu check-in de hoje está pronto", {
-      body: "Leva menos de 1 minuto. Abra a Lumina e responda no melhor momento do seu dia.",
+      body: "Leva menos de 1 minuto. Abra a JuPHD e responda no melhor momento do seu dia.",
       icon: "/favicon.png",
       badge: "/favicon.png",
       tag: `checkin-${today}`,
@@ -768,7 +767,6 @@ export default function DashboardPage() {
   const checkedInDates = history.map((h) => h.date);
 
   const checkedIn = scores.hasCheckedIn || justCompleted;
-  const isFirstVisit = !checkedIn && history.length === 0;
   const CRISIS_THRESHOLD = 25;
   const hasCrisisSignal = checkedIn && Object.values(scores.domainScores).some(
     (s) => s < CRISIS_THRESHOLD,
@@ -925,6 +923,7 @@ export default function DashboardPage() {
         firstName={firstName}
         scores={scores}
         solarPoints={solarPoints}
+        checkedInDates={checkedInDates}
         onOpenNotifications={() => setDrawerOpen(true)}
         onOpenSettings={() => navigate("/settings")}
         onTapLumina={() => navigate("/support")}
@@ -936,13 +935,22 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      <main className="relative z-10 max-w-lg mx-auto px-4 pb-24 pt-5">
+      <main className="relative z-10 mx-auto max-w-lg px-4 pb-24 pt-5">
+        {/* Lumina — permanent AI companion card (AI sprint: swap engine for live RAG call) */}
+        <LuminaCard
+          context={hasCrisisSignal ? "dashboard-low" : "dashboard"}
+          delay={0.32}
+          featured
+          className="relative z-10"
+          onTap={() => navigate("/support")}
+        />
+
         {/* Inline check-in OR post-check-in celebration */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className={checkedIn ? "mt-4" : "mt-4 rounded-[30px] ring-2 ring-brand-gold/20 ring-offset-4 ring-offset-background"}
+          transition={{ delay: 0.38 }}
+          className={checkedIn ? "mt-5" : "mt-5 rounded-[30px] ring-2 ring-brand-gold/20 ring-offset-4 ring-offset-background"}
         >
           {checkedIn ? null : (
             <div className="mb-3 flex items-center justify-between rounded-2xl border border-brand-gold/20 bg-brand-gold/8 px-4 py-2.5">
@@ -951,7 +959,7 @@ export default function DashboardPage() {
                   Check-in de hoje
                 </p>
                 <p className="text-sm text-foreground">
-                  Já está pronto aqui na home.
+                  Já está pronto aqui no início.
                 </p>
               </div>
               <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-brand-navy">
@@ -978,40 +986,6 @@ export default function DashboardPage() {
         {shouldOfferInstall ? (
           <InstallAppCard onInstall={handleInstallApp} />
         ) : null}
-
-        {/* Constancy dots */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.38 }}
-          className="mt-4 flex justify-center"
-        >
-          <ConstancyDots checkedInDates={checkedInDates} />
-        </motion.div>
-
-        {/* First-visit welcome */}
-        {isFirstVisit && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="mt-4 rounded-2xl border border-primary/10 bg-card p-5 text-center shadow-sm"
-          >
-            <p className="text-xl font-semibold tracking-[-0.03em]">Boas-vindas à Lumina</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Seu primeiro check-in leva menos de 1 minuto. Vamos?
-            </p>
-          </motion.section>
-        )}
-
-        {/* Lumina — permanent AI companion card (AI sprint: swap engine for live RAG call) */}
-        <LuminaCard
-          context={hasCrisisSignal ? "dashboard-low" : "dashboard"}
-          delay={0.4}
-          featured
-          className="mt-4"
-          onTap={() => navigate("/support")}
-        />
 
         {/* Discovery card — 1 private insight from correlation engine */}
         {checkedIn && featuredDiscovery && (
