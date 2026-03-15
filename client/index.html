@@ -17,6 +17,17 @@
   </head>
   <body>
     <div id="root"></div>
+    <script type="module">
+      // Kill stale dev service workers before app loads
+      if (location.hostname === "localhost" && "serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        regs.forEach((r) => r.unregister());
+        if (typeof caches !== "undefined") {
+          const keys = await caches.keys();
+          keys.forEach((n) => caches.delete(n));
+        }
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

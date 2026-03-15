@@ -14,7 +14,7 @@ import DevToolbar from "@/components/dev-toolbar";
 const LoginPage = lazy(() => import("@/pages/login"));
 const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const CheckInPage = lazy(() => import("@/pages/checkin"));
-const ProtecaoPage = lazy(() => import("@/pages/protecao"));
+const DenunciaPage = lazy(() => import("@/pages/denuncia"));
 const MissionCenterPage = lazy(() => import("@/pages/missions"));
 const SupportCenterPage = lazy(() => import("@/pages/support"));
 const MeuCuidadoPage = lazy(() => import("@/pages/meu-cuidado"));
@@ -75,8 +75,8 @@ function Router() {
       <Route path="/checkin">
         {() => <ProtectedRoute component={CheckInPage} />}
       </Route>
-      <Route path="/protecao">
-        {() => <ProtectedRoute component={ProtecaoPage} />}
+      <Route path="/denuncia">
+        {() => <ProtectedRoute component={DenunciaPage} />}
       </Route>
       <Route path="/missions">
         {() => <ProtectedRoute component={MissionCenterPage} />}

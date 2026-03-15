@@ -29,7 +29,8 @@ import {
 
 // ── Modo Respiro state ────────────────────────────
 
-const RESPIRO_KEY = "juphdcare_respiro";
+const RESPIRO_KEY = "lumina_respiro";
+const LEGACY_RESPIRO_KEY = "juphdcare_respiro";
 
 export type CareLevel = 1 | 2 | 3;
 
@@ -60,7 +61,7 @@ function defaultRespiroState(): RespiroState {
 
 function readRespiroState(): RespiroState {
   try {
-    const raw = localStorage.getItem(RESPIRO_KEY);
+    const raw = localStorage.getItem(RESPIRO_KEY) ?? localStorage.getItem(LEGACY_RESPIRO_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as Partial<RespiroState>;
       return { ...defaultRespiroState(), ...parsed };
@@ -71,6 +72,7 @@ function readRespiroState(): RespiroState {
 
 function writeRespiroState(state: RespiroState): void {
   localStorage.setItem(RESPIRO_KEY, JSON.stringify(state));
+  localStorage.removeItem(LEGACY_RESPIRO_KEY);
 }
 
 /** Check if Modo Respiro should be active. Auto-entry + auto-exit logic. */
@@ -221,11 +223,12 @@ export function escalateCareLevel(): EscalationAction {
 
 // ── Favorites ─────────────────────────────────────
 
-const FAVORITES_KEY = "juphdcare_support_favorites";
+const FAVORITES_KEY = "lumina_support_favorites";
+const LEGACY_FAVORITES_KEY = "juphdcare_support_favorites";
 
 function readFavorites(): Set<string> {
   try {
-    const raw = localStorage.getItem(FAVORITES_KEY);
+    const raw = localStorage.getItem(FAVORITES_KEY) ?? localStorage.getItem(LEGACY_FAVORITES_KEY);
     if (raw) return new Set(JSON.parse(raw) as string[]);
   } catch (e: unknown) { console.warn("Failed to read favorites:", e); }
   return new Set();
@@ -233,6 +236,7 @@ function readFavorites(): Set<string> {
 
 function writeFavorites(favs: Set<string>): void {
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favs)));
+  localStorage.removeItem(LEGACY_FAVORITES_KEY);
 }
 
 export function toggleFavorite(messageId: string): boolean {
@@ -258,11 +262,12 @@ export function getFavoriteMessages(): SupportMessage[] {
 
 // ── Message seen history ──────────────────────────
 
-const SEEN_KEY = "juphdcare_support_seen";
+const SEEN_KEY = "lumina_support_seen";
+const LEGACY_SEEN_KEY = "juphdcare_support_seen";
 
 function readSeen(): string[] {
   try {
-    const raw = localStorage.getItem(SEEN_KEY);
+    const raw = localStorage.getItem(SEEN_KEY) ?? localStorage.getItem(LEGACY_SEEN_KEY);
     if (raw) return JSON.parse(raw) as string[];
   } catch (e: unknown) { console.warn("Failed to read seen messages:", e); }
   return [];
@@ -273,6 +278,7 @@ function recordSeen(messageId: string): void {
   // Keep last 20 to avoid localStorage bloat
   const updated = [messageId, ...seen.filter((id) => id !== messageId)].slice(0, 20);
   localStorage.setItem(SEEN_KEY, JSON.stringify(updated));
+  localStorage.removeItem(LEGACY_SEEN_KEY);
 }
 
 // ── Selection engine ──────────────────────────────

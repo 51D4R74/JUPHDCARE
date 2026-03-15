@@ -34,7 +34,7 @@ const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toStr
 app.use(
   session({
     secret: sessionSecret,
-    name: "juphd.sid",
+    name: "lumina.sid",
     resave: false,
     saveUninitialized: false,
     cookie: {

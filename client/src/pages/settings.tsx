@@ -1,7 +1,7 @@
 /**
  * Settings — notification preferences + profile section.
  *
- * Persists to localStorage key `juphdcare_settings`.
+ * Persists to localStorage key `lumina_settings`.
  * All UI text in PT-BR.
  */
 
@@ -22,7 +22,8 @@ import type { NotificationType } from "@/lib/notification-engine";
 
 // ── Settings storage ──────────────────────────────
 
-const SETTINGS_KEY = "juphdcare_settings";
+const SETTINGS_KEY = "lumina_settings";
+const LEGACY_SETTINGS_KEY = "juphdcare_settings";
 
 export interface NotificationPreferences {
   enabled: boolean;
@@ -56,7 +57,7 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 export function loadSettings(): AppSettings {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
+    const raw = localStorage.getItem(SETTINGS_KEY) ?? localStorage.getItem(LEGACY_SETTINGS_KEY);
     if (!raw) return structuredClone(DEFAULT_SETTINGS);
     return { ...structuredClone(DEFAULT_SETTINGS), ...JSON.parse(raw) };
   } catch (e: unknown) {
@@ -67,6 +68,7 @@ export function loadSettings(): AppSettings {
 
 export function saveSettings(settings: AppSettings): void {
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  localStorage.removeItem(LEGACY_SETTINGS_KEY);
 }
 
 // ── Notification type labels ──────────────────────

@@ -1,7 +1,7 @@
 /**
  * PanicButton — always-visible red FAB that navigates to the Denúncia page.
  *
- * Fixed bottom-left, above bottom nav. Tapping navigates to /protecao
+ * Fixed bottom-left, above bottom nav. Tapping navigates to /denuncia
  * where the user can file anonymous reports.
  *
  * Design rationale: victims rarely find courage to report — the
@@ -18,7 +18,7 @@ export default function PanicButton() {
   return (
     <motion.button
       type="button"
-      onClick={() => navigate("/protecao")}
+      onClick={() => navigate("/denuncia")}
       className="fixed bottom-20 right-4 z-30 w-14 h-14 rounded-full bg-red-600 shadow-lg shadow-red-600/30 flex items-center justify-center hover:bg-red-700 active:scale-95 transition-all"
       whileTap={{ scale: 0.9 }}
       aria-label="Denúncia — relatar situação"

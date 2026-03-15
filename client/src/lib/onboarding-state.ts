@@ -4,12 +4,15 @@
  * remains in the main bundle.
  */
 
-const ONBOARDED_KEY = "juphdcare_onboarded";
+const ONBOARDED_KEY = "lumina_onboarded";
+const LEGACY_ONBOARDED_KEY = "juphdcare_onboarded";
 
 export function hasCompletedOnboarding(): boolean {
-  return localStorage.getItem(ONBOARDED_KEY) === "true";
+  return localStorage.getItem(ONBOARDED_KEY) === "true"
+    || localStorage.getItem(LEGACY_ONBOARDED_KEY) === "true";
 }
 
 export function markOnboardingComplete(): void {
   localStorage.setItem(ONBOARDED_KEY, "true");
+  localStorage.removeItem(LEGACY_ONBOARDED_KEY);
 }

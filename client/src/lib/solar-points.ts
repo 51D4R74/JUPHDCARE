@@ -53,11 +53,12 @@ export type PointAction =
 
 // ── Storage ───────────────────────────────────────
 
-const STORAGE_KEY = "juphdcare_solar_points";
+const STORAGE_KEY = "lumina_solar_points";
+const LEGACY_STORAGE_KEY = "juphdcare_solar_points";
 
 function readState(): SolarPointsState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
     if (raw) return JSON.parse(raw) as SolarPointsState;
   } catch (e: unknown) {
     console.warn("Corrupted solar points state:", e);
@@ -67,6 +68,7 @@ function readState(): SolarPointsState {
 
 function writeState(state: SolarPointsState): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
 function defaultState(): SolarPointsState {

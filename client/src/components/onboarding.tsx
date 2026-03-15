@@ -3,7 +3,7 @@
  *
  * Screens: Welcome → Sky & Halo → Scores → Missions → Let's go.
  * Shown on first login; skipped on subsequent sessions.
- * localStorage key: juphdcare_onboarded
+ * localStorage key: lumina_onboarded
  */
 
 import { useState, useCallback } from "react";
@@ -34,7 +34,7 @@ const SCREENS: OnboardingScreen[] = [
   {
     id: "welcome",
     title: "Seu companheiro de autocuidado",
-    subtitle: "A JuPhD acompanha seu bem-estar todos os dias, de um jeito acolhedor e privado. Tudo começa por aqui.",
+    subtitle: "A Lumina acompanha seu bem-estar todos os dias, de um jeito acolhedor e privado. Tudo começa por aqui.",
     visual: (
       <div className="flex flex-col items-center gap-4">
         <AnimatedBrandLogo size="hero" showWordmark />

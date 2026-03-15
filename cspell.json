@@ -11,7 +11,7 @@
     "lumina",
 
     // PT-BR terms not in standard dictionary (ASCII route/code forms or specialized)
-    "Protecao", "protecao",
+    "Protecao", "protecao", "Denuncia", "denuncia",
     "Gestao", "gestao",
     "Psicossociais", "psicossociais",
     "Psicossocial", "psicossocial",
@@ -119,6 +119,11 @@
 
     // Design benchmark references (code comments)
     "metaball", "Dribbble",
+
+    // Sky hero image engine terms
+    "fullbleed",
+    "radiante", "Radiante",
+    "resguardo", "Resguardo",
 
     // cSpell itself
     "streetsidesoftware"

@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import type { IStorage } from "./storage";
 import { requireAuth, requireOwner, requireRole } from "./middleware";
-import { insertCheckInSchema, insertMomentCheckInSchema, insertIncidentReportSchema, insertUserMissionSchema, submitPulseResponseSchema, type PulseResponse } from "@shared/schema";
+import { insertCheckInSchema, insertMomentCheckInSchema, insertUserMissionSchema, submitIncidentReportSchema, submitPulseResponseSchema, type PulseResponse } from "@shared/schema";
 import { getWorkday, getWorkdayDate, POINT_VALUES } from "@shared/constants";
 import { selectMonthlyChallenge, getMonthBounds } from "@shared/challenges";
 import { buildCurrentPulseState, getPulseDefinitionByKey, hasCompletePulseAnswerSet, parsePulseScoreSummary, scorePulseAnswers, toPulseAnswerRecord, type LatestPulseSnapshot } from "@shared/pulse-survey";
@@ -54,6 +54,11 @@ export async function registerRoutes(
   app: Express,
   storage: IStorage,
 ): Promise<Server> {
+  // ── Kill stale dev SW (self-destruct response) ───────────────────────
+  app.get("/dev-sw.js", (_req, res) => {
+    res.type("application/javascript").send("self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',()=>{self.registration.unregister();self.clients.matchAll().then(cs=>cs.forEach(c=>c.navigate(c.url)));});");
+  });
+
   // ── Auth (public, rate-limited) ──────────────────────────────────────
 
   app.post("/api/auth/login", authLimiter, async (req, res) => {
@@ -116,6 +121,7 @@ export async function registerRoutes(
 
   app.post("/api/auth/logout", (req, res) => {
     req.session.destroy(() => {
+      res.clearCookie("lumina.sid");
       res.clearCookie("juphd.sid");
       return res.json({ message: "Sessão encerrada. Até logo!" });
     });
@@ -128,6 +134,7 @@ export async function registerRoutes(
     const user = await storage.getUser(req.session.userId);
     if (!user) {
       req.session.destroy(() => {});
+      res.clearCookie("lumina.sid");
       return res.status(401).json({ message: "Usuário não encontrado" });
     }
     const { password: _, ...safeUser } = user;
@@ -359,7 +366,7 @@ export async function registerRoutes(
 
   app.post("/api/incidents", requireAuth, async (req, res) => {
     try {
-      const data = insertIncidentReportSchema.parse(req.body);
+      const data = submitIncidentReportSchema.parse(req.body);
       // Allow anonymous (userId can be null) but if set, must match session
       if (data.userId && data.userId !== req.userId) {
         return res.status(403).json({ message: "Acesso não autorizado" });

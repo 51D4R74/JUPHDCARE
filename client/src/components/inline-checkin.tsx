@@ -29,7 +29,8 @@ import { useToast } from "@/hooks/use-toast";
 
 // ── Persistence helpers ───────────────────────────
 
-const PARTIAL_KEY = "juphdcare_checkin_partial";
+const PARTIAL_KEY = "lumina_checkin_partial";
+const LEGACY_PARTIAL_KEY = "juphdcare_checkin_partial";
 
 interface PartialState {
   readonly date: string;
@@ -44,7 +45,7 @@ function todayISO(): string {
 
 function loadPartial(): PartialState | null {
   try {
-    const raw = localStorage.getItem(PARTIAL_KEY);
+    const raw = localStorage.getItem(PARTIAL_KEY) ?? localStorage.getItem(LEGACY_PARTIAL_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null) return null;
@@ -63,10 +64,12 @@ function loadPartial(): PartialState | null {
 
 function savePartial(state: PartialState): void {
   localStorage.setItem(PARTIAL_KEY, JSON.stringify(state));
+  localStorage.removeItem(LEGACY_PARTIAL_KEY);
 }
 
 function clearPartial(): void {
   localStorage.removeItem(PARTIAL_KEY);
+  localStorage.removeItem(LEGACY_PARTIAL_KEY);
 }
 
 // ── Slide variants (horizontal) ───────────────────

@@ -10,8 +10,12 @@ interface AuthUser {
 
 let currentUser: AuthUser | null = null;
 const listeners = new Set<() => void>();
+const AUTH_STORAGE_KEY = "lumina_user";
+const LEGACY_AUTH_STORAGE_KEY = "juphd_user";
 
-const stored = globalThis.window === undefined ? null : localStorage.getItem("juphd_user");
+const stored = globalThis.window === undefined
+  ? null
+  : localStorage.getItem(AUTH_STORAGE_KEY) ?? localStorage.getItem(LEGACY_AUTH_STORAGE_KEY);
 if (stored) {
   try { currentUser = JSON.parse(stored); } catch (e: unknown) { console.warn("Corrupt auth state:", e); }
 }
@@ -22,8 +26,13 @@ function emit() {
 
 function setUser(u: AuthUser | null) {
   currentUser = u;
-  if (u) localStorage.setItem("juphd_user", JSON.stringify(u));
-  else localStorage.removeItem("juphd_user");
+  if (u) {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(u));
+    localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
+  } else {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_AUTH_STORAGE_KEY);
+  }
   emit();
 }
 
@@ -59,14 +68,14 @@ function getSnapshot() {
 }
 
 export function useAuth() {
-  const user = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const authUser = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   return {
-    user,
+    user: authUser,
     setUser,
     logout,
     validateSession,
-    isAuthenticated: !!user,
-    isRH: user?.role === "rh",
+    isAuthenticated: !!authUser,
+    isRH: authUser?.role === "rh",
   };
 }

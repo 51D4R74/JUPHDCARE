@@ -1,17 +1,13 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { devNow } from "@shared/dev-clock";
 import {
   Sun, ChevronRight, MessageCircleHeart, BookOpen,
-  Heart, Settings, CheckCircle2,
-  Sparkles,
+  Heart, CheckCircle2,
+  Sparkles, BellRing, Download,
 } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import AnimatedBrandLogo from "@/components/animated-brand-logo";
-import { SKY_CONFIG } from "@/components/sky-header";
-import SolarPointsBadge from "@/components/solar-points-badge";
-import NotificationBadge from "@/components/notification-badge";
+import SkyHero from "@/components/sky-hero";
 import NotificationDrawer from "@/components/notification-drawer";
 import InlineCheckin from "@/components/inline-checkin";
 import LuminaCard from "@/components/lumina-card";
@@ -19,8 +15,7 @@ import ConstancyDots from "@/components/constancy-dots";
 import { useAuth } from "@/lib/auth";
 import { queryClient } from "@/lib/queryClient";
 import { fetchCurrentRelationalPulse, submitRelationalPulse } from "@/lib/pulse-client";
-import { type TodayScores, getDomainMeta, computeBaseline, getDomainNarrative, DOMAIN_WARM_NAMES } from "@/lib/score-engine";
-import { DAILY_STEPS, type ScoreDomainId } from "@/lib/checkin-data";
+import { type TodayScores } from "@/lib/score-engine";
 import { computeDiscoveries, DISCOVERY_MIN_RECORDS } from "@/lib/discovery-engine";
 import { POINT_VALUES } from "@/lib/mission-engine";
 import { useToast } from "@/hooks/use-toast";
@@ -73,6 +68,126 @@ const EMPTY_SCORES: TodayScores = {
   hasCheckedIn: false,
 };
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
+const PULSE_DISMISS_KEY = "lumina_dismissed_pulse_window";
+const LEGACY_PULSE_DISMISS_KEY = "juphdcare_dismissed_pulse_window";
+const CHECKIN_REMINDER_KEY = "lumina_checkin_reminder_date";
+const LEGACY_CHECKIN_REMINDER_KEY = "juphdcare_checkin_reminder_date";
+const SETTINGS_KEY = "lumina_settings";
+const LEGACY_SETTINGS_KEY = "juphdcare_settings";
+
+function todayKey(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function loadLastCheckinReminderDate(): string | null {
+  if (globalThis.window === undefined) {
+    return null;
+  }
+
+  return localStorage.getItem(CHECKIN_REMINDER_KEY) ?? localStorage.getItem(LEGACY_CHECKIN_REMINDER_KEY);
+}
+
+function saveLastCheckinReminderDate(date: string): void {
+  if (globalThis.window === undefined) {
+    return;
+  }
+
+  localStorage.setItem(CHECKIN_REMINDER_KEY, date);
+  localStorage.removeItem(LEGACY_CHECKIN_REMINDER_KEY);
+}
+
+function isStandaloneMode(): boolean {
+  if (globalThis.window === undefined) {
+    return false;
+  }
+
+  const nav = navigator as Navigator & { standalone?: boolean };
+  return globalThis.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
+}
+
+function canSendCheckinReminders(): boolean {
+  if (globalThis.window === undefined) {
+    return false;
+  }
+
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY) ?? localStorage.getItem(LEGACY_SETTINGS_KEY);
+    if (!raw) {
+      return true;
+    }
+
+    const parsed = JSON.parse(raw) as {
+      readonly notifications?: {
+        readonly enabled?: boolean;
+        readonly types?: { readonly microcheck?: boolean };
+        readonly quietHoursEnabled?: boolean;
+        readonly quietStart?: string;
+        readonly quietEnd?: string;
+      };
+    };
+
+    const notifications = parsed.notifications;
+    if (notifications?.enabled === false || notifications?.types?.microcheck === false) {
+      return false;
+    }
+
+    if (notifications?.quietHoursEnabled === true) {
+      const [startHour, startMinute] = (notifications.quietStart ?? "22:00").split(":").map(Number);
+      const [endHour, endMinute] = (notifications.quietEnd ?? "07:00").split(":").map(Number);
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const startMinutes = startHour * 60 + startMinute;
+      const endMinutes = endHour * 60 + endMinute;
+      const inQuietHours = startMinutes <= endMinutes
+        ? currentMinutes >= startMinutes && currentMinutes < endMinutes
+        : currentMinutes >= startMinutes || currentMinutes < endMinutes;
+
+      if (inQuietHours) {
+        return false;
+      }
+    }
+
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+function loadDismissedPulseWindow(): string | null {
+  if (globalThis.window === undefined) {
+    return null;
+  }
+
+  return localStorage.getItem(PULSE_DISMISS_KEY) ?? localStorage.getItem(LEGACY_PULSE_DISMISS_KEY);
+}
+
+function saveDismissedPulseWindow(windowStart: string | null): void {
+  if (globalThis.window === undefined) {
+  localStorage.removeItem(LEGACY_PULSE_DISMISS_KEY);
+    return;
+  }
+
+  if (windowStart === null) {
+    localStorage.removeItem(PULSE_DISMISS_KEY);
+    return;
+  }
+
+  localStorage.setItem(PULSE_DISMISS_KEY, windowStart);
+}
+
+function getActivePulseWindowId(state: CurrentPulseState): string {
+  if (state.isDue) {
+    return state.window.windowStart;
+  }
+
+  return state.latestResponse?.windowStart ?? state.window.windowStart;
+}
+
 
 
 function formatShortDate(date: string | null): string {
@@ -99,10 +214,6 @@ function getPulseCompletionCount(
   questionIds: readonly string[],
 ): number {
   return questionIds.filter((questionId) => answers[questionId] !== undefined).length;
-}
-
-function getHeaderBadgeLabel(scores: TodayScores): string {
-  return SKY_CONFIG[scores.skyState].label;
 }
 
 function getCheckInStatusCopy(justCompleted: boolean): { title: string; description: string } {
@@ -135,85 +246,22 @@ function getPulseCardTone(isDue: boolean): { container: string; badge: string; i
   };
 }
 
-function DashboardHeader({
-  firstName,
-  scores,
-  solarPoints,
-  onOpenNotifications,
-  onOpenSettings,
-}: Readonly<{
-  firstName: string;
-  scores: TodayScores;
-  solarPoints: number;
-  onOpenNotifications: () => void;
-  onOpenSettings: () => void;
-}>) {
-  return (
-    <header className="max-w-lg mx-auto px-4 pt-5">
-      {/* Slim controls bar */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="flex items-center justify-between"
-      >
-        <AnimatedBrandLogo size="compact" showWordmark={false} />
-        <div className="flex items-center gap-2">
-          <SolarPointsBadge points={solarPoints} />
-          <NotificationBadge onClick={onOpenNotifications} />
-          <button
-            onClick={onOpenSettings}
-            className="rounded-full border border-border/80 bg-card p-1.5 shadow-sm transition-colors hover:border-primary/20 hover:bg-primary/5"
-            aria-label="Configurações"
-          >
-            <Settings className="w-4 h-4 text-foreground/72" />
-          </button>
-        </div>
-      </motion.div>
-
-      {/* Hero greeting — breathing space */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.08, duration: 0.5 }}
-        className="relative mt-7 text-center"
-      >
-        {/* Companion breathing orb */}
-        <div
-          className="companion-breathing pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-44 w-44 rounded-full blur-2xl"
-          style={{ background: "radial-gradient(circle, hsl(var(--brand-gold) / 0.1), hsl(var(--brand-teal) / 0.05), transparent)" }}
-          aria-hidden="true"
-        />
-        <p className="relative text-[34px] font-semibold leading-tight tracking-[-0.04em] text-foreground">
-          {getGreeting()}, {firstName}
-        </p>
-        <p className="mx-auto mt-2.5 max-w-[20rem] text-base leading-relaxed text-muted-foreground/90">
-          Como você está hoje?
-        </p>
-        <motion.span
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.18 }}
-          className="mt-4 inline-flex items-center gap-1 rounded-full border border-primary/10 bg-primary/5 px-3 py-1 text-[11px] font-semibold tracking-[0.06em] text-primary/80"
-        >
-          {getHeaderBadgeLabel(scores)}
-        </motion.span>
-      </motion.div>
-    </header>
-  );
-}
-
 function PulseCard({
   pulseState,
   onOpen,
+  onDismiss,
+  canDismiss,
 }: Readonly<{
   pulseState: CurrentPulseState;
   onOpen: () => void;
+  onDismiss: () => void;
+  canDismiss: boolean;
 }>) {
   const tone = getPulseCardTone(pulseState.isDue);
-  const pulseDimensionEntries = pulseState.latestResponse
-    ? Object.entries(pulseState.latestResponse.scoreSummary.dimensionScores)
-    : [];
+  const estimatedMinutes = Math.round(pulseState.definition.estimatedSeconds / 60);
+  const bodyCopy = pulseState.isDue
+    ? `${pulseState.definition.description} ${getPulseLeadText(pulseState)} ${pulseState.definition.questions.length} itens, cerca de ${estimatedMinutes} minuto.`
+    : `Respondida neste ciclo. Ela reaparece na próxima janela mensal. ${getPulseLeadText(pulseState)}`;
 
   return (
     <motion.section
@@ -222,11 +270,7 @@ function PulseCard({
       transition={{ delay: 0.43 }}
       className="mt-4"
     >
-      <button
-        type="button"
-        onClick={onOpen}
-        className={`w-full rounded-2xl border bg-card px-4 py-4 text-left shadow-sm transition-colors ${tone.container}`}
-      >
+      <div className={`w-full rounded-2xl border bg-card px-4 py-4 text-left shadow-sm transition-colors ${tone.container}`}>
         <div className="flex items-start gap-3">
           <div className={`mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ${tone.icon}`}>
             <MessageCircleHeart className="h-5 w-5" />
@@ -235,69 +279,44 @@ function PulseCard({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Leitura mensal
+                  Pesquisa mensal
                 </p>
                 <p className="mt-1 text-base font-semibold tracking-[-0.02em] text-foreground">
                   {pulseState.definition.title}
                 </p>
               </div>
-              <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${tone.badge}`}>
-                {pulseState.isDue ? "Disponível" : "Concluído"}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${tone.badge}`}>
+                  {pulseState.isDue ? "Disponível" : "Respondida"}
+                </span>
+                {canDismiss ? (
+                  <button
+                    type="button"
+                    onClick={onDismiss}
+                    className="rounded-full px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    Dispensar
+                  </button>
+                ) : null}
+              </div>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {getPulseLeadText(pulseState)} {pulseState.definition.questions.length} itens, cerca de {Math.round(pulseState.definition.estimatedSeconds / 60)} minuto.
+              {bodyCopy}
             </p>
 
-            {pulseState.latestResponse && (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <div className="rounded-2xl border border-border/60 bg-background px-3 py-2.5">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Seu último score
-                  </p>
-                  <p className="mt-1 text-xl font-semibold tracking-[-0.03em] text-foreground">
-                    {pulseState.latestResponse.scoreSummary.overallScore}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Respondido em {formatShortDate(pulseState.latestResponse.windowStart)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/60 bg-background px-3 py-2.5">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Pontos solares
-                  </p>
-                  <p className="mt-1 text-xl font-semibold tracking-[-0.03em] text-foreground">
-                    +{POINT_VALUES.pulseSurvey}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Ao responder
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {pulseDimensionEntries.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {pulseDimensionEntries.map(([dimension, score]) => (
-                  <span
-                    key={dimension}
-                    className="rounded-full border border-border/60 bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
-                  >
-                    {PULSE_DIMENSION_LABELS[dimension as keyof typeof PULSE_DIMENSION_LABELS]}: {score}
-                  </span>
-                ))}
-              </div>
-            )}
-
             {pulseState.isDue && (
-              <div className="mt-3 flex items-center gap-2 text-sm font-medium text-brand-teal">
+              <button
+                type="button"
+                onClick={onOpen}
+                className="mt-3 flex items-center gap-2 text-sm font-medium text-brand-teal"
+              >
                 <span>Responder agora</span>
                 <ChevronRight className="h-4 w-4" />
-              </div>
+              </button>
             )}
           </div>
         </div>
-      </button>
+      </div>
     </motion.section>
   );
 }
@@ -308,11 +327,11 @@ function DashboardBottomNav({
   onNavigate: (path: string) => void;
 }>) {
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-20 glass-card border-t border-border/30">
+    <nav className="fixed bottom-0 inset-x-0 z-20 glass-nav-dark">
       <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-around">
         <button
           onClick={() => onNavigate("/dashboard")}
-          className="flex flex-col items-center gap-1 text-primary"
+          className="flex flex-col items-center gap-1 text-white"
           data-testid="nav-home"
         >
           <Sun className="w-5 h-5" />
@@ -320,7 +339,7 @@ function DashboardBottomNav({
         </button>
         <button
           onClick={() => onNavigate("/checkin")}
-          className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors"
           data-testid="nav-checkin"
         >
           <MessageCircleHeart className="w-5 h-5" />
@@ -328,7 +347,7 @@ function DashboardBottomNav({
         </button>
         <button
           onClick={() => onNavigate("/missions")}
-          className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors"
           data-testid="nav-missions"
         >
           <Sparkles className="w-5 h-5" />
@@ -336,7 +355,7 @@ function DashboardBottomNav({
         </button>
         <button
           onClick={() => onNavigate("/support")}
-          className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors"
           data-testid="nav-support"
         >
           <Heart className="w-5 h-5" />
@@ -344,7 +363,7 @@ function DashboardBottomNav({
         </button>
         <button
           onClick={() => onNavigate("/meu-cuidado")}
-          className="flex flex-col items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors"
           data-testid="nav-jornada"
         >
           <BookOpen className="w-5 h-5" />
@@ -355,11 +374,346 @@ function DashboardBottomNav({
   );
 }
 
-function getGreeting(): string {
-  const hour = devNow().getHours();
-  if (hour < 12) return "Bom dia";
-  if (hour < 18) return "Boa tarde";
-  return "Boa noite";
+// ── Extracted section components (reduces DashboardPage cognitive complexity) ──
+
+function CheckedInCard({ justCompleted, statusCopy }: Readonly<{
+  justCompleted: boolean;
+  statusCopy: { readonly title: string; readonly description: string };
+}>) {
+  return (
+    <motion.div
+      initial={justCompleted ? { scale: 0.92, opacity: 0 } : false}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      className="relative flex items-center gap-3 rounded-2xl border border-score-good/20 bg-card p-4 shadow-sm"
+    >
+      {justCompleted && <CelebrationParticles />}
+      <motion.div
+        initial={justCompleted ? { rotate: -90, scale: 0 } : false}
+        animate={{ rotate: 0, scale: 1 }}
+        transition={{ delay: 0.15, type: "spring", stiffness: 300, damping: 15 }}
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-score-good/12"
+      >
+        {justCompleted ? (
+          <Sparkles className="w-5 h-5 text-score-good" />
+        ) : (
+          <CheckCircle2 className="w-5 h-5 text-score-good" />
+        )}
+      </motion.div>
+      <div className="flex-1 min-w-0">
+        <p className="text-base font-semibold tracking-[-0.02em] text-foreground">
+          {statusCopy.title}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {statusCopy.description}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+function ReminderActivationCard({ onEnable }: Readonly<{ onEnable: () => void }>) {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.34 }}
+      className="mt-3"
+    >
+      <div className="rounded-2xl border border-brand-teal/20 bg-card px-4 py-4 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand-teal/10">
+            <BellRing className="h-5 w-5 text-brand-teal" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              Ative o lembrete do check-in
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Quando o check-in do dia abrir, a Lumina pode te avisar sem você precisar caçar a tela.
+            </p>
+            <Button type="button" onClick={onEnable} className="mt-3 rounded-xl bg-brand-teal hover:bg-brand-teal/90">
+              Ativar lembretes
+            </Button>
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+function InstallAppCard({ onInstall }: Readonly<{ onInstall: () => void }>) {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.36 }}
+      className="mt-3"
+    >
+      <div className="rounded-2xl border border-brand-navy/15 bg-card px-4 py-4 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand-navy/10">
+            <Download className="h-5 w-5 text-brand-navy" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              Instale a Lumina como app
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Assim ela abre direto no celular, em tela cheia, com menos atrito no seu dia a dia.
+            </p>
+            <Button type="button" variant="outline" onClick={onInstall} className="mt-3 rounded-xl border-brand-navy/20 text-brand-navy hover:bg-brand-navy/5">
+              Instalar app
+            </Button>
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+function DiscoveryCard({ discovery }: Readonly<{
+  discovery: { readonly text: string; readonly withCount: number };
+}>) {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.42 }}
+      className="mt-4 rounded-2xl border border-brand-teal/15 bg-card px-4 py-4 shadow-sm"
+    >
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-brand-teal/12">
+          <Sparkles className="h-4 w-4 text-brand-teal" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">
+            Descoberta privada
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-foreground">
+            {discovery.text}
+          </p>
+          <p className="mt-1.5 text-xs text-muted-foreground/70">
+            Baseado em {discovery.withCount} dias · Só você vê isso
+          </p>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+function DiscoveryProgressTeaser({ progress, threshold }: Readonly<{
+  progress: number;
+  threshold: number;
+}>) {
+  const remaining = threshold - progress;
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.42 }}
+      className="mt-4 rounded-2xl border border-border/60 bg-card px-4 py-3.5 shadow-sm"
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary/8">
+          <Sparkles className="h-3.5 w-3.5 text-primary/60" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {remaining} check-in{remaining > 1 ? "s" : ""} até sua primeira descoberta privada
+          </p>
+          <div className="mt-1.5 h-1 rounded-full bg-primary/10 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.round((progress / threshold) * 100)}%` }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              className="h-full rounded-full bg-primary/40"
+            />
+          </div>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+function CrisisSupportCTA({ onNavigate }: Readonly<{ onNavigate: () => void }>) {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.45 }}
+      className="mt-3"
+    >
+      <button
+        onClick={onNavigate}
+        className="flex w-full items-center gap-3 rounded-2xl border border-score-attention/20 bg-card p-4 text-left shadow-sm transition-colors hover:border-score-attention/30"
+        data-testid="button-crisis-support"
+      >
+        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-score-attention/14">
+          <Heart className="w-5 h-5 text-score-attention" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-base font-semibold tracking-[-0.02em]">Tô aqui se precisar.</p>
+          <p className="text-sm text-muted-foreground">
+            Apoio e acolhimento quando quiser
+          </p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+      </button>
+    </motion.section>
+  );
+}
+
+function PulseDialog({
+  pulseState,
+  open,
+  onOpenChange,
+  answers,
+  onAnswer,
+  answeredCount,
+  totalCount,
+  canSubmit,
+  isPending,
+  onSubmit,
+}: Readonly<{
+  pulseState: CurrentPulseState;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  answers: Readonly<Record<string, PulseAnswerValue>>;
+  onAnswer: (questionId: string, value: PulseAnswerValue) => void;
+  answeredCount: number;
+  totalCount: number;
+  canSubmit: boolean;
+  isPending: boolean;
+  onSubmit: () => void;
+}>) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl rounded-3xl border-border/70 px-0 pb-0 pt-0 sm:max-w-xl">
+        <DialogHeader className="border-b border-border/60 px-6 py-5">
+          <DialogTitle>{pulseState.definition.title}</DialogTitle>
+          <DialogDescription>
+            Responda pensando nas últimas duas semanas. A pesquisa é privada e ajuda a entender melhor seu momento de trabalho.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+          <div className="mb-4 flex items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Progresso do pulse
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {answeredCount} de {totalCount} itens respondidos
+              </p>
+            </div>
+            <span className="rounded-full bg-primary/8 px-3 py-1 text-xs font-semibold text-primary">
+              Até {formatShortDate(pulseState.window.windowEnd)}
+            </span>
+          </div>
+
+          <div className="space-y-4 pb-5">
+            {pulseState.definition.questions.map((question, index) => (
+              <section
+                key={question.id}
+                className="rounded-2xl border border-border/65 bg-background px-4 py-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {PULSE_DIMENSION_LABELS[question.dimension]}
+                    </p>
+                    <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">
+                      {index + 1}. {question.prompt}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {PULSE_RESPONSE_OPTIONS.map((option) => {
+                    const selected = answers[question.id] === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => onAnswer(question.id, option.value)}
+                        className={`rounded-2xl border px-3 py-3 text-left text-sm transition-colors ${selected ? "border-brand-teal/40 bg-brand-teal/10 text-foreground" : "border-border/60 bg-card text-muted-foreground hover:border-primary/20 hover:bg-primary/5 hover:text-foreground"}`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+
+        <DialogFooter className="border-t border-border/60 px-6 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Agora não
+          </Button>
+          <Button
+            type="button"
+            onClick={onSubmit}
+            disabled={!canSubmit || isPending}
+          >
+            {isPending ? "Enviando..." : "Concluir pulse"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function getInitialNotificationPermission(): NotificationPermission {
+  if (typeof Notification === "undefined") {
+    return "default";
+  }
+
+  return Notification.permission;
+}
+
+function useCheckinReminderNotification(
+  checkedIn: boolean,
+  permission: NotificationPermission,
+  lastDate: string | null,
+  onSent: (date: string) => void,
+) {
+  useEffect(() => {
+    if (checkedIn || permission !== "granted") {
+      return;
+    }
+
+    if (!canSendCheckinReminders()) {
+      return;
+    }
+
+    const today = todayKey();
+    if (lastDate === today) {
+      return;
+    }
+
+    const reminder = new Notification("Seu check-in de hoje está pronto", {
+      body: "Leva menos de 1 minuto. Abra a Lumina e responda no melhor momento do seu dia.",
+      icon: "/favicon.png",
+      badge: "/favicon.png",
+      tag: `checkin-${today}`,
+    });
+
+    reminder.onclick = () => {
+      globalThis.focus();
+    };
+
+    saveLastCheckinReminderDate(today);
+    onSent(today);
+  }, [checkedIn, lastDate, permission, onSent]);
 }
 
 export default function DashboardPage() {
@@ -370,9 +724,13 @@ export default function DashboardPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pulseDialogOpen, setPulseDialogOpen] = useState(false);
   const [pulseAnswers, setPulseAnswers] = useState<Record<string, PulseAnswerValue>>({});
+  const [dismissedPulseWindow, setDismissedPulseWindow] = useState<string | null>(() => loadDismissedPulseWindow());
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isStandalone, setIsStandalone] = useState(() => isStandaloneMode());
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(getInitialNotificationPermission);
+  const [lastCheckinReminderDate, setLastCheckinReminderDate] = useState<string | null>(() => loadLastCheckinReminderDate());
   // Track local completion to show celebration immediately (before server refetch)
   const [justCompleted, setJustCompleted] = useState(false);
-  const [expandedDomain, setExpandedDomain] = useState<ScoreDomainId | null>(null);
 
   const { data: scores = EMPTY_SCORES } = useQuery<TodayScores>({
     queryKey: ["/api/scores/user", userId, "today"],
@@ -425,6 +783,26 @@ export default function DashboardPage() {
     }
   }, [pulseDialogOpen, pulseState?.window.windowStart]);
 
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPromptEvent(event as BeforeInstallPromptEvent);
+    };
+
+    const handleAppInstalled = () => {
+      setInstallPromptEvent(null);
+      setIsStandalone(true);
+    };
+
+    globalThis.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    globalThis.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      globalThis.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      globalThis.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
   const submitPulseMutation = useMutation({
     mutationFn: async () => {
       if (!pulseState?.isDue) {
@@ -445,6 +823,8 @@ export default function DashboardPage() {
       await queryClient.invalidateQueries({ queryKey: ["/api/pulses/user", userId, "current"] });
       setPulseDialogOpen(false);
       setPulseAnswers({});
+      saveDismissedPulseWindow(null);
+      setDismissedPulseWindow(null);
       toast({
         title: "Leitura registrada",
         description: `Obrigado por compartilhar. Você ganhou ${POINT_VALUES.pulseSurvey} pontos solares ☀️`,
@@ -470,11 +850,53 @@ export default function DashboardPage() {
     setPulseAnswers((current) => ({ ...current, [questionId]: value }));
   }, []);
 
+  const handleDismissPulse = useCallback(() => {
+    if (!pulseState?.latestResponse) {
+      return;
+    }
+
+    const activeWindowId = getActivePulseWindowId(pulseState);
+    saveDismissedPulseWindow(activeWindowId);
+    setDismissedPulseWindow(activeWindowId);
+  }, [pulseState]);
+
+  const handleEnableReminders = useCallback(async () => {
+    if (typeof Notification === "undefined") {
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+
+    if (permission === "granted") {
+      toast({
+        title: "Lembretes ativados",
+        description: "Vamos te avisar quando o check-in do dia estiver disponível.",
+      });
+      return;
+    }
+
+    toast({
+      title: "Lembretes não ativados",
+      description: "Se quiser, você pode liberar depois nas permissões do navegador.",
+    });
+  }, [toast]);
+
+  const handleInstallApp = useCallback(async () => {
+    if (!installPromptEvent) {
+      return;
+    }
+
+    await installPromptEvent.prompt();
+    const choice = await installPromptEvent.userChoice;
+    if (choice.outcome === "accepted") {
+      setInstallPromptEvent(null);
+    }
+  }, [installPromptEvent]);
+
   const firstName = user?.name?.split(" ")[0] || "Colaborador";
 
-  const domains = useMemo(() => getDomainMeta(), []);
   const discoveries = useMemo(() => computeDiscoveries(discoveryHistory), [discoveryHistory]);
-  const baseline = useMemo(() => computeBaseline(discoveryHistory), [discoveryHistory]);
   const featuredDiscovery = discoveries.length > 0 ? discoveries[0] : null;
   const discoveryProgress = discoveryHistory.length;
   const pulseQuestionIds = pulseState?.definition.questions.map((question) => question.id) ?? [];
@@ -483,15 +905,29 @@ export default function DashboardPage() {
     && pulseAnsweredCount === pulseQuestionIds.length
     && pulseQuestionIds.length > 0;
   const checkInStatusCopy = getCheckInStatusCopy(justCompleted);
+  const activePulseWindowId = pulseState ? getActivePulseWindowId(pulseState) : null;
+  const shouldShowPulseCard = pulseState !== undefined && dismissedPulseWindow !== activePulseWindowId;
+  const shouldOfferReminderActivation = !checkedIn
+    && typeof Notification !== "undefined"
+    && notificationPermission !== "granted"
+    && canSendCheckinReminders();
+  const shouldOfferInstall = !isStandalone && installPromptEvent !== null;
+
+  const handleReminderSent = useCallback((date: string) => {
+    setLastCheckinReminderDate(date);
+  }, []);
+  useCheckinReminderNotification(checkedIn, notificationPermission, lastCheckinReminderDate, handleReminderSent);
 
   return (
-    <div className="min-h-screen gradient-sunrise">
-      <DashboardHeader
+    <div className="min-h-screen bg-background">
+      {/* Fullbleed sky hero */}
+      <SkyHero
         firstName={firstName}
         scores={scores}
         solarPoints={solarPoints}
         onOpenNotifications={() => setDrawerOpen(true)}
         onOpenSettings={() => navigate("/settings")}
+        onTapLumina={() => navigate("/support")}
       />
 
       <AnimatePresence>
@@ -500,124 +936,65 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      <main className="relative z-10 max-w-lg mx-auto px-4 pb-24 pt-3">
+      <main className="relative z-10 max-w-lg mx-auto px-4 pb-24 pt-5">
+        {/* Inline check-in OR post-check-in celebration */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className={checkedIn ? "mt-4" : "mt-4 rounded-[30px] ring-2 ring-brand-gold/20 ring-offset-4 ring-offset-background"}
+        >
+          {checkedIn ? null : (
+            <div className="mb-3 flex items-center justify-between rounded-2xl border border-brand-gold/20 bg-brand-gold/8 px-4 py-2.5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-brand-gold-dark">
+                  Check-in de hoje
+                </p>
+                <p className="text-sm text-foreground">
+                  Já está pronto aqui na home.
+                </p>
+              </div>
+              <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-brand-navy">
+                Menos de 1 min
+              </span>
+            </div>
+          )}
+
+          {checkedIn ? (
+            <CheckedInCard justCompleted={justCompleted} statusCopy={checkInStatusCopy} />
+          ) : (
+            <InlineCheckin
+              userId={userId}
+              onComplete={handleCheckinComplete}
+              onNavigateProtection={() => navigate("/denuncia")}
+            />
+          )}
+        </motion.section>
+
+        {shouldOfferReminderActivation ? (
+          <ReminderActivationCard onEnable={handleEnableReminders} />
+        ) : null}
+
+        {shouldOfferInstall ? (
+          <InstallAppCard onInstall={handleInstallApp} />
+        ) : null}
+
         {/* Constancy dots */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="flex justify-center"
+          transition={{ delay: 0.38 }}
+          className="mt-4 flex justify-center"
         >
           <ConstancyDots checkedInDates={checkedInDates} />
         </motion.div>
-
-        {/* Score contributors — expandable Oura pattern */}
-        {checkedIn && (
-          <motion.section
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="mt-4 space-y-2"
-          >
-            {domains.map((d) => {
-              const score = Math.round(scores.domainScores[d.id] ?? 0);
-              const narrative = getDomainNarrative(d.id, score);
-              const isOpen = expandedDomain === d.id;
-              const contributors = DAILY_STEPS.filter((s) => d.questionIds.includes(s.id));
-
-              return (
-                <div key={d.id}>
-                  <button
-                    type="button"
-                    onClick={() => setExpandedDomain(isOpen ? null : d.id)}
-                    className="w-full rounded-2xl border border-border/40 bg-card px-4 py-3.5 text-left transition-all hover:border-primary/15 hover:shadow-sm"
-                    aria-expanded={isOpen}
-                    aria-label={`${DOMAIN_WARM_NAMES[d.id]}: ${narrative.text}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg flex-shrink-0" role="img" aria-hidden="true">
-                        {narrative.emoji}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70">
-                          {DOMAIN_WARM_NAMES[d.id]}
-                        </span>
-                        <p className="text-sm font-medium leading-snug text-foreground mt-0.5">
-                          {narrative.text}
-                        </p>
-                      </div>
-                      <ChevronRight className={`h-4 w-4 text-muted-foreground/50 flex-shrink-0 transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`} />
-                    </div>
-                  </button>
-
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
-                        <div className="rounded-2xl border border-border/50 bg-card px-4 py-3 mt-1 space-y-2.5">
-                          <p className="text-xs leading-relaxed text-muted-foreground">
-                            {d.description}
-                          </p>
-                          {contributors.map((step) => (
-                            <div key={step.id} className="flex items-center gap-2">
-                              <div className="h-1.5 w-1.5 rounded-full bg-primary/40 flex-shrink-0" />
-                              <span className="text-sm text-foreground/80">{step.question}</span>
-                            </div>
-                          ))}
-                          {baseline?.[d.id] && (
-                            <div className="rounded-xl border border-border/40 bg-background px-3 py-2">
-                              <p className="text-[11px] font-medium text-muted-foreground tracking-wide">
-                                Sua faixa típica
-                              </p>
-                              <div className="mt-1.5 flex items-center gap-2">
-                                <div className="relative h-1.5 flex-1 rounded-full bg-primary/10 overflow-hidden">
-                                  <div
-                                    className="absolute h-full rounded-full bg-primary/30"
-                                    style={{
-                                      left: `${baseline[d.id].low}%`,
-                                      width: `${baseline[d.id].high - baseline[d.id].low}%`,
-                                    }}
-                                  />
-                                  <div
-                                    className="absolute h-3 w-0.5 -top-[3px] rounded-full bg-foreground"
-                                    style={{ left: `${score}%` }}
-                                  />
-                                </div>
-                                <span className="text-[11px] tabular-nums text-muted-foreground">
-                                  {baseline[d.id].low}–{baseline[d.id].high}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => navigate("/meu-cuidado")}
-                            className="flex items-center gap-1 text-xs font-medium text-primary pt-1"
-                          >
-                            Ver histórico completo
-                            <ChevronRight className="h-3 w-3" />
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </motion.section>
-        )}
 
         {/* First-visit welcome */}
         {isFirstVisit && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
+            transition={{ delay: 0.4 }}
             className="mt-4 rounded-2xl border border-primary/10 bg-card p-5 text-center shadow-sm"
           >
             <p className="text-xl font-semibold tracking-[-0.03em]">Boas-vindas à Lumina</p>
@@ -627,118 +1004,26 @@ export default function DashboardPage() {
           </motion.section>
         )}
 
-        {/* Inline check-in OR post-check-in celebration */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+        {/* Lumina — permanent AI companion card (AI sprint: swap engine for live RAG call) */}
+        <LuminaCard
+          context={hasCrisisSignal ? "dashboard-low" : "dashboard"}
+          delay={0.4}
+          featured
           className="mt-4"
-        >
-          {checkedIn ? (
-            <motion.div
-              initial={justCompleted ? { scale: 0.92, opacity: 0 } : false}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20 }}
-              className="relative flex items-center gap-3 rounded-2xl border border-score-good/20 bg-card p-4 shadow-sm"
-            >
-              {justCompleted && <CelebrationParticles />}
-              <motion.div
-                initial={justCompleted ? { rotate: -90, scale: 0 } : false}
-                animate={{ rotate: 0, scale: 1 }}
-                transition={{ delay: 0.15, type: "spring", stiffness: 300, damping: 15 }}
-                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-score-good/12"
-              >
-                {justCompleted ? (
-                  <Sparkles className="w-5 h-5 text-score-good" />
-                ) : (
-                  <CheckCircle2 className="w-5 h-5 text-score-good" />
-                )}
-              </motion.div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold tracking-[-0.02em] text-foreground">
-                  {checkInStatusCopy.title}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {checkInStatusCopy.description}
-                </p>
-              </div>
-            </motion.div>
-          ) : (
-            <InlineCheckin
-              userId={userId}
-              onComplete={handleCheckinComplete}
-              onNavigateProtection={() => navigate("/protecao")}
-            />
-          )}
-        </motion.section>
-
-        {/* Lumina — contextual AI companion */}
-        {checkedIn && (
-          <LuminaCard
-            context={hasCrisisSignal ? "dashboard-low" : "dashboard"}
-            delay={0.4}
-            className="mt-4"
-            onTap={() => navigate("/support")}
-          />
-        )}
+          onTap={() => navigate("/support")}
+        />
 
         {/* Discovery card — 1 private insight from correlation engine */}
         {checkedIn && featuredDiscovery && (
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.42 }}
-            className="mt-4 rounded-2xl border border-brand-teal/15 bg-card px-4 py-4 shadow-sm"
-          >
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-brand-teal/12">
-                <Sparkles className="h-4 w-4 text-brand-teal" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Descoberta privada
-                </p>
-                <p className="mt-1 text-sm leading-relaxed text-foreground">
-                  {featuredDiscovery.text}
-                </p>
-                <p className="mt-1.5 text-xs text-muted-foreground/70">
-                  Baseado em {featuredDiscovery.withCount} dias · Só você vê isso
-                </p>
-              </div>
-            </div>
-          </motion.section>
+          <DiscoveryCard discovery={featuredDiscovery} />
         )}
 
         {/* Discovery progress teaser — before threshold */}
         {checkedIn && !featuredDiscovery && discoveryProgress > 0 && discoveryProgress < DISCOVERY_MIN_RECORDS && (
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.42 }}
-            className="mt-4 rounded-2xl border border-border/60 bg-card px-4 py-3.5 shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary/8">
-                <Sparkles className="h-3.5 w-3.5 text-primary/60" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  {DISCOVERY_MIN_RECORDS - discoveryProgress} check-in{DISCOVERY_MIN_RECORDS - discoveryProgress > 1 ? "s" : ""} até sua primeira descoberta privada
-                </p>
-                <div className="mt-1.5 h-1 rounded-full bg-primary/10 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.round((discoveryProgress / DISCOVERY_MIN_RECORDS) * 100)}%` }}
-                    transition={{ delay: 0.5, duration: 0.6 }}
-                    className="h-full rounded-full bg-primary/40"
-                  />
-                </div>
-              </div>
-            </div>
-          </motion.section>
+          <DiscoveryProgressTeaser progress={discoveryProgress} threshold={DISCOVERY_MIN_RECORDS} />
         )}
 
-        {pulseState && (
+        {shouldShowPulseCard && pulseState && (
           <PulseCard
             pulseState={pulseState}
             onOpen={() => {
@@ -746,119 +1031,30 @@ export default function DashboardPage() {
                 setPulseDialogOpen(true);
               }
             }}
+            onDismiss={handleDismissPulse}
+            canDismiss={pulseState.latestResponse !== null && !pulseState.isDue}
           />
         )}
 
         {/* Crisis-aware support CTA */}
         {hasCrisisSignal && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            className="mt-3"
-          >
-            <button
-              onClick={() => navigate("/support")}
-              className="flex w-full items-center gap-3 rounded-2xl border border-score-attention/20 bg-card p-4 text-left shadow-sm transition-colors hover:border-score-attention/30"
-              data-testid="button-crisis-support"
-            >
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-score-attention/14">
-                <Heart className="w-5 h-5 text-score-attention" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-semibold tracking-[-0.02em]">Tô aqui se precisar.</p>
-                <p className="text-sm text-muted-foreground">
-                  Apoio e acolhimento quando quiser
-                </p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            </button>
-          </motion.section>
+          <CrisisSupportCTA onNavigate={() => navigate("/support")} />
         )}
       </main>
 
       {pulseState && (
-        <Dialog open={pulseDialogOpen} onOpenChange={setPulseDialogOpen}>
-          <DialogContent className="max-w-2xl rounded-3xl border-border/70 px-0 pb-0 pt-0 sm:max-w-xl">
-            <DialogHeader className="border-b border-border/60 px-6 py-5">
-              <DialogTitle>{pulseState.definition.title}</DialogTitle>
-              <DialogDescription>
-                Responda pensando nas últimas duas semanas. A leitura é privada e ajuda a calibrar os sinais diários do aplicativo.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
-              <div className="mb-4 flex items-center justify-between rounded-2xl border border-border/60 bg-background px-4 py-3">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">
-                    Progresso do pulse
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {pulseAnsweredCount} de {pulseQuestionIds.length} itens respondidos
-                  </p>
-                </div>
-                <span className="rounded-full bg-primary/8 px-3 py-1 text-xs font-semibold text-primary">
-                  Até {formatShortDate(pulseState.window.windowEnd)}
-                </span>
-              </div>
-
-              <div className="space-y-4 pb-5">
-                {pulseState.definition.questions.map((question, index) => (
-                  <section
-                    key={question.id}
-                    className="rounded-2xl border border-border/65 bg-background px-4 py-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">
-                          {PULSE_DIMENSION_LABELS[question.dimension]}
-                        </p>
-                        <p className="mt-1 text-sm font-medium leading-relaxed text-foreground">
-                          {index + 1}. {question.prompt}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {PULSE_RESPONSE_OPTIONS.map((option) => {
-                        const selected = pulseAnswers[question.id] === option.value;
-
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => handlePulseAnswer(question.id, option.value)}
-                            className={`rounded-2xl border px-3 py-3 text-left text-sm transition-colors ${selected ? "border-brand-teal/40 bg-brand-teal/10 text-foreground" : "border-border/60 bg-card text-muted-foreground hover:border-primary/20 hover:bg-primary/5 hover:text-foreground"}`}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </div>
-
-            <DialogFooter className="border-t border-border/60 px-6 py-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setPulseDialogOpen(false)}
-                disabled={submitPulseMutation.isPending}
-              >
-                Agora não
-              </Button>
-              <Button
-                type="button"
-                onClick={() => submitPulseMutation.mutate()}
-                disabled={!canSubmitPulse || submitPulseMutation.isPending}
-              >
-                {submitPulseMutation.isPending ? "Enviando..." : "Concluir pulse"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <PulseDialog
+          pulseState={pulseState}
+          open={pulseDialogOpen}
+          onOpenChange={setPulseDialogOpen}
+          answers={pulseAnswers}
+          onAnswer={handlePulseAnswer}
+          answeredCount={pulseAnsweredCount}
+          totalCount={pulseQuestionIds.length}
+          canSubmit={canSubmitPulse}
+          isPending={submitPulseMutation.isPending}
+          onSubmit={() => submitPulseMutation.mutate()}
+        />
       )}
 
       <DashboardBottomNav onNavigate={navigate} />

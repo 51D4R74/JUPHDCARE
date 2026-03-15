@@ -16,7 +16,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const TOOLTIP_DISMISSED_KEY = "juphdcare_solar_tooltip_dismissed";
+const TOOLTIP_DISMISSED_KEY = "lumina_solar_tooltip_dismissed";
+const LEGACY_TOOLTIP_DISMISSED_KEY = "juphdcare_solar_tooltip_dismissed";
 
 interface SolarPointsBadgeProps {
   readonly points: number;
@@ -31,7 +32,7 @@ export default function SolarPointsBadge({
 
   useEffect(() => {
     if (points > 0) return;
-    const dismissed = localStorage.getItem(TOOLTIP_DISMISSED_KEY);
+    const dismissed = localStorage.getItem(TOOLTIP_DISMISSED_KEY) ?? localStorage.getItem(LEGACY_TOOLTIP_DISMISSED_KEY);
     if (dismissed) return;
     // Show after a short delay so the page settles
     const timer = setTimeout(() => setShowHint(true), 1200);
@@ -41,6 +42,7 @@ export default function SolarPointsBadge({
   function handleDismiss() {
     setShowHint(false);
     localStorage.setItem(TOOLTIP_DISMISSED_KEY, "1");
+    localStorage.removeItem(LEGACY_TOOLTIP_DISMISSED_KEY);
   }
 
   const badge = (

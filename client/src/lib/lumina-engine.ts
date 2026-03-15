@@ -27,7 +27,7 @@ const MESSAGES: Record<LuminaContext, readonly LuminaMessage[]> = {
       cta: "Falar com Lumina",
     },
     {
-      text: "Como foi até agora? Seus dados contam uma história.",
+      text: "Como foi até agora? Quero entender melhor o seu momento.",
       cta: "Contar pra Lumina",
     },
     {
@@ -41,7 +41,7 @@ const MESSAGES: Record<LuminaContext, readonly LuminaMessage[]> = {
       cta: "Conversar agora",
     },
     {
-      text: "Notei um sinal de atenção nos seus registros. Estou aqui.",
+      text: "Notei um sinal de atenção no seu momento. Estou aqui.",
       cta: "Falar agora",
     },
   ],
@@ -65,17 +65,17 @@ const MESSAGES: Record<LuminaContext, readonly LuminaMessage[]> = {
       cta: "Me explica",
     },
     {
-      text: "Cada missão aqui tem uma razão ligada ao seu histórico.",
+      text: "Cada missão aqui foi escolhida para o seu momento atual.",
       cta: "Quero saber mais",
     },
   ],
   journey: [
     {
-      text: "Quer que eu interprete o padrão que estou vendo no seu histórico?",
+      text: "Quer que eu interprete o padrão dos seus últimos dias?",
       cta: "Interpretar pra mim",
     },
     {
-      text: "Seus registros mostram algo interessante. Quer ver o que notei?",
+      text: "Percebi algo interessante no seu momento. Quer ver o que notei?",
       cta: "Me mostra",
     },
     {

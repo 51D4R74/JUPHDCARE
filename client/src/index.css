@@ -229,6 +229,41 @@
     box-shadow: 0 10px 24px hsl(var(--foreground) / 0.06);
   }
 
+  /* Sky hero — glassmorphic overlays for content on top of sky photos */
+
+  .glass-sky-controls {
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-sky-pill {
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+  }
+
+  .glass-sky-cta {
+    background: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-nav-dark {
+    background: rgba(30, 58, 95, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .text-sky-readable {
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
   .glow-violet {
     box-shadow: 0 12px 28px hsl(var(--foreground) / 0.08);
   }

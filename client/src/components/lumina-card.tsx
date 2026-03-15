@@ -24,6 +24,7 @@ interface LuminaCardProps {
   readonly delay?: number;
   readonly className?: string;
   readonly compact?: boolean;
+  readonly featured?: boolean;
 }
 
 export default function LuminaCard({
@@ -32,6 +33,7 @@ export default function LuminaCard({
   delay = 0,
   className = "",
   compact = false,
+  featured = false,
 }: Readonly<LuminaCardProps>) {
   const msg = selectLuminaMessage(context);
 
@@ -64,7 +66,7 @@ export default function LuminaCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
       className={
-        "relative overflow-hidden rounded-2xl border border-brand-teal/20 " +
+        "relative overflow-hidden rounded-[28px] border border-brand-teal/20 " +
         "bg-card shadow-sm " + className
       }
     >
@@ -77,34 +79,72 @@ export default function LuminaCard({
         aria-hidden="true"
       />
 
-      <div className="relative flex items-start gap-3.5 px-4 py-4">
-        <LuminaAvatar size={40} />
+      <div
+        className={
+          featured
+            ? "relative flex min-h-[280px] flex-col items-center px-6 py-7 text-center sm:min-h-[320px] sm:px-8 sm:py-8"
+            : "relative flex items-start gap-3.5 px-4 py-4"
+        }
+      >
+        {featured ? (
+          <>
+            <LuminaAvatar size={88} />
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="text-xs font-semibold tracking-wide text-brand-teal">
-              Lumina
-            </span>
-            <Sparkles className="h-3 w-3 text-brand-teal/60" />
-          </div>
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-sm font-semibold tracking-[0.22em] text-brand-teal">
+                LUMINA
+              </span>
+              <Sparkles className="h-4 w-4 text-brand-teal/60" />
+            </div>
 
-          <p className="text-sm leading-relaxed text-foreground">
-            {msg.text}
-          </p>
+            <p className="mt-4 max-w-xl text-[1.05rem] leading-7 text-foreground sm:text-lg">
+              {msg.text}
+            </p>
 
-          <button
-            type="button"
-            onClick={onTap}
-            className={
-              "mt-3 inline-flex items-center gap-1.5 rounded-xl " +
-              "bg-brand-teal/10 px-3.5 py-2 text-sm font-medium text-brand-teal " +
-              "transition-colors hover:bg-brand-teal/16 active:bg-brand-teal/20"
-            }
-          >
-            {msg.cta}
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={onTap}
+              className={
+                "mt-6 inline-flex min-h-12 items-center gap-2 rounded-2xl " +
+                "bg-brand-teal/10 px-5 py-3 text-base font-medium text-brand-teal " +
+                "transition-colors hover:bg-brand-teal/16 active:bg-brand-teal/20"
+              }
+            >
+              {msg.cta}
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </>
+        ) : (
+          <>
+            <LuminaAvatar size={40} />
+
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 flex items-center gap-1.5">
+                <span className="text-xs font-semibold tracking-wide text-brand-teal">
+                  Lumina
+                </span>
+                <Sparkles className="h-3 w-3 text-brand-teal/60" />
+              </div>
+
+              <p className="text-sm leading-relaxed text-foreground">
+                {msg.text}
+              </p>
+
+              <button
+                type="button"
+                onClick={onTap}
+                className={
+                  "mt-3 inline-flex items-center gap-1.5 rounded-xl " +
+                  "bg-brand-teal/10 px-3.5 py-2 text-sm font-medium text-brand-teal " +
+                  "transition-colors hover:bg-brand-teal/16 active:bg-brand-teal/20"
+                }
+              >
+                {msg.cta}
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </motion.div>
   );

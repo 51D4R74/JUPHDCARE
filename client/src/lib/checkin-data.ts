@@ -294,7 +294,7 @@ export const CHAT_TRIGGERS: Record<string, ChatTriggerConfig> = {
   pressured: {
     message:
       `Percebi que algo no ambiente pode estar pesando.\n\nQuer conversar? Posso só ouvir, sem cobranças.`,
-    cta: "Conversar com a JuPhD",
+    cta: "Conversar com a Lumina",
     anonymousNote: "Nada chega ao RH sem a sua autorização.",
   },
   proj_yes: {

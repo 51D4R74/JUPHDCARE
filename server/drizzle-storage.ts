@@ -221,6 +221,12 @@ export class DrizzleStorage extends BaseStorage {
         userId: insertReport.userId ?? null,
         description: insertReport.description ?? null,
         anonymous: insertReport.anonymous ?? true,
+        reportMode: insertReport.reportMode ?? "anonymous",
+        severity: insertReport.severity ?? null,
+        occurrenceWindow: insertReport.occurrenceWindow ?? null,
+        location: insertReport.location ?? null,
+        peopleInvolved: insertReport.peopleInvolved ?? null,
+        followUpRequested: insertReport.followUpRequested ?? false,
       })
       .returning();
     const report = rows.at(0);

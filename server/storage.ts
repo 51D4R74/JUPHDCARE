@@ -592,7 +592,7 @@ export class MemStorage extends BaseStorage {
 
     const demoUser: User = {
       id: "user-1",
-      username: "maria@juphd.com",
+      username: "maria@lumina.com",
       password: seedHash,
       name: "Maria Silva",
       role: "collaborator",
@@ -602,7 +602,7 @@ export class MemStorage extends BaseStorage {
 
     const rhUser: User = {
       id: "user-rh",
-      username: "rh@juphd.com",
+      username: "rh@lumina.com",
       password: seedHash,
       name: "Carlos Mendes",
       role: "rh",
@@ -616,7 +616,7 @@ export class MemStorage extends BaseStorage {
       const dept = departments[i % departments.length];
       const seedUser: User = {
         id: `seed-user-${i}`,
-        username: `user${i}@juphd.com`,
+        username: `user${i}@lumina.com`,
         password: seedHash,
         name: `Colaborador ${i + 1}`,
         role: "collaborator",
@@ -909,6 +909,12 @@ export class MemStorage extends BaseStorage {
       userId: insertReport.userId || null,
       description: insertReport.description || null,
       anonymous: insertReport.anonymous ?? true,
+      reportMode: insertReport.reportMode ?? "anonymous",
+      severity: insertReport.severity || null,
+      occurrenceWindow: insertReport.occurrenceWindow || null,
+      location: insertReport.location || null,
+      peopleInvolved: insertReport.peopleInvolved || null,
+      followUpRequested: insertReport.followUpRequested ?? false,
     };
     this.incidentReports.set(id, report);
     return report;

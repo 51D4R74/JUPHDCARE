@@ -4,6 +4,9 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const incidentReportModeSchema = z.enum(["anonymous", "formal"]);
+const incidentOccurrenceWindowSchema = z.enum(["today", "this_week", "this_month", "older"]);
+const incidentSeveritySchema = z.enum(["low", "moderate", "high", "emergency"]);
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -47,6 +50,12 @@ export const incidentReports = pgTable("incident_reports", {
   subcategory: text("subcategory").notNull(),
   description: text("description"),
   anonymous: boolean("anonymous").default(true),
+  reportMode: text("report_mode").notNull().default("anonymous"),
+  severity: text("severity"),
+  occurrenceWindow: text("occurrence_window"),
+  location: text("location"),
+  peopleInvolved: text("people_involved"),
+  followUpRequested: boolean("follow_up_requested").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -144,6 +153,64 @@ export const insertIncidentReportSchema = createInsertSchema(incidentReports).pi
   subcategory: true,
   description: true,
   anonymous: true,
+  reportMode: true,
+  severity: true,
+  occurrenceWindow: true,
+  location: true,
+  peopleInvolved: true,
+  followUpRequested: true,
+});
+
+export const submitIncidentReportSchema = z.object({
+  userId: z.string().min(1).nullable(),
+  category: z.string().min(1).max(80),
+  subcategory: z.string().min(1).max(160),
+  description: z.string().trim().max(4000).nullable(),
+  anonymous: z.boolean(),
+  reportMode: incidentReportModeSchema,
+  severity: incidentSeveritySchema.nullable(),
+  occurrenceWindow: incidentOccurrenceWindowSchema.nullable(),
+  location: z.string().trim().max(160).nullable(),
+  peopleInvolved: z.string().trim().max(240).nullable(),
+  followUpRequested: z.boolean(),
+}).superRefine((data, ctx) => {
+  const isFormal = data.reportMode === "formal";
+  const isAnonymous = data.reportMode === "anonymous";
+  if (isFormal && data.anonymous) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["anonymous"],
+      message: "Denúncia formal não pode ser anônima",
+    });
+  }
+  if (isFormal && data.userId === null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["userId"],
+      message: "Denúncia formal precisa estar vinculada à sua conta",
+    });
+  }
+  if (isFormal && data.occurrenceWindow === null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["occurrenceWindow"],
+      message: "Informe quando a situação aconteceu",
+    });
+  }
+  if (isFormal && (data.description === null || data.description.length < 12)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["description"],
+      message: "Descreva a situação com um pouco mais de detalhe",
+    });
+  }
+  if (isAnonymous && data.severity === null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["severity"],
+      message: "Selecione o nível de severidade",
+    });
+  }
 });
 
 export const insertUserMissionSchema = createInsertSchema(userMissions).pick({
@@ -208,6 +275,7 @@ export type InsertMomentCheckIn = z.infer<typeof insertMomentCheckInSchema>;
 export type MomentCheckIn = typeof momentCheckIns.$inferSelect;
 export type InsertIncidentReport = z.infer<typeof insertIncidentReportSchema>;
 export type IncidentReport = typeof incidentReports.$inferSelect;
+export type SubmitIncidentReport = z.infer<typeof submitIncidentReportSchema>;
 export type InsertUserMission = z.infer<typeof insertUserMissionSchema>;
 export type UserMission = typeof userMissions.$inferSelect;
 export type InsertSolarPoints = z.infer<typeof insertSolarPointsSchema>;
@@ -221,6 +289,9 @@ export type InsertPulseResponse = z.infer<typeof insertPulseResponseSchema>;
 export type PulseResponse = typeof pulseResponses.$inferSelect;
 export type PulseSubmissionAnswer = z.infer<typeof pulseSubmissionAnswerSchema>;
 export type SubmitPulseResponse = z.infer<typeof submitPulseResponseSchema>;
+export type IncidentReportMode = z.infer<typeof incidentReportModeSchema>;
+export type IncidentOccurrenceWindow = z.infer<typeof incidentOccurrenceWindowSchema>;
+export type IncidentSeverity = z.infer<typeof incidentSeveritySchema>;
 
 /** Canonical check-in history record returned by GET /api/checkins/user/:id/history */
 export interface CheckInHistoryRecord {

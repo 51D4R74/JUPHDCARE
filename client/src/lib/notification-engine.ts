@@ -25,7 +25,8 @@ export interface AppNotification {
 
 // ── Storage ───────────────────────────────────────
 
-const STORAGE_KEY = "juphdcare_notifications";
+const STORAGE_KEY = "lumina_notifications";
+const LEGACY_STORAGE_KEY = "juphdcare_notifications";
 const MAX_PER_DAY = 3;
 const MAX_STORED = 20;
 
@@ -40,7 +41,7 @@ interface NotificationStore {
 
 function readStore(): NotificationStore {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return { items: [], todayCount: { date: todayKey(), count: 0 } };
     return JSON.parse(raw) as NotificationStore;
   } catch (e: unknown) {
@@ -51,6 +52,7 @@ function readStore(): NotificationStore {
 
 function writeStore(store: NotificationStore): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
 // ── Public API ────────────────────────────────────

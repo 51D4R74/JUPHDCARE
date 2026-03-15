@@ -338,7 +338,7 @@ export default function MeuCuidadoPage() {
                 animate={{ opacity: 1 }}
                 className="flex items-center justify-center h-[100px] text-muted-foreground text-sm"
               >
-                Sem dados pra esse período ainda.
+                Nada registrado nesse período ainda.
               </motion.div>
             )}
           </AnimatePresence>
